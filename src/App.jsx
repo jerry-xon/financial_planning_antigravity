@@ -9,9 +9,7 @@ import ContingencyModule from './components/ContingencyModule/ContingencyModule'
 import ReportView from './components/ReportModule/ReportView';
 
 
-//This is the main app.js file for this project.
-//It is a stateful component that manages the state of the application.
-//It also handles the navigation between different modules of the application.
+
 function App() {
   const [currentStep, setCurrentStep] = useState(1);
   const [familyMembers, setFamilyMembers] = useState([
