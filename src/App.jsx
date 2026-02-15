@@ -22,7 +22,7 @@ function App() {
     }
   ]);
 
-  // Cash Flow State
+
   const [income, setIncome] = useState({
     family: '',
     bonus: '',
@@ -35,7 +35,7 @@ function App() {
     savings: { rd: '', fd: '', lifeInsurance: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
   });
 
-  // Asset State
+
   const [assetCategories, setAssetCategories] = useState({
     equity: { stocks: '', mfEquity: '' },
     debt: { ppf: '', fd: '' },
@@ -46,16 +46,16 @@ function App() {
     loans: { home: '', car: '', other: '' }
   });
 
-  // Goals State
+
   const [goals, setGoals] = useState([]);
 
-  // Insurance State
+
   const [policies, setPolicies] = useState([]);
 
-  // Contingency State
+ 
   const [contingencyFund, setContingencyFund] = useState('');
 
-  // Load state on mount
+
   React.useEffect(() => {
     const saved = localStorage.getItem('finplan_state');
     if (saved) {
