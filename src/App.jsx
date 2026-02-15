@@ -8,7 +8,7 @@ import ProtectionGapModule from './components/ProtectionGapModule/ProtectionGapM
 import ContingencyModule from './components/ContingencyModule/ContingencyModule';
 import ReportView from './components/ReportModule/ReportView';
 
-
+// Main App Component
 
 function App() {
   const [currentStep, setCurrentStep] = useState(1);
