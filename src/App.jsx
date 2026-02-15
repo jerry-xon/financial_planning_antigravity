@@ -10,8 +10,18 @@ import ReportView from './components/ReportModule/ReportView';
 
 
 
+/**
+ * Main App Component
+ * 
+ * This component manage the overall state for the financial planning application,
+ * including family profile, cash flow, assets, goals, insurance, and contingency funds.
+ * It uses a step-based navigation to guide the user through the planning process.
+ */
 function App() {
+  // State for tracking the current navigation step (1-8)
   const [currentStep, setCurrentStep] = useState(1);
+
+  // State for Family Profile details
   const [familyMembers, setFamilyMembers] = useState([
     {
       name: '',
@@ -55,7 +65,9 @@ function App() {
   // Contingency State
   const [contingencyFund, setContingencyFund] = useState('');
 
-  // Load state on mount
+  // --- Data Persistence Effects ---
+
+  // Load state from local storage on component mount
   React.useEffect(() => {
     const saved = localStorage.getItem('finplan_state');
     if (saved) {
@@ -76,7 +88,7 @@ function App() {
     }
   }, []);
 
-  // Save state on change
+  // Save state to local storage whenever any relevant state changes
   React.useEffect(() => {
     const state = {
       familyMembers,
@@ -170,6 +182,7 @@ function App() {
         }}>PWA v1.0</span>
       </header>
 
+      {/* Main Content Area - Renders the module corresponding to the current step */}
       <main>
         {currentStep === 1 && (
           <ProfileModule
