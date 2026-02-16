@@ -3,15 +3,19 @@ import { calculateFamilyProfile } from '../ProfileModule/ProfileLogic';
 import { calculateCashFlow, formatCurrency } from '../CashFlowModule/CashFlowLogic';
 import { calculateNetWorth } from '../AssetModule/AssetLogic';
 import { categorizeGoals } from '../GoalModule/GoalLogic';
-import { Download, Printer, CheckCircle, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Download, Printer, CheckCircle, TrendingUp, AlertTriangle, Clock, Shield } from 'lucide-react';
+import { calculateYearlyInsuranceSummary, getInsuredNamesList, getPolicyColumns } from '../InsuranceModule/InsuranceLogic';
 
-const ReportView = ({ familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals }) => {
+const ReportView = ({ familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies }) => {
     const profileResults = calculateFamilyProfile(familyMembers);
     const cashFlowResults = calculateCashFlow(income, expenseCategories);
     const assetResults = calculateNetWorth(assetCategories, liabilityCategories);
 
     const validGoals = goals.filter(g => g.yearsToGoal && g.presentValue);
     const goalResults = categorizeGoals(validGoals);
+    const insuranceSummary = calculateYearlyInsuranceSummary(policies);
+    const policyColumns = getPolicyColumns(policies);
+    const insuredNames = getInsuredNamesList(policies);
 
     const handlePrint = () => {
         window.print();
@@ -218,6 +222,75 @@ const ReportView = ({ familyMembers, income, expenseCategories, assetCategories,
                         </div>
                     ))}
                 </section>
+                
+                {/* Insurance & Protection Summary */}
+                {policies.length > 0 && (
+                    <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                        <h3>5. Insurance & Protection Summary</h3>
+                        
+                        <div style={{ marginBottom: '2rem' }}>
+                            <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Clock size={18} /> Yearly Premium Outflow
+                            </h4>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table className="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Year</th>
+                                            {policyColumns.map(pc => (
+                                                <th key={pc.id}>{pc.label} (Premium ₹)</th>
+                                            ))}
+                                            <th>Total Premium</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {insuranceSummary.filter(s => s.totalPremium > 0).map((s, i) => (
+                                            <tr key={i}>
+                                                <td>{s.year}</td>
+                                                {policyColumns.map(pc => (
+                                                    <td key={pc.id}>
+                                                        {s.policyPremiums[pc.id] ? formatCurrency(s.policyPremiums[pc.id]) : '-'}
+                                                    </td>
+                                                ))}
+                                                <td style={{ fontWeight: 600, color: 'var(--primary)' }}>{formatCurrency(s.totalPremium)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Shield size={18} /> Yearly Coverage per Insured
+                            </h4>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table className="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Year</th>
+                                            {insuredNames.map(name => (
+                                                <th key={name}>{name} (Coverage ₹)</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {insuranceSummary.filter(s => Object.keys(s.coverage).length > 0).map((s, i) => (
+                                            <tr key={i}>
+                                                <td>{s.year}</td>
+                                                {insuredNames.map(name => (
+                                                    <td key={name}>
+                                                        {s.coverage[name] ? formatCurrency(s.coverage[name]) : '-'}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+                )}
             </div>
 
             <style>{`

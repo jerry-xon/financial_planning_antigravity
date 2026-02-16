@@ -1,7 +1,7 @@
 import React from 'react';
 import { formatCurrency } from '../CashFlowModule/CashFlowLogic';
 import { Shield, Clock, Landmark } from 'lucide-react';
-import { getPolicyColumns } from './InsuranceLogic';
+import { getPolicyColumns, getInsuredNamesList } from './InsuranceLogic';
 
 const InsuranceOutput = ({ summary, policies }) => {
     if (!summary || summary.length === 0) return null;
@@ -108,7 +108,7 @@ const InsuranceOutput = ({ summary, policies }) => {
                 </div>
             </section>
 
-            <style jsx>{`
+            <style>{`
         .report-table th { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
         .report-table td { font-size: 0.9rem; }
       `}</style>

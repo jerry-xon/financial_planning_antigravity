@@ -255,6 +255,7 @@ function App() {
             assetCategories={assetCategories}
             liabilityCategories={liabilityCategories}
             goals={goals}
+            policies={policies}
           />
         )}
       </main>
