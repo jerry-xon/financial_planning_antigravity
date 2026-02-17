@@ -10,11 +10,17 @@ export const calculateAge = (dob) => {
     return age;
 };
 
+export const calculateRetirementYear = (dob, retirementAge) => {
+    if (!dob || !retirementAge) return '';
+    const birthDate = new Date(dob);
+    const birthYear = birthDate.getFullYear();
+    return birthYear + parseInt(retirementAge);
+};
+
 export const calculateProfile = (member) => {
     const age = calculateAge(member.dob);
     const yearsToRetire = member.retirementAge - age;
-    const currentYear = new Date().getFullYear();
-    const retirementYear = currentYear + yearsToRetire;
+    const retirementYear = calculateRetirementYear(member.dob, member.retirementAge);
 
     let lifeStage = '';
     if (age < 25) lifeStage = 'Early Career / Foundation';

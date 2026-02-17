@@ -1,5 +1,6 @@
 import React from 'react';
 import { User, Calendar, Target, Briefcase, Plus, Trash2, GraduationCap } from 'lucide-react';
+import { calculateRetirementYear } from './ProfileLogic';
 
 const ProfileInput = ({ members, setMembers, onCalculate }) => {
     const handleMemberChange = (index, e) => {
@@ -73,15 +74,27 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                         </div>
 
                         {(member.relation === 'Self' || member.relation === 'Spouse') && (
-                            <div className="input-group">
-                                <label><Calendar size={14} /> Retirement Age</label>
-                                <input
-                                    type="number"
-                                    name="retirementAge"
-                                    value={member.retirementAge}
-                                    onChange={(e) => handleMemberChange(index, e)}
-                                />
-                            </div>
+                            <>
+                                <div className="input-group">
+                                    <label><Calendar size={14} /> Retirement Age</label>
+                                    <input
+                                        type="number"
+                                        name="retirementAge"
+                                        value={member.retirementAge}
+                                        onChange={(e) => handleMemberChange(index, e)}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label><Target size={14} /> Retirement Year</label>
+                                    <input
+                                        type="text"
+                                        value={calculateRetirementYear(member.dob, member.retirementAge) || '-'}
+                                        readOnly
+                                        className="read-only-field"
+                                        style={{ background: 'var(--bg-main)', cursor: 'not-allowed', opacity: 0.8 }}
+                                    />
+                                </div>
+                            </>
                         )}
 
                         {member.relation === 'Child' && (
