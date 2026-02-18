@@ -6,6 +6,7 @@ import GoalModule from './components/GoalModule/GoalModule';
 import InsuranceModule from './components/InsuranceModule/InsuranceModule';
 import ProtectionGapModule from './components/ProtectionGapModule/ProtectionGapModule';
 import ContingencyModule from './components/ContingencyModule/ContingencyModule';
+import JourneyModule from './components/JourneyModule/JourneyModule';
 import ReportView from './components/ReportModule/ReportView';
 
 //I am learning with Jayesh
@@ -65,6 +66,13 @@ function App() {
   // Contingency State
   const [contingencyFund, setContingencyFund] = useState('');
 
+  // Phase 1: Journey Inflation Rates State
+  const [inflationRates, setInflationRates] = useState({
+    incomeIncrement: 10,
+    householdInflation: 6,
+    educationInflation: 8
+  });
+
   // --- Data Persistence Effects ---
 
   // Load state from local storage on component mount
@@ -81,6 +89,7 @@ function App() {
         if (state.goals) setGoals(state.goals);
         if (state.policies) setPolicies(state.policies);
         if (state.contingencyFund) setContingencyFund(state.contingencyFund);
+        if (state.inflationRates) setInflationRates(state.inflationRates);
         if (state.currentStep) setCurrentStep(state.currentStep);
       } catch (e) {
         console.error("Failed to load state", e);
@@ -99,10 +108,11 @@ function App() {
       goals,
       policies,
       contingencyFund,
+      inflationRates,
       currentStep
     };
     localStorage.setItem('finplan_state', JSON.stringify(state));
-  }, [familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, currentStep]);
+  }, [familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, currentStep]);
 
   return (
     <div className="app-container">
@@ -169,7 +179,14 @@ function App() {
             onClick={() => setCurrentStep(8)}
             style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
           >
-            8. Financial Overview
+            8. Journey
+          </button>
+          <button
+            className={`btn ${currentStep === 9 ? 'btn-primary' : ''}`}
+            onClick={() => setCurrentStep(9)}
+            style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+          >
+            9. Overview
           </button>
         </nav>
         <span style={{
@@ -248,6 +265,17 @@ function App() {
           />
         )}
         {currentStep === 8 && (
+          <JourneyModule
+            familyMembers={familyMembers}
+            income={income}
+            expenseCategories={expenseCategories}
+            goals={goals}
+            inflationRates={inflationRates}
+            setInflationRates={setInflationRates}
+            onNext={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
+          />
+        )}
+        {currentStep === 9 && (
           <ReportView
             familyMembers={familyMembers}
             income={income}
