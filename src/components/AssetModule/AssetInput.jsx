@@ -1,6 +1,13 @@
-import React from 'react';
 
 const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, setLiabilityCategories, onCalculate }) => {
+    // Safely access nested properties with defaults
+    const safeAssetValue = (category, item) => {
+        return assetCategories?.[category]?.[item] ?? '';
+    };
+
+    const safeLiabilityValue = (category, item) => {
+        return liabilityCategories?.[category]?.[item] ?? '';
+    };
 
     const handleAssetChange = (category, item, value) => {
         setAssetCategories(prev => ({
@@ -28,11 +35,11 @@ const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, 
                     <h4>Equity & Mutual Funds</h4>
                     <div className="input-group">
                         <label>Direct Stocks</label>
-                        <input type="number" value={assetCategories.equity.stocks} onChange={(e) => handleAssetChange('equity', 'stocks', e.target.value)} placeholder="0" />
+                        <input type="number" value={safeAssetValue('equity', 'stocks')} onChange={(e) => handleAssetChange('equity', 'stocks', e.target.value)} placeholder="0" />
                     </div>
                     <div className="input-group">
                         <label>Equity Mutual Funds</label>
-                        <input type="number" value={assetCategories.equity.mfEquity} onChange={(e) => handleAssetChange('equity', 'mfEquity', e.target.value)} placeholder="0" />
+                        <input type="number" value={safeAssetValue('equity', 'mfEquity')} onChange={(e) => handleAssetChange('equity', 'mfEquity', e.target.value)} placeholder="0" />
                     </div>
                 </div>
 
@@ -40,11 +47,11 @@ const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, 
                     <h4>Fixed Income / Debt</h4>
                     <div className="input-group">
                         <label>PPF / EPF</label>
-                        <input type="number" value={assetCategories.debt.ppf} onChange={(e) => handleAssetChange('debt', 'ppf', e.target.value)} placeholder="0" />
+                        <input type="number" value={safeAssetValue('debt', 'ppf')} onChange={(e) => handleAssetChange('debt', 'ppf', e.target.value)} placeholder="0" />
                     </div>
                     <div className="input-group">
                         <label>Fixed Deposits / Bonds</label>
-                        <input type="number" value={assetCategories.debt.fd} onChange={(e) => handleAssetChange('debt', 'fd', e.target.value)} placeholder="0" />
+                        <input type="number" value={safeAssetValue('debt', 'fd')} onChange={(e) => handleAssetChange('debt', 'fd', e.target.value)} placeholder="0" />
                     </div>
                 </div>
 
@@ -52,11 +59,11 @@ const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, 
                     <h4>Real Estate & Others</h4>
                     <div className="input-group">
                         <label>Properties (Market Value)</label>
-                        <input type="number" value={assetCategories.realEstate.residence} onChange={(e) => handleAssetChange('realEstate', 'residence', e.target.value)} placeholder="0" />
+                        <input type="number" value={safeAssetValue('realEstate', 'residence')} onChange={(e) => handleAssetChange('realEstate', 'residence', e.target.value)} placeholder="0" />
                     </div>
                     <div className="input-group">
                         <label>Gold / Cash / Others</label>
-                        <input type="number" value={assetCategories.others.gold} onChange={(e) => handleAssetChange('others', 'gold', e.target.value)} placeholder="0" />
+                        <input type="number" value={safeAssetValue('others', 'gold')} onChange={(e) => handleAssetChange('others', 'gold', e.target.value)} placeholder="0" />
                     </div>
                 </div>
             </div>
@@ -71,11 +78,11 @@ const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, 
                     <h4>Major Loans</h4>
                     <div className="input-group">
                         <label>Home Loan</label>
-                        <input type="number" value={liabilityCategories.loans.home} onChange={(e) => handleLiabilityChange('loans', 'home', e.target.value)} placeholder="0" />
+                        <input type="number" value={safeLiabilityValue('loans', 'home')} onChange={(e) => handleLiabilityChange('loans', 'home', e.target.value)} placeholder="0" />
                     </div>
                     <div className="input-group">
                         <label>Car / Personal Loan</label>
-                        <input type="number" value={liabilityCategories.loans.car} onChange={(e) => handleLiabilityChange('loans', 'car', e.target.value)} placeholder="0" />
+                        <input type="number" value={safeLiabilityValue('loans', 'car')} onChange={(e) => handleLiabilityChange('loans', 'car', e.target.value)} placeholder="0" />
                     </div>
                 </div>
 
@@ -83,7 +90,7 @@ const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, 
                     <h4>Short Term / Others</h4>
                     <div className="input-group">
                         <label>Credit Card / Other Loans</label>
-                        <input type="number" value={liabilityCategories.loans.other} onChange={(e) => handleLiabilityChange('loans', 'other', e.target.value)} placeholder="0" />
+                        <input type="number" value={safeLiabilityValue('loans', 'other')} onChange={(e) => handleLiabilityChange('loans', 'other', e.target.value)} placeholder="0" />
                     </div>
                 </div>
             </div>
