@@ -25,10 +25,41 @@ const ProfileOutput = ({ familyResults }) => {
                                 <span><strong>Occupation:</strong> {result.occupation || 'Not Specified'}</span>
                             </div>
 
-                            {result.standard && (
+                            {result.standard && result.occupation === 'School' && (
                                 <div style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <GraduationCap size={14} color="var(--text-muted)" />
                                     <span><strong>Education:</strong> {result.standard}</span>
+                                </div>
+                            )}
+
+                            {result.occupation === 'College' && (
+                                <div className="college-details" style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed var(--border)' }}>
+                                    <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <GraduationCap size={14} color="var(--text-muted)" />
+                                        <span><strong>Course:</strong> {result.courseName || 'Not Specified'}</span>
+                                    </div>
+                                    <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Clock size={14} color="var(--text-muted)" />
+                                        <span><strong>Duration:</strong> {result.courseDuration} Years</span>
+                                    </div>
+                                    <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Clock size={14} color="var(--text-muted)" />
+                                        <span><strong>Current:</strong> {result.currentSemYear}</span>
+                                    </div>
+                                    <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Clock size={14} color="var(--text-muted)" />
+                                        <span><strong>Remaining:</strong> {result.remainingTime} Years</span>
+                                    </div>
+                                    <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <AlertTriangle size={14} color="var(--text-muted)" />
+                                        <span><strong>Total Cost:</strong> ₹{result.costOfCompleteCourse}</span>
+                                    </div>
+                                    {result.isFeePaid && (
+                                        <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <AlertTriangle size={14} color={result.isFeePaid === 'YES' ? '#22c55e' : '#ef4444'} />
+                                            <span><strong>Fee Paid:</strong> {result.isFeePaid}</span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

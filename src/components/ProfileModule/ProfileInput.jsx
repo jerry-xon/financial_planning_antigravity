@@ -1,12 +1,30 @@
 import React from 'react';
 import { User, Calendar, Target, Briefcase, Plus, Trash2, GraduationCap } from 'lucide-react';
 import { calculateRetirementYear } from './ProfileLogic';
+import { EDUCATION_STANDARDS } from '../JourneyModule/ProjectionLogic';
 
 const ProfileInput = ({ members, setMembers, onCalculate }) => {
     const handleMemberChange = (index, e) => {
         const { name, value } = e.target;
         const updatedMembers = [...members];
-        updatedMembers[index] = { ...updatedMembers[index], [name]: value };
+        let member = { ...updatedMembers[index], [name]: value };
+
+        // Clear stale education data when switching status for children
+        if (member.relation === 'Child' && name === 'occupation') {
+            if (value === 'College') {
+                member.standard = '';
+                member.annualSchoolFee = '';
+            } else if (value === 'School') {
+                member.courseName = '';
+                member.courseDuration = '';
+                member.currentSemYear = '';
+                member.remainingTime = '';
+                member.costOfCompleteCourse = '';
+                member.isFeePaid = '';
+            }
+        }
+
+        updatedMembers[index] = member;
         setMembers(updatedMembers);
     };
 
@@ -14,7 +32,10 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
         setMembers([...members, {
             name: '',
             dob: '',
-            occupation: '',
+            occupation: relation === 'Child' ? '' : 'Salaried',
+            natureOfBusiness: '',
+            organizationName: '',
+            educationalQualification: '',
             retirementAge: 60,
             relation: relation,
             standard: relation === 'Child' ? '' : undefined
@@ -63,18 +84,62 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                         </div>
 
                         <div className="input-group">
-                            <label><Briefcase size={14} /> Occupation</label>
-                            <input
-                                type="text"
-                                name="occupation"
-                                value={member.occupation}
-                                onChange={(e) => handleMemberChange(index, e)}
-                                placeholder="e.g. Engineer"
-                            />
+                            <label><Briefcase size={14} /> {member.relation === 'Child' ? 'Studying at' : 'Occupation'}</label>
+                            {member.relation === 'Child' ? (
+                                <select
+                                    name="occupation"
+                                    value={member.occupation || ''}
+                                    onChange={(e) => handleMemberChange(index, e)}
+                                >
+                                    <option value="">Select Option</option>
+                                    <option value="School">School</option>
+                                    <option value="College">College</option>
+                                </select>
+                            ) : (
+                                <select
+                                    name="occupation"
+                                    value={member.occupation}
+                                    onChange={(e) => handleMemberChange(index, e)}
+                                >
+                                    <option value="Salaried">Salaried</option>
+                                    <option value="Business / Profession">Business / Profession</option>
+                                    <option value="Housewife">Housewife</option>
+                                </select>
+                            )}
                         </div>
 
                         {(member.relation === 'Self' || member.relation === 'Spouse') && (
                             <>
+                                <div className="input-group">
+                                    <label><Briefcase size={14} /> Nature of Business / Profession</label>
+                                    <input
+                                        type="text"
+                                        name="natureOfBusiness"
+                                        value={member.natureOfBusiness || ''}
+                                        onChange={(e) => handleMemberChange(index, e)}
+                                        placeholder="e.g. IT Consulting"
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label><Briefcase size={14} /> Name of Business / Organization</label>
+                                    <input
+                                        type="text"
+                                        name="organizationName"
+                                        value={member.organizationName || ''}
+                                        onChange={(e) => handleMemberChange(index, e)}
+                                        placeholder="e.g. Acme Corp"
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label><GraduationCap size={14} /> Educational Qualification</label>
+                                    <input
+                                        type="text"
+                                        name="educationalQualification"
+                                        value={member.educationalQualification || ''}
+                                        onChange={(e) => handleMemberChange(index, e)}
+                                        placeholder="e.g. MBA"
+                                    />
+                                </div>
                                 <div className="input-group">
                                     <label><Calendar size={14} /> Retirement Age</label>
                                     <input
@@ -97,17 +162,20 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                             </>
                         )}
 
-                        {member.relation === 'Child' && (
+                        {member.relation === 'Child' && member.occupation === 'School' && (
                             <>
                                 <div className="input-group">
                                     <label><GraduationCap size={14} /> Studying in Standard</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         name="standard"
                                         value={member.standard || ''}
                                         onChange={(e) => handleMemberChange(index, e)}
-                                        placeholder="e.g. 5th Standard"
-                                    />
+                                    >
+                                        <option value="">Select Standard</option>
+                                        {EDUCATION_STANDARDS.map((std, i) => (
+                                            <option key={i} value={std}>{std}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="input-group">
                                     <label><GraduationCap size={14} /> Annual School fee (₹)</label>
@@ -118,6 +186,76 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                         onChange={(e) => handleMemberChange(index, e)}
                                         placeholder="e.g. 50000"
                                     />
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.5rem', gridColumn: '1 / -1', fontStyle: 'italic' }}>
+                                        Note: Higher education (College) planning will be done in Goals Section.
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {member.relation === 'Child' && member.occupation === 'College' && (
+                            <>
+                                <div className="input-group">
+                                    <label><GraduationCap size={14} /> Name of course</label>
+                                    <input
+                                        type="text"
+                                        name="courseName"
+                                        value={member.courseName || ''}
+                                        onChange={(e) => handleMemberChange(index, e)}
+                                        placeholder="e.g. B.Tech"
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label><Calendar size={14} /> Duration of the course (Years)</label>
+                                    <input
+                                        type="number"
+                                        name="courseDuration"
+                                        value={member.courseDuration || ''}
+                                        onChange={(e) => handleMemberChange(index, e)}
+                                        placeholder="e.g. 4"
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label><Calendar size={14} /> Current Semester / Year</label>
+                                    <input
+                                        type="text"
+                                        name="currentSemYear"
+                                        value={member.currentSemYear || ''}
+                                        onChange={(e) => handleMemberChange(index, e)}
+                                        placeholder="e.g. 2nd Year"
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label><Calendar size={14} /> Remaining Time to Complete (Years)</label>
+                                    <input
+                                        type="number"
+                                        name="remainingTime"
+                                        value={member.remainingTime || ''}
+                                        onChange={(e) => handleMemberChange(index, e)}
+                                        placeholder="e.g. 2"
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label><Target size={14} /> Cost of Complete Course (₹)</label>
+                                    <input
+                                        type="number"
+                                        name="costOfCompleteCourse"
+                                        value={member.costOfCompleteCourse || ''}
+                                        onChange={(e) => handleMemberChange(index, e)}
+                                        placeholder="e.g. 400000"
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label><Briefcase size={14} /> Is {member.currentSemYear || 'current year'} fee paid?</label>
+                                    <select
+                                        name="isFeePaid"
+                                        value={member.isFeePaid || ''}
+                                        onChange={(e) => handleMemberChange(index, e)}
+                                    >
+                                        <option value="">Select Option</option>
+                                        <option value="YES">YES</option>
+                                        <option value="NO">NO</option>
+                                    </select>
                                 </div>
                             </>
                         )}

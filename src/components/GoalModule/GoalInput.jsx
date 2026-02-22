@@ -21,52 +21,94 @@ const GoalInput = ({ goals, setGoals, onCalculate }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {goals.map((goal) => (
-                            <tr key={goal.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                                <td style={{ padding: '0.75rem' }}>
-                                    {goal.isPredefined ? (
-                                        <span style={{ fontWeight: 500 }}>{goal.name}</span>
-                                    ) : (
+                        {goals.map((goal) => {
+                            const isEducation = goal.name?.toLowerCase().includes('higher education');
+                            
+                            return (
+                                <tr key={goal.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                                    <td style={{ padding: '0.75rem' }}>
+                                        {goal.isPredefined ? (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <span style={{ fontWeight: 500 }}>{goal.name}</span>
+                                                {isEducation && (
+                                                    <div className="education-extras" style={{ display: 'grid', gap: '8px', marginTop: '4px' }}>
+                                                        <input
+                                                            type="text"
+                                                            value={goal.profession || ''}
+                                                            onChange={(e) => handleGoalChange(goal.id, 'profession', e.target.value)}
+                                                            placeholder="What your child will become"
+                                                            className="input-minimal"
+                                                            style={{ fontSize: '0.8rem' }}
+                                                        />
+                                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                                            <input
+                                                                type="number"
+                                                                value={goal.courseDuration || ''}
+                                                                onChange={(e) => handleGoalChange(goal.id, 'courseDuration', e.target.value)}
+                                                                placeholder="Duration (Years)"
+                                                                className="input-minimal"
+                                                                style={{ fontSize: '0.8rem', width: '120px' }}
+                                                            />
+                                                            <input
+                                                                type="number"
+                                                                value={goal.totalCourseCost || ''}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    handleGoalChange(goal.id, 'totalCourseCost', val);
+                                                                    handleGoalChange(goal.id, 'presentValue', val); // Auto-fill PV
+                                                                }}
+                                                                placeholder="Total Cost (₹)"
+                                                                className="input-minimal"
+                                                                style={{ fontSize: '0.8rem' }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={goal.name}
+                                                onChange={(e) => handleGoalChange(goal.id, 'name', e.target.value)}
+                                                placeholder={goal.placeholder}
+                                                className="input-minimal"
+                                            />
+                                        )}
+                                    </td>
+                                    <td style={{ padding: '0.75rem' }}>
                                         <input
-                                            type="text"
-                                            value={goal.name}
-                                            onChange={(e) => handleGoalChange(goal.id, 'name', e.target.value)}
-                                            placeholder={goal.placeholder}
+                                            type="number"
+                                            value={goal.yearsToGoal || ''}
+                                            onChange={(e) => handleGoalChange(goal.id, 'yearsToGoal', e.target.value)}
+                                            placeholder="Years"
                                             className="input-minimal"
+                                            style={{ width: '80px' }}
                                         />
-                                    )}
-                                </td>
-                                <td style={{ padding: '0.75rem' }}>
-                                    <input
-                                        type="number"
-                                        value={goal.yearsToGoal || ''}
-                                        onChange={(e) => handleGoalChange(goal.id, 'yearsToGoal', e.target.value)}
-                                        placeholder="Years"
-                                        className="input-minimal"
-                                        style={{ width: '80px' }}
-                                    />
-                                </td>
-                                <td style={{ padding: '0.75rem' }}>
-                                    <input
-                                        type="number"
-                                        value={goal.presentValue || ''}
-                                        onChange={(e) => handleGoalChange(goal.id, 'presentValue', e.target.value)}
-                                        placeholder="₹ 0"
-                                        className="input-minimal"
-                                    />
-                                </td>
-                                <td style={{ padding: '0.75rem' }}>
-                                    <input
-                                        type="number"
-                                        value={goal.inflationRate || ''}
-                                        onChange={(e) => handleGoalChange(goal.id, 'inflationRate', e.target.value)}
-                                        placeholder="6%"
-                                        className="input-minimal"
-                                        style={{ width: '80px' }}
-                                    />
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td style={{ padding: '0.75rem' }}>
+                                        <input
+                                            type="number"
+                                            value={goal.presentValue || ''}
+                                            onChange={(e) => handleGoalChange(goal.id, 'presentValue', e.target.value)}
+                                            placeholder="₹ 0"
+                                            className="input-minimal"
+                                            readOnly={isEducation}
+                                            style={isEducation ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
+                                        />
+                                    </td>
+                                    <td style={{ padding: '0.75rem' }}>
+                                        <input
+                                            type="number"
+                                            value={goal.inflationRate || ''}
+                                            onChange={(e) => handleGoalChange(goal.id, 'inflationRate', e.target.value)}
+                                            placeholder="6%"
+                                            className="input-minimal"
+                                            style={{ width: '80px' }}
+                                        />
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

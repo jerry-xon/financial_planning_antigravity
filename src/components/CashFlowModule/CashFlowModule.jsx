@@ -3,7 +3,7 @@ import CashFlowInput from './CashFlowInput';
 import CashFlowOutput from './CashFlowOutput';
 import { calculateCashFlow } from './CashFlowLogic';
 
-const CashFlowModule = ({ income, setIncome, expenseCategories, setExpenseCategories, onNext, onBack }) => {
+const CashFlowModule = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, onNext, onBack }) => {
     const [results, setResults] = useState(null);
 
     const handleCalculate = () => {
@@ -20,6 +20,7 @@ const CashFlowModule = ({ income, setIncome, expenseCategories, setExpenseCatego
                 </p>
 
                 <CashFlowInput
+                    familyMembers={familyMembers}
                     income={income}
                     setIncome={setIncome}
                     expenseCategories={expenseCategories}

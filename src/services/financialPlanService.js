@@ -56,11 +56,15 @@ export const createFinancialPlan = async (planName = 'My Financial Plan') => {
               dob: '',
               occupation: '',
               retirementAge: 60,
-              relation: 'Self'
+              relation: 'Self',
+              natureOfBusiness: '',
+              organizationName: '',
+              educationalQualification: '',
             }
           ],
           income: {
-            family: '',
+            self: '',
+            spouse: '',
             bonus: '',
             passive: '',
             other: ''

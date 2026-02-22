@@ -17,7 +17,6 @@ const JourneyTable = ({ projections }) => {
                         <th>Surplus before saving</th>
                         <th>Savings & Investments</th>
                         <th>Net Investible Surplus</th>
-                        <th>Goals in Year</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -36,37 +35,10 @@ const JourneyTable = ({ projections }) => {
                             }}>
                                 {formatCurrency(row.netInvestibleSurplus)}
                             </td>
-                            <td>
-                                {row.goalsInYear.length > 0 ? (
-                                    <div className="goals-cell">
-                                        {row.goalsInYear.map((g, i) => (
-                                            <span key={i} className="goal-badge">{g}</span>
-                                        ))}
-                                    </div>
-                                ) : '-'}
-                            </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
-
-            <style>{`
-                .goal-badge {
-                    display: inline-block;
-                    background: var(--primary);
-                    color: white;
-                    font-size: 0.75rem;
-                    padding: 2px 8px;
-                    border-radius: 12px;
-                    margin: 2px;
-                }
-                .goals-cell {
-                    max-width: 200px;
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 4px;
-                }
-            `}</style>
         </div>
     );
 };

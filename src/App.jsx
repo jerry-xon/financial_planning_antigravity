@@ -40,13 +40,17 @@ function App() {
       dob: '',
       occupation: '',
       retirementAge: 60,
-      relation: 'Self'
+      relation: 'Self',
+      natureOfBusiness: '',
+      organizationName: '',
+      educationalQualification: '',
     }
   ]);
 
   // Cash Flow State
   const [income, setIncome] = useState({
-    family: '',
+    self: '',
+    spouse: '',
     bonus: '',
     passive: '',
     other: ''
@@ -108,7 +112,12 @@ function App() {
         setPlanId(data.id);
         setCurrentStep(data.current_step || 1);
         setFamilyMembers(data.family_members && data.family_members.length > 0 ? data.family_members : [{ name: '', dob: '', occupation: '', retirementAge: 60, relation: 'Self' }]);
-        setIncome(data.income || { family: '', bonus: '', passive: '', other: '' });
+        const loadedIncome = data.income || { self: '', spouse: '', bonus: '', passive: '', other: '' };
+        if (loadedIncome.family && !loadedIncome.self) {
+            loadedIncome.self = loadedIncome.family;
+            delete loadedIncome.family;
+        }
+        setIncome(loadedIncome);
         
         // Merge loaded expense_categories with default structure
         const defaultExpenseCategories = {
@@ -331,6 +340,7 @@ function App() {
           )}
           {currentStep === 2 && (
             <CashFlowModule
+              familyMembers={familyMembers}
               income={income}
               setIncome={setIncome}
               expenseCategories={expenseCategories}

@@ -103,7 +103,12 @@ const ReportView = ({ familyMembers, income, expenseCategories, assetCategories,
                                                 {m.annualSchoolFee && <div style={{ fontSize: '0.85rem' }}>Fee: {formatCurrency(m.annualSchoolFee)}/yr</div>}
                                             </div>
                                         ) : (
-                                            <div>Retires: {m.retirementYear}</div>
+                                            <div>
+                                                <div>Retires: {m.retirementYear}</div>
+                                                {m.educationalQualification && <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Qual: {m.educationalQualification}</div>}
+                                                {m.occupation && <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{m.occupation}</div>}
+                                                {m.natureOfBusiness && <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{m.natureOfBusiness} @ {m.organizationName}</div>}
+                                            </div>
                                         )}
                                     </td>
                                 </tr>

@@ -48,11 +48,22 @@ export const getPredefinedGoals = (familyMembers) => {
 
     children.forEach((child, index) => {
         const childName = child.name || `Child ${index + 1}`;
-        goals.push({
-            id: `edu_${index}`,
-            name: `Higher Education - ${childName}`,
-            isPredefined: true
-        });
+        
+        // Only add Higher Education goal if child is not currently in College
+        if (child.occupation !== 'College') {
+            goals.push({
+                id: `edu_${index}`,
+                name: `Higher Education - ${childName}`,
+                isPredefined: true,
+                profession: '',
+                courseDuration: '',
+                totalCourseCost: '',
+                yearsToGoal: '',
+                presentValue: '',
+                inflationRate: 8 // Default for education
+            });
+        }
+
         goals.push({
             id: `marriage_${index}`,
             name: `Marriage - ${childName}`,

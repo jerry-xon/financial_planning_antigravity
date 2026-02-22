@@ -4,12 +4,12 @@ import ProfileOutput from './ProfileOutput';
 import { calculateFamilyProfile } from './ProfileLogic';
 
 const ProfileModule = ({ members, setMembers, onNext }) => {
-    const [results, setResults] = useState(null);
+    const [results, setResults] = React.useState(null);
 
-    const handleCalculate = () => {
+    React.useEffect(() => {
         const calculated = calculateFamilyProfile(members);
         setResults(calculated);
-    };
+    }, [members]);
 
     return (
         <div className="fade-in">
@@ -19,7 +19,7 @@ const ProfileModule = ({ members, setMembers, onNext }) => {
                     Please provide details for yourself and your family members to build a comprehensive financial roadmap.
                 </p>
 
-                <ProfileInput members={members} setMembers={setMembers} onCalculate={handleCalculate} />
+                <ProfileInput members={members} setMembers={setMembers} />
             </div>
 
             {results && (

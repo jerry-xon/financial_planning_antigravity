@@ -201,10 +201,14 @@ begin
       'dob', '',
       'occupation', '',
       'retirementAge', 60,
-      'relation', 'Self'
+      'relation', 'Self',
+      'natureOfBusiness', '',
+      'organizationName', '',
+      'educationalQualification', ''
     )),
     jsonb_build_object(
-      'family', '',
+      'self', '',
+      'spouse', '',
       'bonus', '',
       'passive', '',
       'other', ''

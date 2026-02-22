@@ -16,11 +16,16 @@ const GoalModule = ({ familyMembers, goals, setGoals, onNext, onBack }) => {
                 const existing = prev.find(p => p.id === newGoal.id);
                 if (existing) {
                     return {
-                        ...newGoal,
+                        ...existing,
+                        ...newGoal, // Update predefined names/ids from logic
+                        // Re-apply values from existing to prioritize user input over predefined defaults
                         yearsToGoal: existing.yearsToGoal,
                         presentValue: existing.presentValue,
                         inflationRate: existing.inflationRate,
-                        name: newGoal.isPredefined ? newGoal.name : existing.name // Keep custom names, update predefined ones (e.g. if child name changed)
+                        profession: existing.profession,
+                        courseDuration: existing.courseDuration,
+                        totalCourseCost: existing.totalCourseCost,
+                        name: newGoal.isPredefined ? newGoal.name : existing.name
                     };
                 }
                 return {

@@ -63,28 +63,63 @@ export const generateProjections = (params) => {
         const fixedOutflow = (emiMonthly * 12); // Flat
         const annualOutflow = householdOutflow + fixedOutflow;
         
-        // Education logic for each child
+        // Group college costs by year to add them to educationExpenses
         let totalEducationExpenses = 0;
+        
+        // 1. School Education (Grade-by-grade)
         familyMembers.forEach(member => {
             if (member.relation === 'Child') {
-                const currentStandard = member.standard || '';
-                const baseFee = parseFloat(member.annualSchoolFee) || 0;
-                
-                // Find current index in progression
-                const currentIndex = EDUCATION_STANDARDS.findIndex(s => 
-                    s.toLowerCase().includes(currentStandard.toLowerCase()) || 
-                    currentStandard.toLowerCase().includes(s.toLowerCase())
-                );
-                
-                // If standard is found and hasn't exceeded 12th
-                if (currentIndex !== -1) {
-                    const yearsSinceStart = i;
-                    const futureIndex = currentIndex + yearsSinceStart;
+                if (member.occupation === 'School' || !member.occupation) {
+                    const currentStandard = member.standard || '';
+                    const baseFee = parseFloat(member.annualSchoolFee) || 0;
+                    const currentIndex = EDUCATION_STANDARDS.findIndex(s => 
+                        s.toLowerCase().includes(currentStandard.toLowerCase()) || 
+                        currentStandard.toLowerCase().includes(s.toLowerCase())
+                    );
                     
-                    if (futureIndex < EDUCATION_STANDARDS.length) {
-                        // Fee with inflation
-                        totalEducationExpenses += baseFee * Math.pow(1 + (educationInflation / 100), i);
+                    if (currentIndex !== -1) {
+                        const futureIndex = currentIndex + i;
+                        if (futureIndex < EDUCATION_STANDARDS.length) {
+                            totalEducationExpenses += baseFee * Math.pow(1 + (educationInflation / 100), i);
+                        }
                     }
+                } else if (member.occupation === 'College') {
+                    const duration = parseFloat(member.courseDuration) || 1;
+                    const remainingTime = parseFloat(member.remainingTime) || 0;
+                    const totalCost = parseFloat(member.costOfCompleteCourse) || 0;
+                    const isPaid = member.isFeePaid === 'YES';
+                    
+                    const annualCost = totalCost / duration;
+
+                    if (i === 0) {
+                        // Current year: Show fee only if NOT paid
+                        if (!isPaid) {
+                            totalEducationExpenses += annualCost;
+                        }
+                    } else if (i <= remainingTime) {
+                        // Future years: Show fee for remaining years
+                        totalEducationExpenses += annualCost;
+                    }
+                }
+            }
+        });
+
+        // 2. Higher Education (from Goals section)
+        goals.forEach(goal => {
+            const isEducation = goal.name?.toLowerCase().includes('higher education');
+            if (isEducation) {
+                const yearsToGoal = parseFloat(goal.yearsToGoal) || 0;
+                const duration = parseInt(goal.courseDuration) || 0;
+                const totalCost = parseFloat(goal.totalCourseCost) || 0;
+                const inflation = (parseFloat(goal.inflationRate) || educationInflation) / 100;
+                
+                // If this year falls within the [StartYear, duration] window of the goal
+                const goalStartYear = startYear + Math.round(yearsToGoal);
+                if (year >= goalStartYear && year < goalStartYear + duration) {
+                    // Future cost of the entire course at the point of starting college
+                    const futureTotalCost = totalCost * Math.pow(1 + inflation, yearsToGoal);
+                    // Spread the cost annually (simply divided by duration as requested)
+                    totalEducationExpenses += (futureTotalCost / duration);
                 }
             }
         });
@@ -94,13 +129,6 @@ export const generateProjections = (params) => {
         const savingsAndInvestments = savingsMonthly * 12; // Flat as per current understanding
         const netInvestibleSurplus = surplusBeforeSaving - savingsAndInvestments;
 
-        // Goals fall in this year
-        const goalsInYear = goals.filter(g => {
-            const yearsToGoal = parseFloat(g.yearsToGoal) || 0;
-            const targetYear = startYear + Math.round(yearsToGoal);
-            return targetYear === year;
-        }).map(g => g.name);
-
         projections.push({
             year,
             annualInflow,
@@ -109,8 +137,7 @@ export const generateProjections = (params) => {
             totalOutflow,
             surplusBeforeSaving,
             savingsAndInvestments,
-            netInvestibleSurplus,
-            goalsInYear
+            netInvestibleSurplus
         });
     }
 
