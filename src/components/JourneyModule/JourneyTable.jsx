@@ -11,6 +11,8 @@ const JourneyTable = ({ projections }) => {
                     <tr>
                         <th>Year</th>
                         <th>Annual Inflows</th>
+                        <th>Income Tax (Approx)</th>
+                        <th>Net Inflow after Tax</th>
                         <th>Annual Outflow</th>
                         <th>Education Expenses</th>
                         <th>Total Outflow</th>
@@ -24,6 +26,8 @@ const JourneyTable = ({ projections }) => {
                         <tr key={idx}>
                             <td>{row.year}</td>
                             <td>{formatCurrency(row.annualInflow)}</td>
+                            <td style={{ color: '#ef4444' }}>{formatCurrency(row.approxTax)}</td>
+                            <td style={{ fontWeight: 600, color: 'var(--accent)' }}>{formatCurrency(row.netInflowAfterTax)}</td>
                             <td>{formatCurrency(row.annualOutflow)}</td>
                             <td>{formatCurrency(row.educationExpenses)}</td>
                             <td>{formatCurrency(row.totalOutflow)}</td>
