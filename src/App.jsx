@@ -6,6 +6,7 @@ import CashFlowModule from './components/CashFlowModule/CashFlowModule';
 import ContingencyModule from './components/ContingencyModule/ContingencyModule';
 import GoalModule from './components/GoalModule/GoalModule';
 import InsuranceModule from './components/InsuranceModule/InsuranceModule';
+import IncomeTaxModule from './components/IncomeTaxModule/IncomeTaxModule';
 import JourneyModule from './components/JourneyModule/JourneyModule';
 import ProfileModule from './components/ProfileModule/ProfileModule';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -288,14 +289,21 @@ function App() {
               onClick={() => setCurrentStep(8)}
               style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
             >
-              8. Journey
+              8. Income Tax
             </button>
             <button
               className={`btn ${currentStep === 9 ? 'btn-primary' : ''}`}
               onClick={() => setCurrentStep(9)}
               style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
             >
-              9. Overview
+              9. Journey
+            </button>
+            <button
+              className={`btn ${currentStep === 10 ? 'btn-primary' : ''}`}
+              onClick={() => setCurrentStep(10)}
+              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+            >
+              10. Overview
             </button>
           </nav>
           
@@ -411,6 +419,14 @@ function App() {
             />
           )}
           {currentStep === 8 && (
+            <IncomeTaxModule
+              familyMembers={familyMembers}
+              income={income}
+              onNext={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
+              onBack={() => { setCurrentStep(7); window.scrollTo(0, 0); }}
+            />
+          )}
+          {currentStep === 9 && (
             <JourneyModule
               familyMembers={familyMembers}
               income={income}
@@ -418,10 +434,11 @@ function App() {
               goals={goals}
               inflationRates={inflationRates}
               setInflationRates={setInflationRates}
-              onNext={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
+              onNext={() => { setCurrentStep(10); window.scrollTo(0, 0); }}
+              onBack={() => { setCurrentStep(8); window.scrollTo(0, 0); }}
             />
           )}
-          {currentStep === 9 && (
+          {currentStep === 10 && (
             <ReportView
               familyMembers={familyMembers}
               income={income}
@@ -430,6 +447,7 @@ function App() {
               liabilityCategories={liabilityCategories}
               goals={goals}
               policies={policies}
+              onBack={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
             />
           )}
         </main>
