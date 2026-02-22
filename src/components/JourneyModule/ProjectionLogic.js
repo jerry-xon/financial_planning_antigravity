@@ -44,7 +44,10 @@ export const generateProjections = (params) => {
     if (yearsToProject <= 0) return [];
 
     // 2. Initial Annual Figures (from Monthly)
-    const annualIncomeBase = Object.values(income).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) * 12;
+    const annualIncomeBase = (
+        (parseFloat(income.self) || 0) + (parseFloat(income.selfBonus) || 0) + (parseFloat(income.selfPassive) || 0) + (parseFloat(income.selfOther) || 0) +
+        (parseFloat(income.spouse) || 0) + (parseFloat(income.spouseBonus) || 0) + (parseFloat(income.spousePassive) || 0) + (parseFloat(income.spouseOther) || 0)
+    ) * 12;
     
     const householdMonthly = Object.values(expenseCategories.household || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
     const emiMonthly = Object.values(expenseCategories.emi || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);

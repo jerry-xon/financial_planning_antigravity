@@ -50,8 +50,14 @@ function App() {
   // Cash Flow State
   const [income, setIncome] = useState({
     self: '',
+    selfBonus: '',
+    selfPassive: '',
+    selfOther: '',
     spouse: '',
-    bonus: '',
+    spouseBonus: '',
+    spousePassive: '',
+    spouseOther: '',
+    bonus: '', // Keep for sync/migration
     passive: '',
     other: ''
   });
@@ -112,12 +118,21 @@ function App() {
         setPlanId(data.id);
         setCurrentStep(data.current_step || 1);
         setFamilyMembers(data.family_members && data.family_members.length > 0 ? data.family_members : [{ name: '', dob: '', occupation: '', retirementAge: 60, relation: 'Self' }]);
-        const loadedIncome = data.income || { self: '', spouse: '', bonus: '', passive: '', other: '' };
-        if (loadedIncome.family && !loadedIncome.self) {
-            loadedIncome.self = loadedIncome.family;
-            delete loadedIncome.family;
-        }
-        setIncome(loadedIncome);
+        const loadedIncome = data.income || {};
+        
+        // Handle migration from old flat structure to new per-person structure
+        const migrationIncome = {
+            self: loadedIncome.self || loadedIncome.family || '',
+            selfBonus: loadedIncome.selfBonus || loadedIncome.bonus || '',
+            selfPassive: loadedIncome.selfPassive || loadedIncome.passive || '',
+            selfOther: loadedIncome.selfOther || loadedIncome.other || '',
+            spouse: loadedIncome.spouse || '',
+            spouseBonus: loadedIncome.spouseBonus || '',
+            spousePassive: loadedIncome.spousePassive || '',
+            spouseOther: loadedIncome.spouseOther || ''
+        };
+        
+        setIncome(migrationIncome);
         
         // Merge loaded expense_categories with default structure
         const defaultExpenseCategories = {

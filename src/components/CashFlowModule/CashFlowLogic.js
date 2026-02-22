@@ -1,9 +1,12 @@
 export const calculateCashFlow = (income, expenseCategories) => {
     const totalIncome = (parseFloat(income.self) || 0) + 
+                       (parseFloat(income.selfBonus) || 0) + 
+                       (parseFloat(income.selfPassive) || 0) + 
+                       (parseFloat(income.selfOther) || 0) +
                        (parseFloat(income.spouse) || 0) + 
-                       (parseFloat(income.bonus) || 0) + 
-                       (parseFloat(income.passive) || 0) + 
-                       (parseFloat(income.other) || 0) +
+                       (parseFloat(income.spouseBonus) || 0) + 
+                       (parseFloat(income.spousePassive) || 0) + 
+                       (parseFloat(income.spouseOther) || 0) +
                        (parseFloat(income.family) || 0); // Include legacy family income if present
 
     const categorySums = {

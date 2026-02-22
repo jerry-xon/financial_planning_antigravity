@@ -34,9 +34,23 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                         {/* Member 1: Self */}
                         <div className="income-form-member" style={{ padding: '1rem', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border)' }}>
                             <h4 style={{ margin: '0 0 1rem 0', color: 'var(--primary)' }}>{selfMember.name || 'Self'}'s Income</h4>
-                            <div className="input-group" style={{ maxWidth: '300px' }}>
-                                <label>Monthly Salary / Earnings</label>
-                                <input type="number" name="self" value={income.self} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                            <div className="input-grid-mini">
+                                <div className="input-group">
+                                    <label>Monthly Salary / Earnings</label>
+                                    <input type="number" name="self" value={income.self} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                </div>
+                                <div className="input-group">
+                                    <label>Bonuses, Incentives, Irregular</label>
+                                    <input type="number" name="selfBonus" value={income.selfBonus} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                </div>
+                                <div className="input-group">
+                                    <label>Rental, Dividends, Passive</label>
+                                    <input type="number" name="selfPassive" value={income.selfPassive} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                </div>
+                                <div className="input-group">
+                                    <label>Other Sources</label>
+                                    <input type="number" name="selfOther" value={income.selfOther} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                </div>
                             </div>
                         </div>
 
@@ -44,40 +58,60 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                         {!isSpouseHousewife && spouseMember && (
                             <div className="income-form-member" style={{ padding: '1rem', background: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border)' }}>
                                 <h4 style={{ margin: '0 0 1rem 0', color: 'var(--accent)' }}>{spouseMember.name || 'Spouse'}'s Income</h4>
-                                <div className="input-group" style={{ maxWidth: '300px' }}>
-                                    <label>Monthly Salary / Earnings</label>
-                                    <input type="number" name="spouse" value={income.spouse} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                <div className="input-grid-mini">
+                                    <div className="input-group">
+                                        <label>Monthly Salary / Earnings</label>
+                                        <input type="number" name="spouse" value={income.spouse} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Bonuses, Incentives, Irregular</label>
+                                        <input type="number" name="spouseBonus" value={income.spouseBonus} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Rental, Dividends, Passive</label>
+                                        <input type="number" name="spousePassive" value={income.spousePassive} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Other Sources</label>
+                                        <input type="number" name="spouseOther" value={income.spouseOther} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                    </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* Total & Others */}
-                        <div className="income-summary-section" style={{ padding: '1rem', borderRadius: '8px', border: '1px dotted var(--border)' }}>
-                            <div className="input-grid-mini">
-                                <div className="input-group">
-                                    <label style={{ fontWeight: 600 }}>Total Household Income (Self + Spouse)</label>
-                                    <input 
-                                        type="number" 
-                                        value={totalHouseholdIncome} 
-                                        readOnly 
-                                        className="read-only-field" 
-                                        style={{ background: 'var(--bg-main)', cursor: 'not-allowed', fontStyle: 'italic', fontWeight: 'bold' }} 
-                                    />
+                        {/* Total Household Income Calculation */}
+                        {(() => {
+                            const totalSelf = (parseFloat(income.self) || 0) + (parseFloat(income.selfBonus) || 0) + (parseFloat(income.selfPassive) || 0) + (parseFloat(income.selfOther) || 0);
+                            const totalSpouse = (parseFloat(income.spouse) || 0) + (parseFloat(income.spouseBonus) || 0) + (parseFloat(income.spousePassive) || 0) + (parseFloat(income.spouseOther) || 0);
+                            const grandTotal = totalSelf + totalSpouse;
+
+                            return (
+                                <div className="income-summary-section" style={{ padding: '1.5rem', borderRadius: '12px', border: '2px solid var(--border)', background: 'var(--bg-main)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <label style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>
+                                                Total Household Income (Self + Spouse)
+                                            </label>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                                Sum total of all income sources for your family.
+                                            </p>
+                                        </div>
+                                        <div style={{ 
+                                            padding: '1rem 2rem', 
+                                            background: 'var(--bg-card)', 
+                                            borderRadius: '8px', 
+                                            border: '1px solid var(--primary)',
+                                            fontSize: '1.5rem',
+                                            fontWeight: 'bold',
+                                            color: 'var(--primary)',
+                                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                        }}>
+                                            ₹{grandTotal.toLocaleString('en-IN')}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="input-group">
-                                    <label>Bonuses, Incentives, Irregular</label>
-                                    <input type="number" name="bonus" value={income.bonus} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
-                                </div>
-                                <div className="input-group">
-                                    <label>Rental, Dividends, Passive</label>
-                                    <input type="number" name="passive" value={income.passive} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
-                                </div>
-                                <div className="input-group">
-                                    <label>Other Sources</label>
-                                    <input type="number" name="other" value={income.other} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
-                                </div>
-                            </div>
-                        </div>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>
