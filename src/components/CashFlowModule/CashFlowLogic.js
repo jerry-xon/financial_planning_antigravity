@@ -90,6 +90,7 @@ const getItemLabel = (key) => {
         carInsurance: 'Car Insurance',
         bikeInsurance: 'Two-wheeler Insurance',
         otherInsurance: 'Others (Insurance)',
+        lifeInsurancePremium: 'Life Insurance Premium',
 
         // Savings & Investments
         rd: 'RD',

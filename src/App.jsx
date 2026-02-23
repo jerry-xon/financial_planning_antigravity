@@ -359,6 +359,8 @@ function App() {
                   familyMembers={familyMembers}
                   policies={policies}
                   setPolicies={setPolicies}
+                  expenseCategories={expenseCategories}
+                  setExpenseCategories={setExpenseCategories}
                   onNext={() => { setCurrentStep(6); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(4); window.scrollTo(0, 0); }}
                 />

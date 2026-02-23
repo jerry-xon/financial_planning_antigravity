@@ -184,6 +184,10 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                             <label>Others (Insurance)</label>
                             <input type="number" value={expenseCategories.emi.otherInsurance} onChange={(e) => handleExpenseChange('emi', 'otherInsurance', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
                         </div>
+                        <div className="input-group">
+                            <label>Life Insurance Premium (Monthly)</label>
+                            <input type="number" value={expenseCategories.emi.lifeInsurancePremium} onChange={(e) => handleExpenseChange('emi', 'lifeInsurancePremium', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                        </div>
                     </div>
                 </div>
 
