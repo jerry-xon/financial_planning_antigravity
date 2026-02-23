@@ -12,6 +12,7 @@ import ProfileModule from './components/ProfileModule/ProfileModule';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProtectionGapModule from './components/ProtectionGapModule/ProtectionGapModule';
 import ReportView from './components/ReportModule/ReportView';
+import CalculatorPlaceholder from './components/Calculators/CalculatorPlaceholder';
 import { useAuth } from './contexts/AuthContext';
 import { signOut } from './services/authService';
 import { getActivePlan, updateFinancialPlan } from './services/financialPlanService';
@@ -33,6 +34,10 @@ function App() {
 
   // State for tracking the current navigation step (1-9)
   const [currentStep, setCurrentStep] = useState(1);
+
+  // New states for Secondary Navigation (Calculators)
+  const [activeSection, setActiveSection] = useState('modules'); // 'modules' or 'calculators'
+  const [activeCalculator, setActiveCalculator] = useState(null);
 
   // State for Family Profile details
   const [familyMembers, setFamilyMembers] = useState([
@@ -227,228 +232,196 @@ function App() {
       <ProtectedRoute>
         <div className="app-container">
         <header style={{
-          height: 'var(--header-height)',
-          display: 'flex',
-          alignItems: 'center',
+          height: 'auto',
+          padding: '1rem 0',
           borderBottom: '1px solid var(--border)',
           marginBottom: '2rem'
         }}>
-          <h1 style={{ fontSize: '1.5rem', margin: 0 }}>FinPlan</h1>
-          <nav style={{ marginLeft: '2rem', display: 'flex', gap: '1rem' }}>
-            <button
-              className={`btn ${currentStep === 1 ? 'btn-primary' : ''}`}
-              onClick={() => setCurrentStep(1)}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-            >
-              1. Profile
-            </button>
-            <button
-              className={`btn ${currentStep === 2 ? 'btn-primary' : ''}`}
-              onClick={() => setCurrentStep(2)}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-            >
-              2. Cash Flow
-            </button>
-            <button
-              className={`btn ${currentStep === 3 ? 'btn-primary' : ''}`}
-              onClick={() => setCurrentStep(3)}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-            >
-              3. Assets
-            </button>
-            <button
-              className={`btn ${currentStep === 4 ? 'btn-primary' : ''}`}
-              onClick={() => setCurrentStep(4)}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-            >
-              4. Goals
-            </button>
-            <button
-              className={`btn ${currentStep === 5 ? 'btn-primary' : ''}`}
-              onClick={() => setCurrentStep(5)}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-            >
-              5. Insurance
-            </button>
-            <button
-              className={`btn ${currentStep === 6 ? 'btn-primary' : ''}`}
-              onClick={() => setCurrentStep(6)}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-            >
-              6. Protection Gap
-            </button>
-            <button
-              className={`btn ${currentStep === 7 ? 'btn-primary' : ''}`}
-              onClick={() => setCurrentStep(7)}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-            >
-              7. Contingency
-            </button>
-            <button
-              className={`btn ${currentStep === 8 ? 'btn-primary' : ''}`}
-              onClick={() => setCurrentStep(8)}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-            >
-              8. Income Tax
-            </button>
-            <button
-              className={`btn ${currentStep === 9 ? 'btn-primary' : ''}`}
-              onClick={() => setCurrentStep(9)}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-            >
-              9. Journey
-            </button>
-            <button
-              className={`btn ${currentStep === 10 ? 'btn-primary' : ''}`}
-              onClick={() => setCurrentStep(10)}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-            >
-              10. Overview
-            </button>
-          </nav>
-          
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            {saving && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Saving...
-              </span>
-            )}
-            <span style={{
-              fontSize: '0.875rem',
-              color: 'var(--text-muted)',
-              background: 'var(--border)',
-              padding: '2px 8px',
-              borderRadius: '4px'
-            }}>PWA v1.0</span>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <span style={{ 
-                fontSize: '0.875rem',
-                color: 'var(--text-muted)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                <User size={16} />
-                {user?.email}
-              </span>
-              <button
-                className="btn"
-                onClick={handleLogout}
-                style={{ 
-                  padding: '0.5rem 1rem',
-                  fontSize: '0.875rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  background: 'transparent',
-                  border: '1px solid var(--border)'
-                }}
-              >
-                <LogOut size={16} />
-                Logout
-              </button>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+            <h1 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--primary)' }}>FinPlan</h1>
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              {saving && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Saving...</span>}
+              <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', background: 'var(--border)', padding: '2px 8px', borderRadius: '4px' }}>PWA v1.1</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <User size={16} /> {user?.email}
+                </span>
+                <button className="btn" onClick={handleLogout} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: '1px solid var(--border)' }}>
+                  <LogOut size={16} /> Logout
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Primary Nav: Planning Modules */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', width: '100px' }}>Process</span>
+              <nav style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {[
+                  'Profile', 'Cash Flow', 'Assets', 'Goals', 'Insurance', 
+                  'Protection Gap', 'Contingency', 'Journey', 'Overview'
+                ].map((name, idx) => (
+                  <button
+                    key={name}
+                    className={`btn ${activeSection === 'modules' && currentStep === idx + 1 ? 'btn-primary' : ''}`}
+                    onClick={() => {
+                      setCurrentStep(idx + 1);
+                      setActiveSection('modules');
+                    }}
+                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                  >
+                    {idx + 1}. {name}
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* Secondary Nav: Calculators */}
+            <div style={{ display: 'flex', alignItems: 'center', borderTop: '1px dashed var(--border)', paddingTop: '0.75rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', width: '100px' }}>Calculators</span>
+              <nav style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {[
+                  { id: 'tax', label: 'Income Tax' },
+                  { id: 'sip', label: 'SIP' },
+                  { id: 'per_loan', label: 'Personal Loan' },
+                  { id: 'home_loan', label: 'Home Loan' },
+                  { id: 'car_loan', label: 'Car Loan' },
+                  { id: 'lumpsum', label: 'Lumpsum' },
+                  { id: 'swp', label: 'SWP' }
+                ].map((calc) => (
+                  <button
+                    key={calc.id}
+                    className={`btn ${activeSection === 'calculators' && activeCalculator === calc.id ? 'btn-primary' : ''}`}
+                    onClick={() => {
+                      setActiveCalculator(calc.id);
+                      setActiveSection('calculators');
+                    }}
+                    style={{ 
+                      padding: '0.4rem 0.8rem', 
+                      fontSize: '0.8rem', 
+                      whiteSpace: 'nowrap',
+                      background: activeSection === 'calculators' && activeCalculator === calc.id ? 'var(--primary)' : 'var(--bg-card)',
+                      border: '1px solid var(--border)'
+                    }}
+                  >
+                    {calc.label}
+                  </button>
+                ))}
+              </nav>
             </div>
           </div>
         </header>
 
-        {/* Main Content Area - Renders the module corresponding to the current step */}
+        {/* Main Content Area */}
         <main>
-          {currentStep === 1 && (
-            <ProfileModule
-              members={familyMembers}
-              setMembers={setFamilyMembers}
-              onNext={() => { setCurrentStep(2); window.scrollTo(0, 0); }}
-            />
-          )}
-          {currentStep === 2 && (
-            <CashFlowModule
-              familyMembers={familyMembers}
-              income={income}
-              setIncome={setIncome}
-              expenseCategories={expenseCategories}
-              setExpenseCategories={setExpenseCategories}
-              onNext={() => { setCurrentStep(3); window.scrollTo(0, 0); }}
-              onBack={() => { setCurrentStep(1); window.scrollTo(0, 0); }}
-            />
-          )}
-          {currentStep === 3 && (
-            <AssetModule
-              assetCategories={assetCategories}
-              setAssetCategories={setAssetCategories}
-              liabilityCategories={liabilityCategories}
-              setLiabilityCategories={setLiabilityCategories}
-              onNext={() => { setCurrentStep(4); window.scrollTo(0, 0); }}
-              onBack={() => { setCurrentStep(2); window.scrollTo(0, 0); }}
-            />
-          )}
-          {currentStep === 4 && (
-            <GoalModule
-              familyMembers={familyMembers}
-              goals={goals}
-              setGoals={setGoals}
-              onNext={() => { setCurrentStep(5); window.scrollTo(0, 0); }}
-              onBack={() => { setCurrentStep(3); window.scrollTo(0, 0); }}
-            />
-          )}
-          {currentStep === 5 && (
-            <InsuranceModule
-              familyMembers={familyMembers}
-              policies={policies}
-              setPolicies={setPolicies}
-              onNext={() => { setCurrentStep(6); window.scrollTo(0, 0); }}
-              onBack={() => { setCurrentStep(4); window.scrollTo(0, 0); }}
-            />
-          )}
-          {currentStep === 6 && (
-            <ProtectionGapModule
-              familyMembers={familyMembers}
-              expenseCategories={expenseCategories}
-              policies={policies}
-              onNext={() => { setCurrentStep(7); window.scrollTo(0, 0); }}
-              onBack={() => { setCurrentStep(5); window.scrollTo(0, 0); }}
-            />
-          )}
-          {currentStep === 7 && (
-            <ContingencyModule
-              expenseCategories={expenseCategories}
-              contingencyFund={contingencyFund}
-              setContingencyFund={setContingencyFund}
-              onNext={() => { setCurrentStep(8); window.scrollTo(0, 0); }}
-              onBack={() => { setCurrentStep(6); window.scrollTo(0, 0); }}
-            />
-          )}
-          {currentStep === 8 && (
-            <IncomeTaxModule
-              familyMembers={familyMembers}
-              income={income}
-              onNext={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
-              onBack={() => { setCurrentStep(7); window.scrollTo(0, 0); }}
-            />
-          )}
-          {currentStep === 9 && (
-            <JourneyModule
-              familyMembers={familyMembers}
-              income={income}
-              expenseCategories={expenseCategories}
-              goals={goals}
-              inflationRates={inflationRates}
-              setInflationRates={setInflationRates}
-              onNext={() => { setCurrentStep(10); window.scrollTo(0, 0); }}
-              onBack={() => { setCurrentStep(8); window.scrollTo(0, 0); }}
-            />
-          )}
-          {currentStep === 10 && (
-            <ReportView
-              familyMembers={familyMembers}
-              income={income}
-              expenseCategories={expenseCategories}
-              assetCategories={assetCategories}
-              liabilityCategories={liabilityCategories}
-              goals={goals}
-              policies={policies}
-              onBack={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
-            />
+          {activeSection === 'modules' ? (
+            <>
+              {currentStep === 1 && (
+                <ProfileModule
+                  members={familyMembers}
+                  setMembers={setFamilyMembers}
+                  onNext={() => { setCurrentStep(2); window.scrollTo(0, 0); }}
+                />
+              )}
+              {currentStep === 2 && (
+                <CashFlowModule
+                  familyMembers={familyMembers}
+                  income={income}
+                  setIncome={setIncome}
+                  expenseCategories={expenseCategories}
+                  setExpenseCategories={setExpenseCategories}
+                  onNext={() => { setCurrentStep(3); window.scrollTo(0, 0); }}
+                  onBack={() => { setCurrentStep(1); window.scrollTo(0, 0); }}
+                />
+              )}
+              {currentStep === 3 && (
+                <AssetModule
+                  assetCategories={assetCategories}
+                  setAssetCategories={setAssetCategories}
+                  liabilityCategories={liabilityCategories}
+                  setLiabilityCategories={setLiabilityCategories}
+                  onNext={() => { setCurrentStep(4); window.scrollTo(0, 0); }}
+                  onBack={() => { setCurrentStep(2); window.scrollTo(0, 0); }}
+                />
+              )}
+              {currentStep === 4 && (
+                <GoalModule
+                  familyMembers={familyMembers}
+                  goals={goals}
+                  setGoals={setGoals}
+                  onNext={() => { setCurrentStep(5); window.scrollTo(0, 0); }}
+                  onBack={() => { setCurrentStep(3); window.scrollTo(0, 0); }}
+                />
+              )}
+              {currentStep === 5 && (
+                <InsuranceModule
+                  familyMembers={familyMembers}
+                  policies={policies}
+                  setPolicies={setPolicies}
+                  onNext={() => { setCurrentStep(6); window.scrollTo(0, 0); }}
+                  onBack={() => { setCurrentStep(4); window.scrollTo(0, 0); }}
+                />
+              )}
+              {currentStep === 6 && (
+                <ProtectionGapModule
+                  familyMembers={familyMembers}
+                  expenseCategories={expenseCategories}
+                  policies={policies}
+                  onNext={() => { setCurrentStep(7); window.scrollTo(0, 0); }}
+                  onBack={() => { setCurrentStep(5); window.scrollTo(0, 0); }}
+                />
+              )}
+              {currentStep === 7 && (
+                <ContingencyModule
+                  expenseCategories={expenseCategories}
+                  contingencyFund={contingencyFund}
+                  setContingencyFund={setContingencyFund}
+                  onNext={() => { setCurrentStep(8); window.scrollTo(0, 0); }}
+                  onBack={() => { setCurrentStep(6); window.scrollTo(0, 0); }}
+                />
+              )}
+              {currentStep === 8 && (
+                <JourneyModule
+                  familyMembers={familyMembers}
+                  income={income}
+                  expenseCategories={expenseCategories}
+                  goals={goals}
+                  inflationRates={inflationRates}
+                  setInflationRates={setInflationRates}
+                  onNext={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
+                  onBack={() => { setCurrentStep(7); window.scrollTo(0, 0); }}
+                />
+              )}
+              {currentStep === 9 && (
+                <ReportView
+                  familyMembers={familyMembers}
+                  income={income}
+                  expenseCategories={expenseCategories}
+                  assetCategories={assetCategories}
+                  liabilityCategories={liabilityCategories}
+                  goals={goals}
+                  policies={policies}
+                  onBack={() => { setCurrentStep(8); window.scrollTo(0, 0); }}
+                />
+              )}
+            </>
+          ) : (
+            <>
+              {activeCalculator === 'tax' && (
+                <IncomeTaxModule
+                  familyMembers={familyMembers}
+                  income={income}
+                  isCalculatorMode={true}
+                />
+              )}
+              {activeCalculator === 'sip' && <CalculatorPlaceholder name="SIP" />}
+              {activeCalculator === 'per_loan' && <CalculatorPlaceholder name="Personal Loan" />}
+              {activeCalculator === 'home_loan' && <CalculatorPlaceholder name="Home Loan" />}
+              {activeCalculator === 'car_loan' && <CalculatorPlaceholder name="Car Loan" />}
+              {activeCalculator === 'lumpsum' && <CalculatorPlaceholder name="Lumpsum" />}
+              {activeCalculator === 'swp' && <CalculatorPlaceholder name="SWP" />}
+            </>
           )}
         </main>
 

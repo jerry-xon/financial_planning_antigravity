@@ -2,7 +2,7 @@ import React from 'react';
 import { calculateIncomeTax } from './IncomeTaxLogic';
 import IncomeTaxOutput from './IncomeTaxOutput';
 
-const IncomeTaxModule = ({ familyMembers, income, onNext, onBack }) => {
+const IncomeTaxModule = ({ familyMembers, income, onNext, onBack, isCalculatorMode = false }) => {
     const selfMember = familyMembers.find(m => m.relation?.toLowerCase() === 'self') || { name: 'Self', occupation: 'Salaried' };
     const spouseMember = familyMembers.find(m => m.relation?.toLowerCase() === 'spouse');
     
@@ -70,14 +70,16 @@ const IncomeTaxModule = ({ familyMembers, income, onNext, onBack }) => {
                     )}
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '3rem', marginBottom: '2rem' }}>
-                    <button className="btn btn-secondary" onClick={onBack} style={{ padding: '1rem 3rem' }}>
-                        Back to Life Goals
-                    </button>
-                    <button className="btn btn-primary" onClick={onNext} style={{ padding: '1rem 3rem' }}>
-                        Proceed to Journey Roadmap
-                    </button>
-                </div>
+                {!isCalculatorMode && (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '3rem', marginBottom: '2rem' }}>
+                        <button className="btn btn-secondary" onClick={onBack} style={{ padding: '1rem 3rem' }}>
+                            Back to Life Goals
+                        </button>
+                        <button className="btn btn-primary" onClick={onNext} style={{ padding: '1rem 3rem' }}>
+                            Proceed to Journey Roadmap
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
