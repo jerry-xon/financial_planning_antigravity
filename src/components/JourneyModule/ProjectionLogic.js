@@ -1,7 +1,22 @@
 import { calculateIncomeTax } from '../IncomeTaxModule/IncomeTaxLogic';
 
 export const EDUCATION_STANDARDS = [
-// ... (omitting standards for brevity, assuming standard replace behavior)
+    "Play Group",
+    "Nursery",
+    "LKG",
+    "UKG",
+    "1st Standard",
+    "2nd Standard",
+    "3rd Standard",
+    "4th Standard",
+    "5th Standard",
+    "6th Standard",
+    "7th Standard",
+    "8th Standard",
+    "9th Standard",
+    "10th Standard",
+    "11th Standard",
+    "12th Standard"
 ];
 
 export const generateProjections = (params) => {
