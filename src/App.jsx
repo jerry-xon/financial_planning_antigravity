@@ -13,6 +13,10 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ProtectionGapModule from './components/ProtectionGapModule/ProtectionGapModule';
 import ReportView from './components/ReportModule/ReportView';
 import CalculatorPlaceholder from './components/Calculators/CalculatorPlaceholder';
+import SIPCalculator from './components/Calculators/SIPCalculator';
+import PersonalLoanCalculator from './components/Calculators/PersonalLoanCalculator';
+import HomeLoanCalculator from './components/Calculators/HomeLoanCalculator';
+import CarLoanCalculator from './components/Calculators/CarLoanCalculator';
 import { useAuth } from './contexts/AuthContext';
 import { signOut } from './services/authService';
 import { getActivePlan, updateFinancialPlan } from './services/financialPlanService';
@@ -417,10 +421,22 @@ function App() {
                   isCalculatorMode={true}
                 />
               )}
-              {activeCalculator === 'sip' && <CalculatorPlaceholder name="SIP" />}
-              {activeCalculator === 'per_loan' && <CalculatorPlaceholder name="Personal Loan" />}
-              {activeCalculator === 'home_loan' && <CalculatorPlaceholder name="Home Loan" />}
-              {activeCalculator === 'car_loan' && <CalculatorPlaceholder name="Car Loan" />}
+              {activeCalculator === 'sip' && (
+                <SIPCalculator 
+                  expenseCategories={expenseCategories} 
+                  assetCategories={assetCategories} 
+                  familyMembers={familyMembers}
+                />
+              )}
+              {activeCalculator === 'per_loan' && (
+                <PersonalLoanCalculator />
+              )}
+              {activeCalculator === 'home_loan' && (
+                <HomeLoanCalculator />
+              )}
+              {activeCalculator === 'car_loan' && (
+                <CarLoanCalculator />
+              )}
               {activeCalculator === 'lumpsum' && <CalculatorPlaceholder name="Lumpsum" />}
               {activeCalculator === 'swp' && <CalculatorPlaceholder name="SWP" />}
             </>

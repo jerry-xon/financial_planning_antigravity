@@ -1,0 +1,250 @@
+import React, { useState, useMemo } from 'react';
+import { Calculator, Calendar, DollarSign, TrendingDown, Clock, Info } from 'lucide-react';
+
+const PersonalLoanCalculator = () => {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+
+    // State for inputs
+    const [loanAmount, setLoanAmount] = useState(500000);
+    const [interestRate, setInterestRate] = useState(10.5);
+    const [tenureYears, setTenureYears] = useState(5);
+    const [startMonth, setStartMonth] = useState(currentMonth);
+    const [startYear, setStartYear] = useState(currentYear);
+
+    // Derived values
+    const tenureMonths = tenureYears * 12;
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const yearOptions = Array.from({ length: 31 }, (_, i) => currentYear - 10 + i);
+
+    // Calculate Loan End Date
+    const endDateData = useMemo(() => {
+        let endM = startMonth + tenureMonths - 1;
+        let endY = startYear + Math.floor((endM - 1) / 12);
+        endM = ((endM - 1) % 12) + 1;
+        return { month: endM, year: endY };
+    }, [startMonth, startYear, tenureMonths]);
+
+    // EMI Calculation (Reducing Balance)
+    const emiData = useMemo(() => {
+        const P = loanAmount;
+        const r = interestRate / 12 / 100;
+        const n = tenureMonths;
+
+        if (r === 0) return { emi: P / n, totalPayment: P, totalInterest: 0 };
+
+        const emi = (P * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+        const totalPayment = emi * n;
+        const totalInterest = totalPayment - P;
+
+        return { emi, totalPayment, totalInterest };
+    }, [loanAmount, interestRate, tenureMonths]);
+
+    // Table Schedule Generation
+    const schedule = useMemo(() => {
+        let results = [];
+        let runningBalance = loanAmount;
+        const r = interestRate / 12 / 100;
+        const monthlyEMI = emiData.emi;
+
+        let currentM = startMonth;
+        let currentY = startYear;
+
+        let yearlyData = {
+            year: currentY,
+            openingBalance: loanAmount,
+            principalPaid: 0,
+            interestPaid: 0,
+            closingBalance: 0
+        };
+
+        for (let m = 1; m <= tenureMonths; m++) {
+            const interestForMonth = runningBalance * r;
+            const principalForMonth = monthlyEMI - interestForMonth;
+            
+            yearlyData.principalPaid += principalForMonth;
+            yearlyData.interestPaid += interestForMonth;
+            runningBalance -= principalForMonth;
+
+            // If it's December or the last month of the loan, push the year
+            if (currentM === 12 || m === tenureMonths) {
+                yearlyData.closingBalance = Math.max(0, runningBalance);
+                results.push({ ...yearlyData });
+                
+                if (m < tenureMonths) {
+                    currentY++;
+                    yearlyData = {
+                        year: currentY,
+                        openingBalance: runningBalance,
+                        principalPaid: 0,
+                        interestPaid: 0,
+                        closingBalance: 0
+                    };
+                }
+            }
+
+            currentM = (currentM % 12) + 1;
+        }
+
+        return results;
+    }, [loanAmount, interestRate, tenureMonths, startMonth, startYear, emiData.emi]);
+
+    return (
+        <div className="fade-in" style={{ padding: '1rem' }}>
+            <div className="card" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+                    <Calculator size={32} color="var(--primary)" />
+                    <div>
+                        <h1 style={{ margin: 0 }}>Personal Loan Calculator</h1>
+                        <p className="text-muted" style={{ margin: 0 }}>Reducing balance method for accurate financial planning.</p>
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 350px) 1fr', gap: '2.5rem' }}>
+                    {/* Inputs */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div className="form-group">
+                            <label><DollarSign size={16} /> Loan Amount (₹)</label>
+                            <input 
+                                type="number" 
+                                value={loanAmount} 
+                                onChange={(e) => setLoanAmount(parseFloat(e.target.value) || 0)} 
+                                className="form-input" 
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label><TrendingDown size={16} /> Interest Rate (% p.a.)</label>
+                            <input 
+                                type="number" 
+                                step="0.1"
+                                value={interestRate} 
+                                onChange={(e) => setInterestRate(parseFloat(e.target.value) || 0)} 
+                                className="form-input" 
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label><Clock size={16} /> Tenure (Years)</label>
+                            <input 
+                                type="number" 
+                                value={tenureYears} 
+                                onChange={(e) => setTenureYears(parseInt(e.target.value) || 0)} 
+                                className="form-input" 
+                            />
+                            <small className="text-muted">Tenure in Months: {tenureMonths}</small>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div className="form-group">
+                                <label>Start Month</label>
+                                <select 
+                                    value={startMonth} 
+                                    onChange={(e) => setStartMonth(parseInt(e.target.value))}
+                                    className="form-input"
+                                >
+                                    {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Start Year</label>
+                                <select 
+                                    value={startYear} 
+                                    onChange={(e) => setStartYear(parseInt(e.target.value))}
+                                    className="form-input"
+                                >
+                                    {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--bg-main)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>
+                                <Calendar size={16} />
+                                <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Loan Timeline</span>
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.85rem' }}>
+                                Ends in: <span style={{ fontWeight: 700 }}>{monthNames[endDateData.month-1]} {endDateData.year}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Results */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        {/* Summary Cards */}
+                        <div style={{ 
+                            padding: '2rem', 
+                            background: 'linear-gradient(135deg, var(--primary) 0%, #1e40af 100%)', 
+                            borderRadius: '16px', 
+                            color: 'white',
+                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                        }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+                                <div>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem' }}>Monthly EMI</p>
+                                    <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 800 }}>
+                                        ₹{Math.round(emiData.emi).toLocaleString('en-IN')}
+                                    </h2>
+                                </div>
+                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem' }}>Principal Amount</p>
+                                    <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 800 }}>
+                                        ₹{loanAmount.toLocaleString('en-IN')}
+                                    </h2>
+                                </div>
+                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem' }}>Total Interest</p>
+                                    <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 800 }}>
+                                        ₹{Math.round(emiData.totalInterest).toLocaleString('en-IN')}
+                                    </h2>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Table */}
+                        <div style={{ 
+                            background: 'var(--bg-card)', 
+                            borderRadius: '12px', 
+                            border: '1px solid var(--border)', 
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+                        }}>
+                            <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto' }}>
+                                <table className="summary-table" style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
+                                    <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', borderBottom: '2px solid var(--border)', zIndex: 10 }}>
+                                        <tr>
+                                            <th style={{ padding: '1.25rem', textAlign: 'left', fontWeight: 700 }}>Year</th>
+                                            <th style={{ padding: '1.25rem', textAlign: 'right', fontWeight: 700 }}>Opening Balance</th>
+                                            <th style={{ padding: '1.25rem', textAlign: 'right', fontWeight: 700 }}>Principal Paid</th>
+                                            <th style={{ padding: '1.25rem', textAlign: 'right', fontWeight: 700 }}>Interest Paid</th>
+                                            <th style={{ padding: '1.25rem', textAlign: 'right', fontWeight: 700 }}>Closing Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {schedule.map((row, idx) => (
+                                            <tr key={row.year} style={{ 
+                                                borderBottom: '1px solid var(--border)',
+                                                background: idx % 2 === 0 ? 'transparent' : '#fcfcfc'
+                                            }}>
+                                                <td style={{ padding: '1rem 1.25rem', fontWeight: 700, color: 'var(--primary)' }}>{row.year}</td>
+                                                <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>₹{Math.round(row.openingBalance).toLocaleString('en-IN')}</td>
+                                                <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>₹{Math.round(row.principalPaid).toLocaleString('en-IN')}</td>
+                                                <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>₹{Math.round(row.interestPaid).toLocaleString('en-IN')}</td>
+                                                <td style={{ padding: '1rem 1.25rem', textAlign: 'right', fontWeight: 700, color: '#059669' }}>
+                                                    ₹{Math.round(row.closingBalance).toLocaleString('en-IN')}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default PersonalLoanCalculator;
