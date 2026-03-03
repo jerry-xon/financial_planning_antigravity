@@ -1,0 +1,288 @@
+import React, { useState, useMemo } from 'react';
+import { Calculator, Calendar, DollarSign, TrendingUp, Clock, Plus, Trash2, Info } from 'lucide-react';
+
+const LumpsumCalculator = ({ familyMembers = [] }) => {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+
+    // Logic to get years to retire (same as SIP)
+    const getYearsToRetire = () => {
+        const self = familyMembers.find(m => m.relation?.toLowerCase() === 'self');
+        if (!self || !self.dob) return 10; 
+        
+        const birthDate = new Date(self.dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        
+        const retirementAge = parseInt(self.retirementAge) || 60;
+        const yearsRemaining = retirementAge - age;
+        return yearsRemaining > 0 ? yearsRemaining : 0;
+    };
+
+    const defaultTenure = getYearsToRetire() || 10;
+
+    // State for inputs
+    const [investmentAmount, setInvestmentAmount] = useState(100000);
+    const [expectedReturns, setExpectedReturns] = useState(12);
+    const [tenureYears, setTenureYears] = useState(defaultTenure);
+    const [startMonth, setStartMonth] = useState(currentMonth);
+    const [startYear, setStartYear] = useState(currentYear);
+
+    // State for dynamic events (Additions and Withdrawals)
+    const [events, setEvents] = useState([]);
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const yearOptions = Array.from({ length: 51 }, (_, i) => currentYear - 5 + i);
+
+    const addEvent = (type) => {
+        setEvents([...events, {
+            id: Date.now(),
+            type,
+            amount: 0,
+            month: 1,
+            year: currentYear
+        }]);
+    };
+
+    const removeEvent = (id) => {
+        setEvents(events.filter(e => e.id !== id));
+    };
+
+    const updateEvent = (id, field, value) => {
+        setEvents(events.map(e => e.id === id ? { ...e, [field]: value } : e));
+    };
+
+    // Calculation Logic: CAGR (Monthly logic for accuracy over full tenure)
+    const calculationData = useMemo(() => {
+        let results = [];
+        let runningBalance = investmentAmount;
+        const monthlyMultiplier = Math.pow(1 + expectedReturns / 100, 1/12);
+        
+        let currentMonthVal = startMonth;
+        let currentYearVal = startYear;
+        const totalMonths = tenureYears * 12;
+
+        let yearlyRecord = {
+            year: currentYearVal,
+            investmentAndAddition: 0,
+            withdrawal: 0,
+            endValueBeforeWithdrawal: 0,
+            valueAfterWithdrawal: 0
+        };
+
+        for (let m = 0; m < totalMonths; m++) {
+            // Initial investment at start of first loop
+            if (m === 0) {
+                yearlyRecord.investmentAndAddition += investmentAmount;
+            }
+
+            // Check for mid-tenure additions or withdrawals
+            const monthlyEvents = events.filter(e => parseInt(e.month) === currentMonthVal && parseInt(e.year) === currentYearVal);
+            
+            monthlyEvents.forEach(e => {
+                if (e.type === 'addition') {
+                    runningBalance += parseFloat(e.amount) || 0;
+                    yearlyRecord.investmentAndAddition += parseFloat(e.amount) || 0;
+                } else if (e.type === 'withdrawal') {
+                    const amount = parseFloat(e.amount) || 0;
+                    yearlyRecord.withdrawal += amount;
+                    runningBalance -= amount;
+                }
+            });
+
+            // Apply Monthly Growth
+            runningBalance *= monthlyMultiplier;
+
+            // Rollup to Yearly Results (Calendar Year)
+            // Push if it's December or the absolute last month of the tenure
+            if (currentMonthVal === 12 || m === totalMonths - 1) {
+                yearlyRecord.valueAfterWithdrawal = runningBalance;
+                yearlyRecord.endValueBeforeWithdrawal = runningBalance + yearlyRecord.withdrawal;
+                results.push({ ...yearlyRecord });
+
+                // Prepare for next year if tenure continues
+                if (m < totalMonths - 1) {
+                    currentYearVal++;
+                    yearlyRecord = {
+                        year: currentYearVal,
+                        investmentAndAddition: 0,
+                        withdrawal: 0,
+                        endValueBeforeWithdrawal: 0,
+                        valueAfterWithdrawal: 0
+                    };
+                }
+            }
+
+            // Increment Month
+            currentMonthVal = (currentMonthVal % 12) + 1;
+        }
+
+        return results;
+    }, [investmentAmount, expectedReturns, tenureYears, startMonth, startYear, events]);
+
+    const finalValue = calculationData[calculationData.length - 1]?.valueAfterWithdrawal || 0;
+    const totalInvested = investmentAmount + events.filter(e => e.type === 'addition').reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+    const totalWithdrawals = events.filter(e => e.type === 'withdrawal').reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+
+    return (
+        <div className="fade-in" style={{ padding: '1rem' }}>
+            <div className="card" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+                    <Calculator size={32} color="var(--primary)" />
+                    <div>
+                        <h1 style={{ margin: 0 }}>Lumpsum Calculator</h1>
+                        <p className="text-muted" style={{ margin: 0 }}>Measure one-time investment growth using CAGR until retirement ({currentYear + defaultTenure}).</p>
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '2.5rem' }}>
+                    {/* Left Column: Inputs & Events */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div className="form-group">
+                            <label><DollarSign size={16} /> Initial Investment Amount (₹)</label>
+                            <input 
+                                type="number" 
+                                value={investmentAmount} 
+                                onChange={(e) => setInvestmentAmount(parseFloat(e.target.value) || 0)} 
+                                className="form-input" 
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label><TrendingUp size={16} /> Expected Returns (CAGR %)</label>
+                            <input 
+                                type="number" 
+                                step="0.1"
+                                value={expectedReturns} 
+                                onChange={(e) => setExpectedReturns(parseFloat(e.target.value) || 0)} 
+                                className="form-input" 
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label><Clock size={16} /> Tenure (Years)</label>
+                            <input 
+                                type="number" 
+                                value={tenureYears} 
+                                onChange={(e) => setTenureYears(parseInt(e.target.value) || 0)} 
+                                className="form-input" 
+                            />
+                            <small className="text-muted">Tenure in Months: {tenureYears * 12}</small>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div className="form-group">
+                                <label>Start Month</label>
+                                <select value={startMonth} onChange={(e) => setStartMonth(parseInt(e.target.value))} className="form-input">
+                                    {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Start Year</label>
+                                <select value={startYear} onChange={(e) => setStartYear(parseInt(e.target.value))} className="form-input">
+                                    {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Adjustments */}
+                        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <h3 style={{ margin: 0, fontSize: '1rem' }}>Future Additions & Withdrawals</h3>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button className="btn" onClick={() => addEvent('addition')} style={{ padding: '4px 8px', background: '#ecfdf5', color: '#059669', border: '1px solid #10b981', fontSize: '0.75rem' }}>+ Add</button>
+                                    <button className="btn" onClick={() => addEvent('withdrawal')} style={{ padding: '4px 8px', background: '#fff1f2', color: '#e11d48', border: '1px solid #f43f5e', fontSize: '0.75rem' }}>- Withdraw</button>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {events.map(event => (
+                                    <div key={event.id} className="card" style={{ padding: '1rem', position: 'relative', border: `1px solid ${event.type === 'addition' ? '#10b981' : '#f43f5e'}` }}>
+                                        <button onClick={() => removeEvent(event.id)} style={{ position: 'absolute', top: '4px', right: '4px', color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={12} /></button>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                            <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>{event.type}</div>
+                                            <select value={event.month} onChange={(e) => updateEvent(event.id, 'month', e.target.value)} style={{ fontSize: '0.8rem' }}>
+                                                {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
+                                            </select>
+                                            <select value={event.year} onChange={(e) => updateEvent(event.id, 'year', e.target.value)} style={{ fontSize: '0.8rem' }}>
+                                                {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                                            </select>
+                                        </div>
+                                        <input 
+                                            type="number" 
+                                            placeholder="Amount (₹)" 
+                                            value={event.amount} 
+                                            onChange={(e) => updateEvent(event.id, 'amount', e.target.value)} 
+                                            style={{ width: '100%', padding: '4px', fontSize: '0.85rem' }} 
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Visualization */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        {/* Summary Header */}
+                        <div style={{ 
+                            padding: '2rem', 
+                            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', 
+                            borderRadius: '16px', 
+                            color: 'white',
+                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                        }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+                                <div>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Projected Value</p>
+                                    <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 800 }}>₹{Math.round(finalValue).toLocaleString('en-IN')}</h2>
+                                </div>
+                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Total Invested</p>
+                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>₹{totalInvested.toLocaleString('en-IN')}</h3>
+                                </div>
+                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Wealth Created</p>
+                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>₹{Math.round(finalValue - totalInvested + totalWithdrawals).toLocaleString('en-IN')}</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Amortization Table */}
+                        <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                            <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto' }}>
+                                <table className="summary-table" style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
+                                    <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', borderBottom: '2px solid var(--border)', zIndex: 10 }}>
+                                        <tr>
+                                            <th style={{ padding: '1.25rem', textAlign: 'left' }}>Year</th>
+                                            <th style={{ padding: '1.25rem', textAlign: 'right' }}>Investment & Addition</th>
+                                            <th style={{ padding: '1.25rem', textAlign: 'right' }}>End Value (Pre-With)</th>
+                                            <th style={{ padding: '1.25rem', textAlign: 'right' }}>Withdrawal</th>
+                                            <th style={{ padding: '1.25rem', textAlign: 'right' }}>Final Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {calculationData.map((row, idx) => (
+                                            <tr key={row.year} style={{ borderBottom: '1px solid var(--border)', background: idx % 2 === 0 ? 'transparent' : '#f8fafc' }}>
+                                                <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--primary)' }}>{row.year}</td>
+                                                <td style={{ padding: '1rem', textAlign: 'right' }}>₹{row.investmentAndAddition.toLocaleString('en-IN')}</td>
+                                                <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600 }}>₹{Math.round(row.endValueBeforeWithdrawal).toLocaleString('en-IN')}</td>
+                                                <td style={{ padding: '1rem', textAlign: 'right', color: '#e11d48' }}>{row.withdrawal > 0 ? `₹${row.withdrawal.toLocaleString('en-IN')}` : '-'}</td>
+                                                <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 800, color: '#059669', fontSize: '1.05rem' }}>₹{Math.round(row.valueAfterWithdrawal).toLocaleString('en-IN')}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default LumpsumCalculator;

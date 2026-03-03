@@ -17,6 +17,7 @@ import SIPCalculator from './components/Calculators/SIPCalculator';
 import PersonalLoanCalculator from './components/Calculators/PersonalLoanCalculator';
 import HomeLoanCalculator from './components/Calculators/HomeLoanCalculator';
 import CarLoanCalculator from './components/Calculators/CarLoanCalculator';
+import LumpsumCalculator from './components/Calculators/LumpsumCalculator';
 import { useAuth } from './contexts/AuthContext';
 import { signOut } from './services/authService';
 import { getActivePlan, updateFinancialPlan } from './services/financialPlanService';
@@ -437,7 +438,9 @@ function App() {
               {activeCalculator === 'car_loan' && (
                 <CarLoanCalculator />
               )}
-              {activeCalculator === 'lumpsum' && <CalculatorPlaceholder name="Lumpsum" />}
+              {activeCalculator === 'lumpsum' && (
+                <LumpsumCalculator familyMembers={familyMembers} />
+              )}
               {activeCalculator === 'swp' && <CalculatorPlaceholder name="SWP" />}
             </>
           )}
