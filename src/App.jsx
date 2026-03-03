@@ -18,6 +18,7 @@ import PersonalLoanCalculator from './components/Calculators/PersonalLoanCalcula
 import HomeLoanCalculator from './components/Calculators/HomeLoanCalculator';
 import CarLoanCalculator from './components/Calculators/CarLoanCalculator';
 import LumpsumCalculator from './components/Calculators/LumpsumCalculator';
+import SWPCalculator from './components/Calculators/SWPCalculator';
 import { useAuth } from './contexts/AuthContext';
 import { signOut } from './services/authService';
 import { getActivePlan, updateFinancialPlan } from './services/financialPlanService';
@@ -441,7 +442,9 @@ function App() {
               {activeCalculator === 'lumpsum' && (
                 <LumpsumCalculator familyMembers={familyMembers} />
               )}
-              {activeCalculator === 'swp' && <CalculatorPlaceholder name="SWP" />}
+              {activeCalculator === 'swp' && (
+                <SWPCalculator />
+              )}
             </>
           )}
         </main>
