@@ -1,4 +1,5 @@
 import React from 'react';
+import { convertToMonthly } from './CashFlowLogic';
 
 const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, onCalculate }) => {
     const handleIncomeChange = (e) => {
@@ -225,7 +226,7 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                             { key: 'life', label: 'Life Insurance Premium' },
                             { key: 'others', label: 'Others (Insurance)' }
                         ].map((ins) => (
-                            <div key={ins.key} className="insurance-input-row" style={{ display: 'grid', gridTemplateColumns: '1fr 140px', gap: '1rem', marginBottom: '1rem', alignItems: 'end' }}>
+                            <div key={ins.key} className="insurance-input-row" style={{ display: 'grid', gridTemplateColumns: '1.2fr 140px 140px', gap: '1rem', marginBottom: '1rem', alignItems: 'end' }}>
                                 <div className="input-group" style={{ marginBottom: 0 }}>
                                     <label>{ins.label}</label>
                                     <input 
@@ -248,6 +249,23 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                         <option value="Quarterly">Quarterly</option>
                                         <option value="Monthly">Monthly</option>
                                     </select>
+                                </div>
+                                <div className="input-group" style={{ marginBottom: 0 }}>
+                                    <label>Monthly Premium (₹)</label>
+                                    <div style={{ 
+                                        height: '42px', 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        padding: '0 1rem', 
+                                        background: 'var(--bg-card)', 
+                                        border: '1px solid var(--border)', 
+                                        borderRadius: '6px',
+                                        color: 'var(--primary)',
+                                        fontWeight: 600,
+                                        fontSize: '0.9rem'
+                                    }}>
+                                        {Math.round(convertToMonthly(expenseCategories.insurance[ins.key].value, expenseCategories.insurance[ins.key].frequency)).toLocaleString('en-IN')}
+                                    </div>
                                 </div>
                             </div>
                         ))}

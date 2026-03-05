@@ -81,7 +81,7 @@ function App() {
       health: { value: '', frequency: 'Annual' },
       car: { value: '', frequency: 'Annual' },
       bike: { value: '', frequency: 'Annual' },
-      life: { value: '', frequency: 'Monthly' },
+      life: { value: '', frequency: 'Annual' },
       others: { value: '', frequency: 'Annual' }
     },
     savings: { rd: '', fd: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
@@ -164,7 +164,7 @@ function App() {
             health: { value: '', frequency: 'Annual' },
             car: { value: '', frequency: 'Annual' },
             bike: { value: '', frequency: 'Annual' },
-            life: { value: '', frequency: 'Monthly' },
+            life: { value: '', frequency: 'Annual' },
             others: { value: '', frequency: 'Annual' }
           },
           savings: { rd: '', fd: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
@@ -176,7 +176,7 @@ function App() {
             health: loadedExpenseCategories.insurance?.health || { value: loadedExpenseCategories.emi?.healthInsurance || '', frequency: 'Annual' },
             car: loadedExpenseCategories.insurance?.car || { value: loadedExpenseCategories.emi?.carInsurance || '', frequency: 'Annual' },
             bike: loadedExpenseCategories.insurance?.bike || { value: loadedExpenseCategories.emi?.bikeInsurance || '', frequency: 'Annual' },
-            life: loadedExpenseCategories.insurance?.life || { value: loadedExpenseCategories.emi?.lifeInsurancePremium || '', frequency: 'Monthly' },
+            life: loadedExpenseCategories.insurance?.life || { value: loadedExpenseCategories.emi?.lifeInsurancePremium || '', frequency: 'Annual' },
             others: loadedExpenseCategories.insurance?.others || { value: loadedExpenseCategories.emi?.otherInsurance || '', frequency: 'Annual' }
         };
 

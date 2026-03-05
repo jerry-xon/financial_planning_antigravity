@@ -1,3 +1,14 @@
+export const convertToMonthly = (value, frequency) => {
+    const val = parseFloat(value) || 0;
+    switch (frequency) {
+        case 'Annual': return val / 12;
+        case 'Half Yearly': return val / 6;
+        case 'Quarterly': return val / 3;
+        case 'Monthly': return val;
+        default: return val;
+    }
+};
+
 export const calculateCashFlow = (income, expenseCategories) => {
     const totalIncome = (parseFloat(income.self) || 0) + 
                        (parseFloat(income.selfBonus) || 0) + 
@@ -8,17 +19,6 @@ export const calculateCashFlow = (income, expenseCategories) => {
                        (parseFloat(income.spousePassive) || 0) + 
                        (parseFloat(income.spouseOther) || 0) +
                        (parseFloat(income.family) || 0);
-
-    const convertToMonthly = (value, frequency) => {
-        const val = parseFloat(value) || 0;
-        switch (frequency) {
-            case 'Annual': return val / 12;
-            case 'Half Yearly': return val / 6;
-            case 'Quarterly': return val / 3;
-            case 'Monthly': return val;
-            default: return val;
-        }
-    };
 
     const householdSum = Object.values(expenseCategories.household || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
     const emiSum = Object.values(expenseCategories.emi || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
