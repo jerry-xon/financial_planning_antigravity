@@ -5,6 +5,7 @@ import { calculateFamilyProfile } from './ProfileLogic';
 
 const ProfileModule = ({ members, setMembers, onNext }) => {
     const [results, setResults] = React.useState(null);
+    const [error, setError] = React.useState('');
 
     React.useEffect(() => {
         const calculated = calculateFamilyProfile(members);
@@ -25,8 +26,22 @@ const ProfileModule = ({ members, setMembers, onNext }) => {
             {results && (
                 <div className="fade-in">
                     <ProfileOutput familyResults={results} />
-                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem', marginBottom: '4rem' }}>
-                        <button className="btn btn-primary" onClick={onNext} style={{ padding: '1rem 3rem', fontSize: '1.1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '2rem', marginBottom: '4rem' }}>
+                        {error && <div style={{ color: '#ef4444', marginBottom: '1rem', fontWeight: 600 }}>{error}</div>}
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={() => {
+                                const missingMobile = members.some(m => (m.relation === 'Self' || m.relation === 'Spouse') && !m.mobile);
+                                if (missingMobile) {
+                                    setError('Please provide mobile number for Self and Spouse.');
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                } else {
+                                    setError('');
+                                    onNext();
+                                }
+                            }} 
+                            style={{ padding: '1rem 3rem', fontSize: '1.1rem' }}
+                        >
                             Proceed to Cash Flow
                         </button>
                     </div>

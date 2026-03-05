@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import GoalInput from './GoalInput';
 import GoalOutput from './GoalOutput';
 import { categorizeGoals, getPredefinedGoals } from './GoalLogic';
+import { calculateAge } from '../ProfileModule/ProfileLogic';
 
 const GoalModule = ({ familyMembers, goals, setGoals, onNext, onBack }) => {
     const [results, setResults] = useState(null);
@@ -24,13 +25,24 @@ const GoalModule = ({ familyMembers, goals, setGoals, onNext, onBack }) => {
                         inflationRate: existing.inflationRate,
                         profession: existing.profession,
                         courseDuration: existing.courseDuration,
+                        courseDuration: existing.courseDuration,
                         totalCourseCost: existing.totalCourseCost,
                         name: newGoal.isPredefined ? newGoal.name : existing.name
                     };
                 }
+
+                let yearsToGoal = '';
+                if (newGoal.id === 'retirement') {
+                    const self = familyMembers.find(m => m.relation === 'Self');
+                    if (self && self.dob && self.retirementAge) {
+                        const age = calculateAge(self.dob);
+                        yearsToGoal = (parseInt(self.retirementAge) - age).toString();
+                    }
+                }
+
                 return {
                     ...newGoal,
-                    yearsToGoal: '',
+                    yearsToGoal: yearsToGoal,
                     presentValue: '',
                     inflationRate: 6
                 };

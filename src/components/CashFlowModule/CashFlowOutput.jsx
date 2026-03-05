@@ -11,28 +11,10 @@ const CashFlowOutput = ({ results }) => {
             <h2>Cash Flow Summary</h2>
 
             <div className="grid">
-                <div className="stat-card">
-                    <label>Monthly Surplus (A)</label>
+                <div className="stat-card" style={{ background: 'var(--bg-main)', border: '2px solid var(--primary)', borderLeft: '8px solid var(--primary)' }}>
+                    <label>Disposable surplus</label>
                     <p style={{
-                        fontSize: '1.5rem',
-                        fontWeight: 700,
-                        color: results.surplus > 0 ? 'var(--accent)' : '#ef4444'
-                    }}>
-                        {results.surplus > 0 ? '+' : ''}{formatCurrency(results.surplus)}
-                    </p>
-                </div>
-
-                <div className="stat-card" style={{ borderLeft: '4px solid var(--primary)' }}>
-                    <label>Monthly Savings (B)</label>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
-                        {formatCurrency(results.totalSavings)}
-                    </p>
-                </div>
-
-                <div className="stat-card" style={{ background: 'var(--bg-main)', border: '2px solid var(--border)' }}>
-                    <label>Disposable Income (A - B)</label>
-                    <p style={{
-                        fontSize: '1.5rem',
+                        fontSize: '1.8rem',
                         fontWeight: 700,
                         color: results.disposableIncome >= 0 ? 'var(--accent)' : '#ef4444'
                     }}>
@@ -41,9 +23,9 @@ const CashFlowOutput = ({ results }) => {
                 </div>
 
                 <div className="stat-card">
-                    <label>Surplus Rate</label>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 700 }}>
-                        {results.surplusRate.toFixed(1)}%
+                    <label>Current monthly savings</label>
+                    <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
+                        {formatCurrency(results.totalSavings)}
                     </p>
                 </div>
 
@@ -67,8 +49,12 @@ const CashFlowOutput = ({ results }) => {
                         <strong style={{ color: '#ef4444' }}>{formatCurrency(results.categorySums.household)}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>(-) EMIs & Insurance (B)</span>
+                        <span>(-) EMIs (B1)</span>
                         <strong style={{ color: '#ef4444' }}>{formatCurrency(results.categorySums.emi)}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>(-) Insurance Premiums (B2)</span>
+                        <strong style={{ color: '#ef4444' }}>{formatCurrency(results.categorySums.insurance)}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--border)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
                         <span style={{ fontWeight: 600 }}>(=) Monthly Surplus</span>
@@ -77,11 +63,11 @@ const CashFlowOutput = ({ results }) => {
                         </strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
-                        <span>(-) Savings & Investments (C)</span>
+                        <span>(-) Current Monthly Savings (C)</span>
                         <strong style={{ color: 'var(--primary)' }}>{formatCurrency(results.totalSavings)}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px dashed var(--border)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
-                        <span style={{ fontWeight: 600 }}>(=) Monthly Disposable Income Available</span>
+                        <span style={{ fontWeight: 600 }}>(=) Monthly Disposable Surplus Available</span>
                         <strong style={{ fontSize: '1.25rem', color: results.disposableIncome >= 0 ? 'var(--accent)' : '#ef4444' }}>
                             {formatCurrency(results.disposableIncome)}
                         </strong>
@@ -121,8 +107,12 @@ const CashFlowOutput = ({ results }) => {
                             <strong>{results.householdRatio.toFixed(1)}%</strong>
                         </div>
                         <div className="stat-mini">
-                            <span>EMIs & Insurance Ratio:</span>
+                            <span>EMIs Ratio:</span>
                             <strong>{results.emiRatio.toFixed(1)}%</strong>
+                        </div>
+                        <div className="stat-mini">
+                            <span>Insurance Ratio:</span>
+                            <strong>{results.insuranceRatio.toFixed(1)}%</strong>
                         </div>
                         <div className="stat-mini">
                             <span>Savings & Investments Ratio:</span>

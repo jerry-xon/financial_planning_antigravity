@@ -56,6 +56,7 @@ function App() {
       natureOfBusiness: '',
       organizationName: '',
       educationalQualification: '',
+      mobile: '',
     }
   ]);
 
@@ -75,8 +76,15 @@ function App() {
   });
   const [expenseCategories, setExpenseCategories] = useState({
     household: { grocery: '', rent: '', education: '', lifestyle: '', medical: '', travel: '' },
-    emi: { personalLoan: '', homeLoan: '', educationLoan: '', otherEmi: '', healthInsurance: '', carInsurance: '', bikeInsurance: '', otherInsurance: '' },
-    savings: { rd: '', fd: '', lifeInsurance: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
+    emi: { personalLoan: '', homeLoan: '', educationLoan: '', otherEmi: '' },
+    insurance: {
+      health: { value: '', frequency: 'Annual' },
+      car: { value: '', frequency: 'Annual' },
+      bike: { value: '', frequency: 'Annual' },
+      life: { value: '', frequency: 'Monthly' },
+      others: { value: '', frequency: 'Annual' }
+    },
+    savings: { rd: '', fd: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
   });
 
   // Asset State
@@ -129,7 +137,9 @@ function App() {
         console.log('Successfully loaded plan:', data.id);
         setPlanId(data.id);
         setCurrentStep(data.current_step || 1);
-        setFamilyMembers(data.family_members && data.family_members.length > 0 ? data.family_members : [{ name: '', dob: '', occupation: '', retirementAge: 60, relation: 'Self' }]);
+        setFamilyMembers(data.family_members && data.family_members.length > 0 
+          ? data.family_members.map(m => ({ ...m, mobile: m.mobile || '' })) 
+          : [{ name: '', dob: '', occupation: '', retirementAge: 60, relation: 'Self', mobile: '' }]);
         const loadedIncome = data.income || {};
         
         // Handle migration from old flat structure to new per-person structure
@@ -149,15 +159,44 @@ function App() {
         // Merge loaded expense_categories with default structure
         const defaultExpenseCategories = {
           household: { grocery: '', rent: '', education: '', lifestyle: '', medical: '', travel: '' },
-          emi: { personalLoan: '', homeLoan: '', educationLoan: '', otherEmi: '', healthInsurance: '', carInsurance: '', bikeInsurance: '', otherInsurance: '' },
-          savings: { rd: '', fd: '', lifeInsurance: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
+          emi: { personalLoan: '', homeLoan: '', educationLoan: '', otherEmi: '' },
+          insurance: {
+            health: { value: '', frequency: 'Annual' },
+            car: { value: '', frequency: 'Annual' },
+            bike: { value: '', frequency: 'Annual' },
+            life: { value: '', frequency: 'Monthly' },
+            others: { value: '', frequency: 'Annual' }
+          },
+          savings: { rd: '', fd: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
         };
         const loadedExpenseCategories = data.expense_categories || {};
+        
+        // Migration logic for insurance and savings
+        const migratedInsurance = {
+            health: loadedExpenseCategories.insurance?.health || { value: loadedExpenseCategories.emi?.healthInsurance || '', frequency: 'Annual' },
+            car: loadedExpenseCategories.insurance?.car || { value: loadedExpenseCategories.emi?.carInsurance || '', frequency: 'Annual' },
+            bike: loadedExpenseCategories.insurance?.bike || { value: loadedExpenseCategories.emi?.bikeInsurance || '', frequency: 'Annual' },
+            life: loadedExpenseCategories.insurance?.life || { value: loadedExpenseCategories.emi?.lifeInsurancePremium || '', frequency: 'Monthly' },
+            others: loadedExpenseCategories.insurance?.others || { value: loadedExpenseCategories.emi?.otherInsurance || '', frequency: 'Annual' }
+        };
+
         const mergedExpenseCategories = {
           household: { ...defaultExpenseCategories.household, ...(loadedExpenseCategories.household || {}) },
-          emi: { ...defaultExpenseCategories.emi, ...(loadedExpenseCategories.emi || {}) },
-          savings: { ...defaultExpenseCategories.savings, ...(loadedExpenseCategories.savings || {}) }
+          emi: { 
+            personalLoan: loadedExpenseCategories.emi?.personalLoan || '',
+            homeLoan: loadedExpenseCategories.emi?.homeLoan || '',
+            educationLoan: loadedExpenseCategories.emi?.educationLoan || '',
+            otherEmi: loadedExpenseCategories.emi?.otherEmi || ''
+          },
+          insurance: migratedInsurance,
+          savings: { 
+            ...defaultExpenseCategories.savings, 
+            ...(loadedExpenseCategories.savings || {})
+          }
         };
+        // Explicitly remove lifeInsurance if it exists in loaded savings
+        delete mergedExpenseCategories.savings.lifeInsurance;
+        
         setExpenseCategories(mergedExpenseCategories);
         
         // Merge loaded asset_categories with default structure

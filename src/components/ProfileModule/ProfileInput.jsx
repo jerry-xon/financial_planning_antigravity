@@ -1,6 +1,5 @@
-import React from 'react';
-import { User, Calendar, Target, Briefcase, Plus, Trash2, GraduationCap } from 'lucide-react';
-import { calculateRetirementYear } from './ProfileLogic';
+import { User, Calendar, Target, Briefcase, Plus, Trash2, GraduationCap, Phone } from 'lucide-react';
+import { calculateRetirementYear, calculateAge } from './ProfileLogic';
 import { EDUCATION_STANDARDS } from '../JourneyModule/ProjectionLogic';
 
 const ProfileInput = ({ members, setMembers, onCalculate }) => {
@@ -38,7 +37,8 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
             educationalQualification: '',
             retirementAge: 60,
             relation: relation,
-            standard: relation === 'Child' ? '' : undefined
+            standard: relation === 'Child' ? '' : undefined,
+            mobile: ''
         }]);
     };
 
@@ -81,7 +81,26 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                 value={member.dob}
                                 onChange={(e) => handleMemberChange(index, e)}
                             />
+                            {member.dob && (
+                                <div style={{ fontSize: '0.85rem', color: 'var(--primary)', marginTop: '0.5rem', fontWeight: 600 }}>
+                                    Current Age: {calculateAge(member.dob)} Years
+                                </div>
+                            )}
                         </div>
+
+                        {(member.relation === 'Self' || member.relation === 'Spouse') && (
+                            <div className="input-group">
+                                <label><Phone size={14} /> Mobile Number <span style={{ color: '#ef4444' }}>*</span></label>
+                                <input
+                                    type="tel"
+                                    name="mobile"
+                                    value={member.mobile || ''}
+                                    onChange={(e) => handleMemberChange(index, e)}
+                                    placeholder="Enter 10-digit mobile number"
+                                    required
+                                />
+                            </div>
+                        )}
 
                         <div className="input-group">
                             <label><Briefcase size={14} /> {member.relation === 'Child' ? 'Studying at' : 'Occupation'}</label>

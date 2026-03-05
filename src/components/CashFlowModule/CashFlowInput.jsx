@@ -16,6 +16,39 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
         }));
     };
 
+    const handleInsuranceChange = (item, field, value) => {
+        setExpenseCategories(prev => ({
+            ...prev,
+            insurance: {
+                ...prev.insurance,
+                [item]: {
+                    ...prev.insurance[item],
+                    [field]: value
+                }
+            }
+        }));
+    };
+
+    // Auto-fill Children Education Expense
+    React.useEffect(() => {
+        let totalEducationMonthly = 0;
+        familyMembers.forEach(member => {
+            if (member.relation === 'Child') {
+                if (member.occupation === 'School' && member.annualSchoolFee) {
+                    totalEducationMonthly += (parseFloat(member.annualSchoolFee) || 0) / 12;
+                } else if (member.occupation === 'College' && member.costOfCompleteCourse && member.courseDuration) {
+                    const totalCost = parseFloat(member.costOfCompleteCourse) || 0;
+                    const durationYears = parseFloat(member.courseDuration) || 1;
+                    totalEducationMonthly += totalCost / (durationYears * 12);
+                }
+            }
+        });
+
+        if (totalEducationMonthly > 0) {
+            handleExpenseChange('household', 'education', Math.round(totalEducationMonthly).toString());
+        }
+    }, [familyMembers]);
+
     const selfMember = familyMembers.find(m => m.relation?.toLowerCase() === 'self') || { name: 'Self' };
     const spouseMember = familyMembers.find(m => m.relation?.toLowerCase() === 'spouse');
     
@@ -131,7 +164,17 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                         </div>
                         <div className="input-group">
                             <label>Children Education</label>
-                            <input type="number" value={expenseCategories.household.education} onChange={(e) => handleExpenseChange('household', 'education', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                            <input 
+                                type="number" 
+                                value={expenseCategories.household.education} 
+                                onChange={(e) => handleExpenseChange('household', 'education', e.target.value)} 
+                                onWheel={(e) => e.target.blur()} 
+                                placeholder="Auto-calculated from Profile"
+                                style={{ background: 'var(--bg-card)', fontWeight: 600, color: 'var(--primary)' }}
+                            />
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                (Auto-filled from Profile Module)
+                            </div>
                         </div>
                         <div className="input-group">
                             <label>Lifestyle (Shopping, Movies, Dinner etc.)</label>
@@ -148,9 +191,9 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                     </div>
                 </div>
 
-                {/* Category B: EMIs & Insurance */}
+                {/* Category B1: EMIs */}
                 <div className="card" style={{ marginBottom: '1.5rem', background: 'var(--bg-main)' }}>
-                    <h4 style={{ color: 'var(--primary)', marginBottom: '1.25rem', fontSize: '1.1rem' }}>B. EMIs & Insurance</h4>
+                    <h4 style={{ color: 'var(--primary)', marginBottom: '1.25rem', fontSize: '1.1rem' }}>B1. EMIs (Monthly)</h4>
                     <div className="input-grid-mini">
                         <div className="input-group">
                             <label>Personal Loan</label>
@@ -168,26 +211,46 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                             <label>Any other EMIs</label>
                             <input type="number" value={expenseCategories.emi.otherEmi} onChange={(e) => handleExpenseChange('emi', 'otherEmi', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
                         </div>
-                        <div className="input-group">
-                            <label>Health Insurance</label>
-                            <input type="number" value={expenseCategories.emi.healthInsurance} onChange={(e) => handleExpenseChange('emi', 'healthInsurance', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
-                        <div className="input-group">
-                            <label>Car Insurance</label>
-                            <input type="number" value={expenseCategories.emi.carInsurance} onChange={(e) => handleExpenseChange('emi', 'carInsurance', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
-                        <div className="input-group">
-                            <label>Two-wheeler Insurance</label>
-                            <input type="number" value={expenseCategories.emi.bikeInsurance} onChange={(e) => handleExpenseChange('emi', 'bikeInsurance', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
-                        <div className="input-group">
-                            <label>Others (Insurance)</label>
-                            <input type="number" value={expenseCategories.emi.otherInsurance} onChange={(e) => handleExpenseChange('emi', 'otherInsurance', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
-                        <div className="input-group">
-                            <label>Life Insurance Premium (Monthly)</label>
-                            <input type="number" value={expenseCategories.emi.lifeInsurancePremium} onChange={(e) => handleExpenseChange('emi', 'lifeInsurancePremium', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
+                    </div>
+                </div>
+
+                {/* Category B2: Insurance Premiums */}
+                <div className="card" style={{ marginBottom: '1.5rem', background: 'var(--bg-main)' }}>
+                    <h4 style={{ color: 'var(--primary)', marginBottom: '1.25rem', fontSize: '1.1rem' }}>B2. Insurance Premiums</h4>
+                    <div className="insurance-grid">
+                        {[
+                            { key: 'health', label: 'Health Insurance' },
+                            { key: 'car', label: 'Car Insurance' },
+                            { key: 'bike', label: 'Two-wheeler Insurance' },
+                            { key: 'life', label: 'Life Insurance Premium' },
+                            { key: 'others', label: 'Others (Insurance)' }
+                        ].map((ins) => (
+                            <div key={ins.key} className="insurance-input-row" style={{ display: 'grid', gridTemplateColumns: '1fr 140px', gap: '1rem', marginBottom: '1rem', alignItems: 'end' }}>
+                                <div className="input-group" style={{ marginBottom: 0 }}>
+                                    <label>{ins.label}</label>
+                                    <input 
+                                        type="number" 
+                                        value={expenseCategories.insurance[ins.key].value} 
+                                        onChange={(e) => handleInsuranceChange(ins.key, 'value', e.target.value)} 
+                                        onWheel={(e) => e.target.blur()} 
+                                        placeholder="0" 
+                                    />
+                                </div>
+                                <div className="input-group" style={{ marginBottom: 0 }}>
+                                    <label>Frequency</label>
+                                    <select 
+                                        value={expenseCategories.insurance[ins.key].frequency} 
+                                        onChange={(e) => handleInsuranceChange(ins.key, 'frequency', e.target.value)}
+                                        style={{ height: '42px' }}
+                                    >
+                                        <option value="Annual">Annual</option>
+                                        <option value="Half Yearly">Half Yearly</option>
+                                        <option value="Quarterly">Quarterly</option>
+                                        <option value="Monthly">Monthly</option>
+                                    </select>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
@@ -202,10 +265,6 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                         <div className="input-group">
                             <label>FD</label>
                             <input type="number" value={expenseCategories.savings.fd} onChange={(e) => handleExpenseChange('savings', 'fd', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
-                        <div className="input-group">
-                            <label>Life Insurance</label>
-                            <input type="number" value={expenseCategories.savings.lifeInsurance} onChange={(e) => handleExpenseChange('savings', 'lifeInsurance', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
                         </div>
                         <div className="input-group">
                             <label>PPF</label>

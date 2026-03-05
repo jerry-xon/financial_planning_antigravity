@@ -7,40 +7,69 @@ export const calculateCashFlow = (income, expenseCategories) => {
                        (parseFloat(income.spouseBonus) || 0) + 
                        (parseFloat(income.spousePassive) || 0) + 
                        (parseFloat(income.spouseOther) || 0) +
-                       (parseFloat(income.family) || 0); // Include legacy family income if present
+                       (parseFloat(income.family) || 0);
 
-    const categorySums = {
-        household: Object.values(expenseCategories.household || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0),
-        emi: Object.values(expenseCategories.emi || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0),
-        savings: Object.values(expenseCategories.savings || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0)
+    const convertToMonthly = (value, frequency) => {
+        const val = parseFloat(value) || 0;
+        switch (frequency) {
+            case 'Annual': return val / 12;
+            case 'Half Yearly': return val / 6;
+            case 'Quarterly': return val / 3;
+            case 'Monthly': return val;
+            default: return val;
+        }
     };
 
-    // New logic: total expenses = A (Household) + B (EMIs)
-    const totalExpenses = categorySums.household + categorySums.emi;
+    const householdSum = Object.values(expenseCategories.household || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+    const emiSum = Object.values(expenseCategories.emi || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+    const insuranceSum = Object.values(expenseCategories.insurance || {}).reduce((sum, item) => sum + convertToMonthly(item.value, item.frequency), 0);
+    const savingsSum = Object.values(expenseCategories.savings || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+
+    const categorySums = {
+        household: householdSum,
+        emi: emiSum,
+        insurance: insuranceSum,
+        savings: savingsSum
+    };
+
+    // Total expenses = A (Household) + B1 (EMIs) + B2 (Insurance)
+    const totalExpenses = householdSum + emiSum + insuranceSum;
     const surplus = totalIncome - totalExpenses;
     const surplusRate = totalIncome > 0 ? (surplus / totalIncome) * 100 : 0;
 
-    // Ratios (requested for report)
-    const householdRatio = totalIncome > 0 ? (categorySums.household / totalIncome) * 100 : 0;
-    const emiRatio = totalIncome > 0 ? (categorySums.emi / totalIncome) * 100 : 0;
-    const savingsRatio = totalIncome > 0 ? (categorySums.savings / totalIncome) * 100 : 0;
+    // Ratios
+    const householdRatio = totalIncome > 0 ? (householdSum / totalIncome) * 100 : 0;
+    const emiRatio = totalIncome > 0 ? (emiSum / totalIncome) * 100 : 0;
+    const insuranceRatio = totalIncome > 0 ? (insuranceSum / totalIncome) * 100 : 0;
+    const savingsRatio = totalIncome > 0 ? (savingsSum / totalIncome) * 100 : 0;
 
     const expenseBreakdown = [];
-    Object.entries(expenseCategories).forEach(([categoryKey, items]) => {
-        Object.entries(items).forEach(([itemKey, value]) => {
+    // Regular categories
+    ['household', 'emi', 'savings'].forEach(cat => {
+        Object.entries(expenseCategories[cat] || {}).forEach(([itemKey, value]) => {
             const amount = parseFloat(value) || 0;
             if (amount > 0) {
                 expenseBreakdown.push({
                     name: getItemLabel(itemKey),
-                    category: getCategoryLabel(categoryKey),
+                    category: getCategoryLabel(cat),
                     value: amount
                 });
             }
         });
     });
+    // Insurance specialized handling
+    Object.entries(expenseCategories.insurance || {}).forEach(([itemKey, item]) => {
+        const monthlyAmount = convertToMonthly(item.value, item.frequency);
+        if (monthlyAmount > 0) {
+            expenseBreakdown.push({
+                name: getItemLabel(itemKey),
+                category: getCategoryLabel('insurance'),
+                value: monthlyAmount
+            });
+        }
+    });
 
-    // Disposable Income Logic
-    const totalSavings = categorySums.savings;
+    const totalSavings = savingsSum;
     const disposableIncome = surplus - totalSavings;
     const disposableIncomeRate = totalIncome > 0 ? (disposableIncome / totalIncome) * 100 : 0;
 
@@ -55,6 +84,7 @@ export const calculateCashFlow = (income, expenseCategories) => {
         disposableIncomeRate,
         householdRatio,
         emiRatio,
+        insuranceRatio,
         savingsRatio,
         expenseBreakdown,
         isHealthy: surplusRate >= 20,
@@ -65,7 +95,8 @@ export const calculateCashFlow = (income, expenseCategories) => {
 const getCategoryLabel = (key) => {
     const labels = {
         household: 'Household & Lifestyle',
-        emi: 'EMIs & Insurance',
+        emi: 'EMIs',
+        insurance: 'Insurance Premiums',
         savings: 'Savings & Investments'
     };
     return labels[key] || key;
@@ -81,16 +112,18 @@ const getItemLabel = (key) => {
         medical: 'Medical Expenses',
         travel: 'Travel',
 
-        // EMIs & Insurance
-        personalLoan: 'Personal Loan',
-        homeLoan: 'Home Loan',
-        educationLoan: 'Education Loan',
-        otherEmi: 'Any other EMIs',
-        healthInsurance: 'Health Insurance',
-        carInsurance: 'Car Insurance',
-        bikeInsurance: 'Two-wheeler Insurance',
-        otherInsurance: 'Others (Insurance)',
-        lifeInsurancePremium: 'Life Insurance Premium',
+        // EMIs
+        personalLoan: 'Personal Loan EMI',
+        homeLoan: 'Home Loan EMI',
+        educationLoan: 'Education Loan EMI',
+        otherEmi: 'Other EMIs',
+
+        // Insurance
+        health: 'Health Insurance Premium',
+        car: 'Car Insurance Premium',
+        bike: 'Two-wheeler Insurance Premium',
+        life: 'Life Insurance Premium',
+        others: 'Other Insurance Premiums',
 
         // Savings & Investments
         rd: 'RD',

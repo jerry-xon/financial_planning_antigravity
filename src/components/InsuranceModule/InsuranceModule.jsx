@@ -19,7 +19,19 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
         const insuranceMonthly = Math.round(totalAnnualPremium / 12);
         
         // Current figure in Cash Flow
-        const cashFlowMonthly = Math.round(parseFloat(expenseCategories.emi.lifeInsurancePremium) || 0);
+        const insuranceData = expenseCategories.insurance?.life || { value: '0', frequency: 'Monthly' };
+        let cashFlowMonthly = 0;
+        
+        const val = parseFloat(insuranceData.value) || 0;
+        switch (insuranceData.frequency) {
+            case 'Annual': cashFlowMonthly = val / 12; break;
+            case 'Half Yearly': cashFlowMonthly = val / 6; break;
+            case 'Quarterly': cashFlowMonthly = val / 3; break;
+            case 'Monthly': cashFlowMonthly = val; break;
+            default: cashFlowMonthly = val;
+        }
+        
+        cashFlowMonthly = Math.round(cashFlowMonthly);
 
         if (insuranceMonthly !== cashFlowMonthly) {
             setPendingMonthlyPremium(insuranceMonthly);
@@ -32,9 +44,12 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
     const handleSyncAgree = () => {
         setExpenseCategories(prev => ({
             ...prev,
-            emi: {
-                ...prev.emi,
-                lifeInsurancePremium: pendingMonthlyPremium.toString()
+            insurance: {
+                ...prev.insurance,
+                life: {
+                    value: pendingMonthlyPremium.toString(),
+                    frequency: 'Monthly'
+                }
             }
         }));
         setShowSyncModal(false);
