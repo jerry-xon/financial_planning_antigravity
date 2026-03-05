@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const useSupabase = import.meta.env.VITE_USE_SUPABASE;
-const devUserEmail = import.meta.env.VITE_DEV_USER_EMAIL;
 
 const isSupabaseDisabled =
   useSupabase === 'false' || !supabaseUrl || !supabaseAnonKey;
@@ -11,17 +10,6 @@ const isSupabaseDisabled =
 export const isSupabaseEnabled = !isSupabaseDisabled;
 
 function createMockSupabaseClient() {
-  const devUser =
-    devUserEmail &&
-    ({
-      id: 'dev-user-id',
-      email: devUserEmail,
-      app_metadata: {},
-      user_metadata: {},
-      aud: 'authenticated',
-      created_at: new Date().toISOString(),
-    });
-
   const emptyPromise = (data = null) =>
     Promise.resolve({ data, error: null });
 
@@ -48,28 +36,20 @@ function createMockSupabaseClient() {
   const auth = {
     getUser: () =>
       authPromise({
-        user: devUser ?? null,
+        user: null,
       }),
     getSession: () =>
       authPromise({
-        session: devUser
-          ? {
-              user: devUser,
-              access_token: 'mock-token',
-              refresh_token: 'mock-refresh',
-              expires_in: 3600,
-              expires_at: Math.floor(Date.now() / 1000) + 3600,
-            }
-          : null,
+        session: null,
       }),
     signUp: () => authPromise({ user: null, session: null }),
     signInWithPassword: () => authPromise({ user: null, session: null }),
     signInWithOAuth: () => authPromise({ provider: 'google', url: null }),
     signOut: () => emptyPromise(),
     resetPasswordForEmail: () => authPromise(),
-    updateUser: () => authPromise({ user: devUser ?? null }),
+    updateUser: () => authPromise({ user: null }),
     onAuthStateChange: (callback) => {
-      callback('INITIAL_SESSION', devUser ? { user: devUser } : null);
+      callback('INITIAL_SESSION', null);
       return {
         data: {
           subscription: {

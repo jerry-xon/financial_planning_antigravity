@@ -64,7 +64,7 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key-here
 ```
 
-**Running without Supabase (e.g. during DB migration):** You can run the app without a live database by setting `VITE_USE_SUPABASE=false` or by leaving `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` unset. The app will use a mock client (no persistence). Optionally set `VITE_DEV_USER_EMAIL=dev@localhost` to bypass the login screen and use the full UI with in-memory state.
+**Running without Supabase (e.g. during DB migration):** You can run the app without a live database by setting `VITE_USE_SUPABASE=false` or by leaving `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` unset. The app will use a mock client (no persistence; you will see the login screen).
 
 5. Start the development server:
 ```bash
@@ -267,7 +267,7 @@ This creates an optimized build in the `dist/` folder.
 - Ensure `.env` file exists in project root
 - Verify variables start with `VITE_`
 - Restart development server after changes
-- **To run without Supabase:** Set `VITE_USE_SUPABASE=false` or leave `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` unset to use mock mode (no database). Set `VITE_DEV_USER_EMAIL=dev@localhost` to bypass login in mock mode.
+- **To run without Supabase:** Set `VITE_USE_SUPABASE=false` or leave `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` unset to use mock mode (no database).
 
 ### Authentication not working
 - Check Supabase project is active

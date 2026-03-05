@@ -4,7 +4,7 @@ This guide will help you set up Supabase for the Financial Planning Application.
 
 ## Running without Supabase (mock mode)
 
-During a database migration or when you do not have Supabase configured, you can still run the app for development. Set `VITE_USE_SUPABASE=false` in `.env`, or leave `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` unset. The app will use a mock client: no persistence, and no real auth (you will see the login screen unless you set `VITE_DEV_USER_EMAIL=dev@localhost` to bypass it). When your new database is ready, set the real env vars and restart the dev server.
+During a database migration or when you do not have Supabase configured, you can still run the app for development. Set `VITE_USE_SUPABASE=false` in `.env`, or leave `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` unset. The app will use a mock client: no persistence and no real auth (you will see the login screen). When your new database is ready, set the real env vars and restart the dev server.
 
 ## Prerequisites
 
