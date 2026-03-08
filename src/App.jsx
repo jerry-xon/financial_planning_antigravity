@@ -535,6 +535,7 @@ function App() {
                   goals={goals}
                   inflationRates={inflationRates}
                   setInflationRates={setInflationRates}
+                  policies={policies}
                   onNext={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(7); window.scrollTo(0, 0); }}
                 />

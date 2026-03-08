@@ -116,7 +116,7 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                         
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <button className="btn btn-primary" onClick={(e) => { e.stopPropagation(); setShowMismatchModal(false); }} style={{ padding: '1rem', background: 'var(--primary)', border: 'none', color: 'white', fontWeight: 600, width: '100%' }}>
-                                Fill all details
+                                Fill all details or Let me match the premium
                             </button>
                             <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); setShowMismatchModal(false); onNext(); }} style={{ padding: '1rem', fontWeight: 600, width: '100%' }}>
                                 Continue Anyway

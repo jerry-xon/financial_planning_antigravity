@@ -26,6 +26,7 @@ export const generateProjections = (params) => {
         expenseCategories,
         goals,
         inflationRates,
+        policies = [],
         startYear = new Date().getFullYear()
     } = params;
 
@@ -66,6 +67,44 @@ export const generateProjections = (params) => {
     const emiMonthly = Object.values(expenseCategories.emi || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
     const savingsMonthly = Object.values(expenseCategories.savings || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
 
+    // --- Insurance Logic ---
+    const getMonthly = (item) => {
+        if (!item) return 0;
+        const val = parseFloat(item.value) || 0;
+        const freq = item.frequency || 'Annual';
+        if (freq === 'Annual') return val / 12;
+        if (freq === 'Half Yearly') return val / 6;
+        if (freq === 'Quarterly') return val / 3;
+        return val;
+    };
+
+    const genInsuranceAnnual = (
+        getMonthly(expenseCategories.insurance?.health) +
+        getMonthly(expenseCategories.insurance?.car) +
+        getMonthly(expenseCategories.insurance?.bike) +
+        getMonthly(expenseCategories.insurance?.others)
+    ) * 12;
+
+    const cashFlowLifeAnnual = getMonthly(expenseCategories.insurance?.life) * 12;
+
+    // Find detailed premiums active in startYear to determine unallocated amount
+    let detailedLifeStartYear = 0;
+    policies.forEach(p => {
+        const startDate = new Date(p.startDate);
+        if (isNaN(startDate.getTime())) return;
+        const startY = startDate.getFullYear();
+        const payTerm = parseInt(p.paymentTerm) || 0;
+        const freq = p.frequency || 'Annually';
+        const mult = freq === 'Monthly' ? 12 : freq === 'Quarterly' ? 4 : freq === 'Half-Yearly' ? 2 : 1;
+        const annual = (parseFloat(p.premium) || 0) * mult;
+
+        if (startY <= startYear && (startY + payTerm) > startYear) {
+            detailedLifeStartYear += annual;
+        }
+    });
+
+    const unallocatedLifeAnnual = Math.max(0, cashFlowLifeAnnual - detailedLifeStartYear);
+
     const projections = [];
 
     for (let i = 0; i < yearsToProject; i++) {
@@ -92,6 +131,24 @@ export const generateProjections = (params) => {
         // Outflows logic
         const householdOutflow = (householdMonthly * 12) * Math.pow(1 + (householdInflation / 100), i);
         const fixedOutflow = (emiMonthly * 12); 
+        
+        // Dynamic Insurance Calculation for this year
+        let detailedLifeThisYear = 0;
+        policies.forEach(p => {
+            const startDate = new Date(p.startDate);
+            if (isNaN(startDate.getTime())) return;
+            const startY = startDate.getFullYear();
+            const payTerm = parseInt(p.paymentTerm) || 0;
+            const freq = p.frequency || 'Annually';
+            const mult = freq === 'Monthly' ? 12 : freq === 'Quarterly' ? 4 : freq === 'Half-Yearly' ? 2 : 1;
+            const annual = (parseFloat(p.premium) || 0) * mult;
+
+            if (startY <= year && (startY + payTerm) > year) {
+                detailedLifeThisYear += annual;
+            }
+        });
+
+        const totalInsuranceOutflow = genInsuranceAnnual + detailedLifeThisYear + unallocatedLifeAnnual;
         const annualOutflow = householdOutflow + fixedOutflow;
         
         let totalEducationExpenses = 0;
@@ -146,7 +203,7 @@ export const generateProjections = (params) => {
             }
         });
 
-        const totalOutflow = annualOutflow + totalEducationExpenses;
+        const totalOutflow = annualOutflow + totalEducationExpenses + totalInsuranceOutflow;
         const surplusBeforeSaving = netInflowAfterTax - totalOutflow;
         const savingsAndInvestments = savingsMonthly * 12; 
         const netInvestibleSurplus = surplusBeforeSaving - savingsAndInvestments;
@@ -157,6 +214,7 @@ export const generateProjections = (params) => {
             approxTax,
             netInflowAfterTax,
             annualOutflow,
+            insurancePremium: totalInsuranceOutflow,
             educationExpenses: totalEducationExpenses,
             totalOutflow,
             surplusBeforeSaving,

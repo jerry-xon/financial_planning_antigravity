@@ -10,6 +10,7 @@ const JourneyModule = ({
     goals, 
     inflationRates, 
     setInflationRates,
+    policies,
     onNext 
 }) => {
     
@@ -26,9 +27,10 @@ const JourneyModule = ({
             income,
             expenseCategories,
             goals,
-            inflationRates
+            inflationRates,
+            policies
         });
-    }, [familyMembers, income, expenseCategories, goals, inflationRates]);
+    }, [familyMembers, income, expenseCategories, goals, inflationRates, policies]);
 
     return (
         <div className="journey-module fade-in">
