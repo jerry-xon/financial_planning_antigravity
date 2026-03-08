@@ -1,9 +1,7 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { convertToMonthly } from './CashFlowLogic';
 
-const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, onCalculate, insuranceMode, setInsuranceMode, onNext, setCurrentStep }) => {
-    const [showInsuranceModal, setShowInsuranceModal] = React.useState(false);
+const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, onCalculate, onNext, setCurrentStep }) => {
     const handleIncomeChange = (e) => {
         const { name, value } = e.target;
         setIncome(prev => ({ ...prev, [name]: value }));
@@ -30,11 +28,6 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                 }
             }
         }));
-    };
-    const handleInsuranceBlur = (item) => {
-        if (item === 'life' && (parseFloat(expenseCategories.insurance.life.value) || 0) > 0 && !insuranceMode) {
-            setShowInsuranceModal(true);
-        }
     };
 
     // Auto-fill Children Education Expense
@@ -241,7 +234,6 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                         value={expenseCategories.insurance[ins.key].value} 
                                         onChange={(e) => handleInsuranceChange(ins.key, 'value', e.target.value)} 
                                         onWheel={(e) => e.target.blur()} 
-                                        onBlur={() => handleInsuranceBlur(ins.key)}
                                         placeholder="0" 
                                     />
                                 </div>
@@ -332,66 +324,6 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
         }
       `}</style>
 
-            {/* Insurance Recommendation Modal */}
-            {showInsuranceModal && createPortal(
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100vw',
-                    height: '100vh',
-                    background: 'rgba(0,0,0,0.8)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 99999,
-                    backdropFilter: 'blur(8px)'
-                }} onClick={(e) => e.stopPropagation()}>
-                    <div className="card fade-in" style={{
-                        width: '90%',
-                        maxWidth: '500px',
-                        padding: '2.5rem',
-                        textAlign: 'center',
-                        background: 'var(--bg-main)',
-                        border: '2px solid var(--primary)',
-                        borderRadius: '16px',
-                        boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-                        animation: 'fadeIn 0.3s ease-out'
-                    }}>
-                        <h3 style={{ color: 'var(--primary)', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Accurate Financial Planning</h3>
-                        <p style={{ marginBottom: '2.5rem', lineHeight: '1.6', fontSize: '1.1rem', color: 'var(--text-main)' }}>
-                            If you want create accurate financial plan, fill complete details of all life insurance policies you have.
-                        </p>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <button 
-                                className="btn btn-primary" 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setInsuranceMode('accurate');
-                                    setShowInsuranceModal(false);
-                                    setCurrentStep(5);
-                                    window.scrollTo(0, 0);
-                                }} 
-                                style={{ padding: '1rem', fontSize: '1.1rem', fontWeight: 600, width: '100%' }}
-                            >
-                                I want accurate report
-                            </button>
-                            <button 
-                                className="btn btn-secondary" 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setInsuranceMode('anyway');
-                                    setShowInsuranceModal(false);
-                                }} 
-                                style={{ padding: '0.8rem', fontSize: '1rem', width: '100%' }}
-                            >
-                                Continue anyway
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
         </div>
     );
 };

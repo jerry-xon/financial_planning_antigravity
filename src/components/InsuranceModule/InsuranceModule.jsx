@@ -4,7 +4,7 @@ import InsuranceInput from './InsuranceInput';
 import InsuranceOutput from './InsuranceOutput';
 import { calculateYearlyInsuranceSummary, getInsuredNamesList } from './InsuranceLogic';
 
-const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategories, setExpenseCategories, onNext, onBack, insuranceMode, setInsuranceMode, setCurrentStep }) => {
+const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategories, setExpenseCategories, onNext, onBack, setCurrentStep }) => {
     const [results, setResults] = useState(null);
     const [showMismatchModal, setShowMismatchModal] = useState(false);
     const [amounts, setAmounts] = useState({ here: 0, cashFlow: 0 });
@@ -107,16 +107,19 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                         animation: 'fadeIn 0.3s ease-out'
                     }}>
                         <h3 style={{ color: '#ef4444', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Premium Mismatch Detected</h3>
-                        <p style={{ marginBottom: '2rem', lineHeight: '1.6', fontSize: '1.1rem' }}>
+                        <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '1.1rem' }}>
                             The Premium you entered here is <strong>₹{amounts.here.toLocaleString('en-IN')}</strong> amount and premium in cash flow is <strong>₹{amounts.cashFlow.toLocaleString('en-IN')}</strong> amount. (Annual Figures)
+                        </p>
+                        <p style={{ marginBottom: '2.5rem', fontWeight: 'bold', fontSize: '1.25rem', color: 'var(--text-main)' }}>
+                            For accurate Financial Plan fill complete details of all insurance policies
                         </p>
                         
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <button className="btn btn-primary" onClick={(e) => { e.stopPropagation(); setCurrentStep(2); window.scrollTo(0, 0); }} style={{ padding: '1rem', background: '#3b82f6', border: 'none', color: 'white', fontWeight: 600, width: '100%' }}>
-                                Make correction in Cash flow premium
+                            <button className="btn btn-primary" onClick={(e) => { e.stopPropagation(); setShowMismatchModal(false); }} style={{ padding: '1rem', background: 'var(--primary)', border: 'none', color: 'white', fontWeight: 600, width: '100%' }}>
+                                Fill all details
                             </button>
-                            <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); setShowMismatchModal(false); }} style={{ padding: '1rem', fontWeight: 600, width: '100%' }}>
-                                Make correction in this form
+                            <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); setShowMismatchModal(false); onNext(); }} style={{ padding: '1rem', fontWeight: 600, width: '100%' }}>
+                                Continue Anyway
                             </button>
                         </div>
                     </div>
