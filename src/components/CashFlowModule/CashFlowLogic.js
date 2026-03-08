@@ -9,6 +9,17 @@ export const convertToMonthly = (value, frequency) => {
     }
 };
 
+export const convertToAnnual = (value, frequency) => {
+    const val = parseFloat(value) || 0;
+    switch (frequency) {
+        case 'Annual': return val;
+        case 'Half Yearly': return val * 2;
+        case 'Quarterly': return val * 4;
+        case 'Monthly': return val * 12;
+        default: return val;
+    }
+};
+
 export const calculateCashFlow = (income, expenseCategories) => {
     const totalIncome = (parseFloat(income.self) || 0) + 
                        (parseFloat(income.selfBonus) || 0) + 

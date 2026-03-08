@@ -16,21 +16,24 @@ export const getActivePlan = async () => {
       .select('*')
       .eq('user_id', user.id)
       .eq('is_active', true)
-      .single();
+      .order('updated_at', { ascending: false })
+      .limit(1);
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('Error fetching plan from DB:', error);
       throw error;
     }
     
+    const plan = data && data.length > 0 ? data[0] : null;
+
     // If no plan exists, create one
-    if (!data) {
+    if (!plan) {
       console.log('No existing plan found, creating new plan...');
       return await createFinancialPlan();
     }
 
-    console.log('Plan loaded successfully:', data.id);
-    return { data, error: null };
+    console.log('Plan loaded successfully:', plan.id);
+    return { data: plan, error: null };
   } catch (error) {
     console.error('Error getting active plan:', error);
     return { data: null, error };

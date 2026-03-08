@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import InsuranceInput from './InsuranceInput';
 import InsuranceOutput from './InsuranceOutput';
 import { calculateYearlyInsuranceSummary, getInsuredNamesList } from './InsuranceLogic';
 
-const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategories, setExpenseCategories, onNext, onBack }) => {
+const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategories, setExpenseCategories, onNext, onBack, insuranceMode, setInsuranceMode, setCurrentStep }) => {
     const [results, setResults] = useState(null);
-    const [showSyncModal, setShowSyncModal] = useState(false);
-    const [pendingMonthlyPremium, setPendingMonthlyPremium] = useState(0);
+    const [showMismatchModal, setShowMismatchModal] = useState(false);
+    const [amounts, setAmounts] = useState({ here: 0, cashFlow: 0 });
 
     const handleCalculate = () => {
         const calculated = calculateYearlyInsuranceSummary(policies);
@@ -14,46 +15,33 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
     };
 
     const handleProceed = () => {
-        // Source of Truth calculation from policies
-        const totalAnnualPremium = policies.reduce((sum, p) => sum + (parseFloat(p.premium) || 0), 0);
-        const insuranceMonthly = Math.round(totalAnnualPremium / 12);
-        
-        // Current figure in Cash Flow
-        const insuranceData = expenseCategories.insurance?.life || { value: '0', frequency: 'Monthly' };
-        let cashFlowMonthly = 0;
-        
-        const val = parseFloat(insuranceData.value) || 0;
-        switch (insuranceData.frequency) {
-            case 'Annual': cashFlowMonthly = val / 12; break;
-            case 'Half Yearly': cashFlowMonthly = val / 6; break;
-            case 'Quarterly': cashFlowMonthly = val / 3; break;
-            case 'Monthly': cashFlowMonthly = val; break;
-            default: cashFlowMonthly = val;
-        }
-        
-        cashFlowMonthly = Math.round(cashFlowMonthly);
+        // A. Total premium from this module (converted to Annual)
+        const totalAnnualHere = policies.reduce((sum, p) => {
+            const premium = parseFloat(p.premium) || 0;
+            const freq = p.frequency || 'Annually';
+            const multiplier = freq === 'Monthly' ? 12 : freq === 'Quarterly' ? 4 : freq === 'Half-Yearly' ? 2 : 1;
+            return sum + (premium * multiplier);
+        }, 0);
 
-        if (insuranceMonthly !== cashFlowMonthly) {
-            setPendingMonthlyPremium(insuranceMonthly);
-            setShowSyncModal(true);
+        // B. Premium from Cash Flow module (converted to Annual)
+        const lifeInsData = expenseCategories.insurance?.life || { value: '0', frequency: 'Annual' };
+        const val = parseFloat(lifeInsData.value) || 0;
+        const freq = lifeInsData.frequency || 'Annual';
+        let totalAnnualCashFlow = 0;
+        switch (freq) {
+            case 'Annual': totalAnnualCashFlow = val; break;
+            case 'Half Yearly': totalAnnualCashFlow = val * 2; break;
+            case 'Quarterly': totalAnnualCashFlow = val * 4; break;
+            case 'Monthly': totalAnnualCashFlow = val * 12; break;
+            default: totalAnnualCashFlow = val;
+        }
+
+        if (Math.round(totalAnnualHere) !== Math.round(totalAnnualCashFlow)) {
+            setAmounts({ here: Math.round(totalAnnualHere), cashFlow: Math.round(totalAnnualCashFlow) });
+            setShowMismatchModal(true);
         } else {
             onNext();
         }
-    };
-
-    const handleSyncAgree = () => {
-        setExpenseCategories(prev => ({
-            ...prev,
-            insurance: {
-                ...prev.insurance,
-                life: {
-                    value: pendingMonthlyPremium.toString(),
-                    frequency: 'Monthly'
-                }
-            }
-        }));
-        setShowSyncModal(false);
-        onNext();
     };
 
     return (
@@ -91,8 +79,8 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                 )}
             </div>
 
-            {/* Sync Verification Modal - Now correctly fixed to viewport because root parent has no transform */}
-            {showSyncModal && (
+            {/* Premium Mismatch Modal */}
+            {showMismatchModal && createPortal(
                 <div style={{
                     position: 'fixed',
                     top: 0,
@@ -105,41 +93,35 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                     justifyContent: 'center',
                     zIndex: 99999,
                     backdropFilter: 'blur(10px)'
-                }}>
+                }} onClick={(e) => e.stopPropagation()}>
                     <div className="card fade-in" style={{
                         width: '90%',
-                        maxWidth: '500px',
+                        maxWidth: '550px',
                         padding: '2.5rem',
                         textAlign: 'center',
                         background: 'var(--bg-main)',
-                        border: '2px solid var(--primary)',
+                        border: '2px solid #ef4444',
                         boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
-                        margin: 'auto'
+                        margin: 'auto',
+                        borderRadius: '16px',
+                        animation: 'fadeIn 0.3s ease-out'
                     }}>
-                        <h3 style={{ color: 'var(--primary)', marginBottom: '1.5rem', fontSize: '1.6rem' }}>Premium Sync Required</h3>
-                        <p style={{ marginBottom: '2.5rem', lineHeight: '1.6', fontSize: '1.1rem' }}>
-                            Your Life Insurance premium in **Cash Flow** does not match your current policies. 
-                            Based on your latest details, the correct Monthly Premium is:
-                            <strong style={{ 
-                                color: 'var(--accent)', 
-                                fontSize: '2rem', 
-                                display: 'block', 
-                                margin: '1.5rem 0',
-                                padding: '1.2rem',
-                                background: 'var(--bg-card)',
-                                borderRadius: '12px',
-                                border: '1px solid var(--primary)',
-                                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
-                            }}>
-                                ₹{pendingMonthlyPremium.toLocaleString('en-IN')}
-                            </strong>
-                            Click below to synchronize and maintain an accurate financial plan.
+                        <h3 style={{ color: '#ef4444', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Premium Mismatch Detected</h3>
+                        <p style={{ marginBottom: '2rem', lineHeight: '1.6', fontSize: '1.1rem' }}>
+                            The Premium you entered here is <strong>₹{amounts.here.toLocaleString('en-IN')}</strong> amount and premium in cash flow is <strong>₹{amounts.cashFlow.toLocaleString('en-IN')}</strong> amount. (Annual Figures)
                         </p>
-                        <button className="btn btn-primary" onClick={handleSyncAgree} style={{ padding: '1.2rem 3rem', width: '100%', fontSize: '1.2rem', fontWeight: 700 }}>
-                            I Agree & Synchronize
-                        </button>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <button className="btn btn-primary" onClick={(e) => { e.stopPropagation(); setCurrentStep(2); window.scrollTo(0, 0); }} style={{ padding: '1rem', background: '#3b82f6', border: 'none', color: 'white', fontWeight: 600, width: '100%' }}>
+                                Make correction in Cash flow premium
+                            </button>
+                            <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); setShowMismatchModal(false); }} style={{ padding: '1rem', fontWeight: 600, width: '100%' }}>
+                                Make correction in this form
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

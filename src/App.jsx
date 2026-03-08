@@ -44,6 +44,7 @@ function App() {
   // New states for Secondary Navigation (Calculators)
   const [activeSection, setActiveSection] = useState('modules'); // 'modules' or 'calculators'
   const [activeCalculator, setActiveCalculator] = useState(null);
+  const [insuranceMode, setInsuranceMode] = useState(null); // 'accurate' or 'anyway'
 
   // State for Family Profile details
   const [familyMembers, setFamilyMembers] = useState([
@@ -114,9 +115,77 @@ function App() {
     educationInflation: 8
   });
 
+  // --- Reset All State ---
+  const resetState = () => {
+    setPlanId(null);
+    setCurrentStep(1);
+    setActiveSection('modules');
+    setActiveCalculator(null);
+    setInsuranceMode(null);
+    setSaving(false);
+    setFamilyMembers([
+      {
+        name: '',
+        dob: '',
+        occupation: '',
+        retirementAge: 60,
+        relation: 'Self',
+        natureOfBusiness: '',
+        organizationName: '',
+        educationalQualification: '',
+        mobile: '',
+      }
+    ]);
+    setIncome({
+      self: '',
+      selfBonus: '',
+      selfPassive: '',
+      selfOther: '',
+      spouse: '',
+      spouseBonus: '',
+      spousePassive: '',
+      spouseOther: '',
+      bonus: '',
+      passive: '',
+      other: ''
+    });
+    setExpenseCategories({
+      household: { grocery: '', rent: '', education: '', lifestyle: '', medical: '', travel: '' },
+      emi: { personalLoan: '', homeLoan: '', educationLoan: '', otherEmi: '' },
+      insurance: {
+        health: { value: '', frequency: 'Annual' },
+        car: { value: '', frequency: 'Annual' },
+        bike: { value: '', frequency: 'Annual' },
+        life: { value: '', frequency: 'Annual' },
+        others: { value: '', frequency: 'Annual' }
+      },
+      savings: { rd: '', fd: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
+    });
+    setAssetCategories({
+      equity: { stocks: '', mfEquity: '' },
+      debt: { ppf: '', fd: '' },
+      realEstate: { residence: '', investmentProp: '' },
+      others: { gold: '', others: '' }
+    });
+    setLiabilityCategories({
+      loans: { home: '', car: '', other: '' }
+    });
+    setGoals([]);
+    setPolicies([]);
+    setContingencyFund('');
+    setInflationRates({
+      incomeIncrement: 10,
+      householdInflation: 6,
+      educationInflation: 8
+    });
+  };
+
   // --- Load Financial Plan from Supabase ---
   useEffect(() => {
     const loadPlan = async () => {
+      // First, reset local state to ensure no stale data remains
+      resetState();
+
       if (!user) {
         setLoading(false);
         return;
@@ -137,6 +206,7 @@ function App() {
         console.log('Successfully loaded plan:', data.id);
         setPlanId(data.id);
         setCurrentStep(data.current_step || 1);
+        setInsuranceMode(data.insurance_mode || null);
         setFamilyMembers(data.family_members && data.family_members.length > 0 
           ? data.family_members.map(m => ({ ...m, mobile: m.mobile || '' })) 
           : [{ name: '', dob: '', occupation: '', retirementAge: 60, relation: 'Self', mobile: '' }]);
@@ -235,13 +305,11 @@ function App() {
     loadPlan();
   }, [user]);
 
-  // --- Save to Supabase with debouncing ---
-  useEffect(() => {
-    if (!planId || loading) return;
-
-    setSaving(true);
-    const timeoutId = setTimeout(async () => {
-      await updateFinancialPlan(planId, {
+  const savePlanData = async () => {
+    if (!planId) return;
+    try {
+      console.log('Attemping to save plan...', planId);
+      const { data, error } = await updateFinancialPlan(planId, {
         current_step: currentStep,
         family_members: familyMembers,
         income,
@@ -251,17 +319,39 @@ function App() {
         goals,
         policies,
         contingency_fund: parseFloat(contingencyFund) || 0,
-        inflation_rates: inflationRates
+        inflation_rates: inflationRates,
+        insurance_mode: insuranceMode
       });
+      
+      if (error) {
+          console.error('Save failed with error:', error);
+      } else {
+          console.log('Save successful at:', new Date().toLocaleTimeString());
+      }
+    } catch (err) {
+      console.error('Save crashed with exception:', err);
+    }
+  };
+
+  // --- Save to Supabase with debouncing ---
+  useEffect(() => {
+    if (!planId || loading) return;
+
+    setSaving(true);
+    const timeoutId = setTimeout(async () => {
+      await savePlanData();
       setSaving(false);
     }, 1000); // Debounce for 1 second
 
     return () => clearTimeout(timeoutId);
-  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates]);
+  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, insuranceMode]);
 
   // Handle logout
   const handleLogout = async () => {
+    setSaving(true);
+    await savePlanData();
     await signOut();
+    resetState(); // Clear data immediately after logout
   };
 
   if (loading) {
@@ -310,11 +400,18 @@ function App() {
                   <button
                     key={name}
                     className={`btn ${activeSection === 'modules' && currentStep === idx + 1 ? 'btn-primary' : ''}`}
+                    disabled={name === 'Insurance' && insuranceMode === 'anyway'}
                     onClick={() => {
                       setCurrentStep(idx + 1);
                       setActiveSection('modules');
                     }}
-                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                    style={{ 
+                      padding: '0.4rem 0.8rem', 
+                      fontSize: '0.8rem', 
+                      whiteSpace: 'nowrap',
+                      opacity: name === 'Insurance' && insuranceMode === 'anyway' ? 0.5 : 1,
+                      cursor: name === 'Insurance' && insuranceMode === 'anyway' ? 'not-allowed' : 'pointer'
+                    }}
                   >
                     {idx + 1}. {name}
                   </button>
@@ -378,6 +475,9 @@ function App() {
                   setExpenseCategories={setExpenseCategories}
                   onNext={() => { setCurrentStep(3); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(1); window.scrollTo(0, 0); }}
+                  insuranceMode={insuranceMode}
+                  setInsuranceMode={setInsuranceMode}
+                  setCurrentStep={setCurrentStep}
                 />
               )}
               {currentStep === 3 && (
@@ -408,6 +508,9 @@ function App() {
                   setExpenseCategories={setExpenseCategories}
                   onNext={() => { setCurrentStep(6); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(4); window.scrollTo(0, 0); }}
+                  insuranceMode={insuranceMode}
+                  setInsuranceMode={setInsuranceMode}
+                  setCurrentStep={setCurrentStep}
                 />
               )}
               {currentStep === 6 && (
