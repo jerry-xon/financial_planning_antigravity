@@ -114,6 +114,7 @@ function App() {
     householdInflation: 6,
     educationInflation: 8
   });
+  const [journeyAdjustments, setJourneyAdjustments] = useState([]);
 
   // --- Reset All State ---
   const resetState = () => {
@@ -178,6 +179,7 @@ function App() {
       householdInflation: 6,
       educationInflation: 8
     });
+    setJourneyAdjustments([]);
   };
 
   // --- Load Financial Plan from Supabase ---
@@ -297,6 +299,7 @@ function App() {
         setPolicies(data.policies || []);
         setContingencyFund(data.contingency_fund || '');
         setInflationRates(data.inflation_rates || { incomeIncrement: 10, householdInflation: 6, educationInflation: 8 });
+        setJourneyAdjustments(data.journey_adjustments || []);
       }
       
       setLoading(false);
@@ -320,6 +323,7 @@ function App() {
         policies,
         contingency_fund: parseFloat(contingencyFund) || 0,
         inflation_rates: inflationRates,
+        journey_adjustments: journeyAdjustments,
         insurance_mode: insuranceMode
       });
       
@@ -344,7 +348,7 @@ function App() {
     }, 1000); // Debounce for 1 second
 
     return () => clearTimeout(timeoutId);
-  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, insuranceMode]);
+  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, journeyAdjustments, insuranceMode]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -535,6 +539,8 @@ function App() {
                   goals={goals}
                   inflationRates={inflationRates}
                   setInflationRates={setInflationRates}
+                  journeyAdjustments={journeyAdjustments}
+                  setJourneyAdjustments={setJourneyAdjustments}
                   policies={policies}
                   onNext={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(7); window.scrollTo(0, 0); }}

@@ -26,6 +26,7 @@ export const generateProjections = (params) => {
         expenseCategories,
         goals,
         inflationRates,
+        journeyAdjustments = [],
         policies = [],
         startYear = new Date().getFullYear()
     } = params;
@@ -203,7 +204,22 @@ export const generateProjections = (params) => {
             }
         });
 
-        const totalOutflow = annualOutflow + totalEducationExpenses + totalInsuranceOutflow;
+        // 3. Journey Adjustments (Future Expenses/Loans)
+        let yearAdjustmentsTotal = 0;
+        const activeAdjustments = [];
+        
+        journeyAdjustments.forEach(adj => {
+            const adjStartYear = parseInt(adj.startYear);
+            const adjDuration = parseInt(adj.duration) || 1;
+            const adjAmount = parseFloat(adj.amount) || 0;
+            
+            if (year >= adjStartYear && year < (adjStartYear + adjDuration)) {
+                yearAdjustmentsTotal += adjAmount;
+                activeAdjustments.push({ name: adj.name, amount: adjAmount });
+            }
+        });
+
+        const totalOutflow = annualOutflow + totalEducationExpenses + totalInsuranceOutflow + yearAdjustmentsTotal;
         const surplusBeforeSaving = netInflowAfterTax - totalOutflow;
         const savingsAndInvestments = savingsMonthly * 12; 
         const netInvestibleSurplus = surplusBeforeSaving - savingsAndInvestments;
@@ -213,9 +229,12 @@ export const generateProjections = (params) => {
             annualInflow,
             approxTax,
             netInflowAfterTax,
-            annualOutflow,
+            householdOutflow,
+            emiOutflow: fixedOutflow,
             insurancePremium: totalInsuranceOutflow,
             educationExpenses: totalEducationExpenses,
+            journeyAdjustments: activeAdjustments,
+            journeyAdjustmentsTotal: yearAdjustmentsTotal,
             totalOutflow,
             surplusBeforeSaving,
             savingsAndInvestments,

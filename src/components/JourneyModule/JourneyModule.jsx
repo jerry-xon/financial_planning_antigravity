@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { TrendingUp, PieChart, GraduationCap, Map } from 'lucide-react';
+import { TrendingUp, PieChart, GraduationCap, Map, Plus, Trash2, Calendar, Banknote } from 'lucide-react';
 import { generateProjections } from './ProjectionLogic';
 import JourneyTable from './JourneyTable';
 
@@ -10,8 +10,11 @@ const JourneyModule = ({
     goals, 
     inflationRates, 
     setInflationRates,
+    journeyAdjustments = [],
+    setJourneyAdjustments,
     policies,
-    onNext 
+    onNext,
+    onBack
 }) => {
     
     const handleRateChange = (name, value) => {
@@ -21,6 +24,23 @@ const JourneyModule = ({
         });
     };
 
+    const addAdjustment = () => {
+        setJourneyAdjustments([
+            ...journeyAdjustments,
+            { id: Date.now(), name: '', startYear: new Date().getFullYear(), duration: 1, amount: '' }
+        ]);
+    };
+
+    const updateAdjustment = (id, field, value) => {
+        setJourneyAdjustments(journeyAdjustments.map(adj => 
+            adj.id === id ? { ...adj, [field]: value } : adj
+        ));
+    };
+
+    const removeAdjustment = (id) => {
+        setJourneyAdjustments(journeyAdjustments.filter(adj => adj.id !== id));
+    };
+
     const projections = useMemo(() => {
         return generateProjections({
             familyMembers,
@@ -28,9 +48,10 @@ const JourneyModule = ({
             expenseCategories,
             goals,
             inflationRates,
+            journeyAdjustments,
             policies
         });
-    }, [familyMembers, income, expenseCategories, goals, inflationRates, policies]);
+    }, [familyMembers, income, expenseCategories, goals, inflationRates, journeyAdjustments, policies]);
 
     return (
         <div className="journey-module fade-in">
@@ -81,6 +102,97 @@ const JourneyModule = ({
                         />
                     </div>
                 </div>
+
+                <div style={{ marginTop: '2.5rem', borderTop: '1px solid var(--border)', paddingTop: '2rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                        <div>
+                            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Banknote size={20} className="text-primary" /> Future Financial Adjustments
+                            </h3>
+                            <p className="text-muted" style={{ fontSize: '0.875rem', marginTop: '4px' }}>
+                                Add future events like new loans, EMIs, or additional lifestyle expenses.
+                            </p>
+                        </div>
+                        <button className="btn btn-secondary" onClick={addAdjustment} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+                            <Plus size={16} style={{ marginRight: '6px' }} /> Add Adjustment
+                        </button>
+                    </div>
+
+                    {journeyAdjustments.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {journeyAdjustments.map((adj) => (
+                                <div key={adj.id} className="grid" style={{ 
+                                    gridTemplateColumns: '2fr 1fr 1fr 1.5fr auto', 
+                                    gap: '1rem', 
+                                    alignItems: 'end',
+                                    background: 'var(--bg-main)',
+                                    padding: '1.25rem',
+                                    borderRadius: '12px',
+                                    border: '1px solid var(--border)'
+                                }}>
+                                    <div className="input-group" style={{ marginBottom: 0 }}>
+                                        <label>Label / Name</label>
+                                        <input 
+                                            type="text" 
+                                            value={adj.name} 
+                                            onChange={(e) => updateAdjustment(adj.id, 'name', e.target.value)}
+                                            placeholder="e.g. Home Loan EMI"
+                                        />
+                                    </div>
+                                    <div className="input-group" style={{ marginBottom: 0 }}>
+                                        <label>Starts Year</label>
+                                        <input 
+                                            type="number" 
+                                            value={adj.startYear} 
+                                            onChange={(e) => updateAdjustment(adj.id, 'startYear', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="input-group" style={{ marginBottom: 0 }}>
+                                        <label>Duration (Yrs)</label>
+                                        <input 
+                                            type="number" 
+                                            value={adj.duration} 
+                                            onChange={(e) => updateAdjustment(adj.id, 'duration', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="input-group" style={{ marginBottom: 0 }}>
+                                        <label>Annual Amount (₹)</label>
+                                        <input 
+                                            type="number" 
+                                            value={adj.amount} 
+                                            onChange={(e) => updateAdjustment(adj.id, 'amount', e.target.value)}
+                                            placeholder="e.g. 180000"
+                                        />
+                                    </div>
+                                    <button 
+                                        onClick={() => removeAdjustment(adj.id)}
+                                        style={{ 
+                                            background: 'none', 
+                                            border: 'none', 
+                                            color: '#ef4444', 
+                                            cursor: 'pointer',
+                                            padding: '0.75rem',
+                                            display: 'flex',
+                                            alignItems: 'center'
+                                        }}
+                                    >
+                                        <Trash2 size={20} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div style={{ 
+                            textAlign: 'center', 
+                            padding: '2rem', 
+                            border: '2px dashed var(--border)', 
+                            borderRadius: '12px',
+                            color: 'var(--text-muted)'
+                        }}>
+                            No future adjustments added. Use the button above to add loans or upcoming expenses.
+                        </div>
+                    )}
+                </div>
             </div>
 
             {projections.length > 0 ? (
@@ -94,7 +206,10 @@ const JourneyModule = ({
                 </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
+                <button className="btn btn-secondary" onClick={onBack}>
+                    Back to Contingency Fund
+                </button>
                 <button className="btn btn-primary" onClick={onNext}>
                     Proceed to Financial Overview
                 </button>
