@@ -93,7 +93,11 @@ export const createFinancialPlan = async (planName = 'My Financial Plan') => {
             incomeIncrement: 10,
             householdInflation: 6,
             educationInflation: 8
-          }
+          },
+          journey_adjustments: [],
+          investment_allocations: [],
+          goal_mappings: {},
+          insurance_mode: null
         }
       ])
       .select()
