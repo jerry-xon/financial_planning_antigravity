@@ -12,9 +12,10 @@ const JourneyModule = ({
     setInflationRates,
     journeyAdjustments = [],
     setJourneyAdjustments,
-    policies,
+    policies = [],
     onNext,
-    onBack
+    onBack,
+    projections: passedProjections
 }) => {
     
     const handleRateChange = (name, value) => {
@@ -42,7 +43,7 @@ const JourneyModule = ({
     };
 
     const projections = useMemo(() => {
-        return generateProjections({
+        return passedProjections || generateProjections({
             familyMembers,
             income,
             expenseCategories,
@@ -51,7 +52,11 @@ const JourneyModule = ({
             journeyAdjustments,
             policies
         });
-    }, [familyMembers, income, expenseCategories, goals, inflationRates, journeyAdjustments, policies]);
+    }, [passedProjections, familyMembers, income, expenseCategories, goals, inflationRates, journeyAdjustments, policies]);
+
+    const onNextHandled = () => {
+        onNext();
+    };
 
     return (
         <div className="journey-module fade-in">
@@ -210,8 +215,8 @@ const JourneyModule = ({
                 <button className="btn btn-secondary" onClick={onBack}>
                     Back to Contingency Fund
                 </button>
-                <button className="btn btn-primary" onClick={onNext}>
-                    Proceed to Financial Overview
+                <button className="btn btn-primary" onClick={onNextHandled}>
+                    Proceed to Investment Allocation
                 </button>
             </div>
         </div>

@@ -1,5 +1,5 @@
 import { LogOut, User } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import AssetModule from './components/AssetModule/AssetModule';
 import RoleBasedRouting from './components/Auth/RoleBasedRouting';
 import CashFlowModule from './components/CashFlowModule/CashFlowModule';
@@ -8,9 +8,13 @@ import GoalModule from './components/GoalModule/GoalModule';
 import InsuranceModule from './components/InsuranceModule/InsuranceModule';
 import IncomeTaxModule from './components/IncomeTaxModule/IncomeTaxModule';
 import JourneyModule from './components/JourneyModule/JourneyModule';
+import { generateProjections } from './components/JourneyModule/ProjectionLogic';
 import ProfileModule from './components/ProfileModule/ProfileModule';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProtectionGapModule from './components/ProtectionGapModule/ProtectionGapModule';
+import AllocationModule from './components/AllocationModule/AllocationModule';
+import GrowthModule from './components/GrowthModule/GrowthModule';
+import FulfillmentModule from './components/FulfillmentModule/FulfillmentModule';
 import ReportView from './components/ReportModule/ReportView';
 import CalculatorPlaceholder from './components/Calculators/CalculatorPlaceholder';
 import SIPCalculator from './components/Calculators/SIPCalculator';
@@ -115,6 +119,8 @@ function App() {
     educationInflation: 8
   });
   const [journeyAdjustments, setJourneyAdjustments] = useState([]);
+  const [investmentAllocations, setInvestmentAllocations] = useState([]);
+  const [goalMappings, setGoalMappings] = useState({});
 
   // --- Reset All State ---
   const resetState = () => {
@@ -180,6 +186,8 @@ function App() {
       educationInflation: 8
     });
     setJourneyAdjustments([]);
+    setInvestmentAllocations([]);
+    setGoalMappings({});
   };
 
   // --- Load Financial Plan from Supabase ---
@@ -300,6 +308,8 @@ function App() {
         setContingencyFund(data.contingency_fund || '');
         setInflationRates(data.inflation_rates || { incomeIncrement: 10, householdInflation: 6, educationInflation: 8 });
         setJourneyAdjustments(data.journey_adjustments || []);
+        setInvestmentAllocations(data.investment_allocations || []);
+        setGoalMappings(data.goal_mappings || {});
       }
       
       setLoading(false);
@@ -307,6 +317,19 @@ function App() {
 
     loadPlan();
   }, [user]);
+
+  const journeyProjections = useMemo(() => {
+    if (!familyMembers.find(m => m.relation?.toLowerCase() === 'self')) return [];
+    return generateProjections({
+      familyMembers,
+      income,
+      expenseCategories,
+      goals,
+      inflationRates,
+      journeyAdjustments,
+      policies
+    });
+  }, [familyMembers, income, expenseCategories, goals, inflationRates, journeyAdjustments, policies]);
 
   const savePlanData = async () => {
     if (!planId) return;
@@ -324,6 +347,8 @@ function App() {
         contingency_fund: parseFloat(contingencyFund) || 0,
         inflation_rates: inflationRates,
         journey_adjustments: journeyAdjustments,
+        investment_allocations: investmentAllocations,
+        goal_mappings: goalMappings,
         insurance_mode: insuranceMode
       });
       
@@ -348,7 +373,7 @@ function App() {
     }, 1000); // Debounce for 1 second
 
     return () => clearTimeout(timeoutId);
-  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, journeyAdjustments, insuranceMode]);
+  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, journeyAdjustments, investmentAllocations, goalMappings, insuranceMode]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -399,7 +424,7 @@ function App() {
               <nav style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {[
                   'Profile', 'Cash Flow', 'Assets', 'Goals', 'Insurance', 
-                  'Protection Gap', 'Contingency', 'Journey', 'Overview'
+                  'Protection Gap', 'Contingency', 'Journey', 'Allocation', 'Growth', 'Roadmap', 'Overview'
                 ].map((name, idx) => (
                   <button
                     key={name}
@@ -542,11 +567,44 @@ function App() {
                   journeyAdjustments={journeyAdjustments}
                   setJourneyAdjustments={setJourneyAdjustments}
                   policies={policies}
+                  projections={journeyProjections}
                   onNext={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(7); window.scrollTo(0, 0); }}
                 />
               )}
               {currentStep === 9 && (
+                <AllocationModule
+                  netInvestibleSurplus={
+                    (journeyProjections.find(p => p.year === new Date().getFullYear()))?.netInvestibleSurplus || 0
+                  }
+                  allocations={investmentAllocations}
+                  setAllocations={setInvestmentAllocations}
+                  onNext={() => { setCurrentStep(10); window.scrollTo(0, 0); }}
+                  onBack={() => { setCurrentStep(8); window.scrollTo(0, 0); }}
+                />
+              )}
+              {currentStep === 10 && (
+                <GrowthModule
+                  familyMembers={familyMembers}
+                  assetCategories={assetCategories}
+                  expenseCategories={expenseCategories}
+                  allocations={investmentAllocations}
+                  goals={goals}
+                  onNext={() => { setCurrentStep(11); window.scrollTo(0, 0); }}
+                  onBack={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
+                />
+              )}
+              {currentStep === 11 && (
+                <FulfillmentModule
+                  goals={goals}
+                  allocations={investmentAllocations}
+                  goalMappings={goalMappings}
+                  setGoalMappings={setGoalMappings}
+                  onNext={() => { setCurrentStep(12); window.scrollTo(0, 0); }}
+                  onBack={() => { setCurrentStep(10); window.scrollTo(0, 0); }}
+                />
+              )}
+              {currentStep === 12 && (
                 <ReportView
                   familyMembers={familyMembers}
                   income={income}
@@ -555,7 +613,9 @@ function App() {
                   liabilityCategories={liabilityCategories}
                   goals={goals}
                   policies={policies}
-                  onBack={() => { setCurrentStep(8); window.scrollTo(0, 0); }}
+                  allocations={investmentAllocations}
+                  goalMappings={goalMappings}
+                  onBack={() => { setCurrentStep(11); window.scrollTo(0, 0); }}
                 />
               )}
             </>

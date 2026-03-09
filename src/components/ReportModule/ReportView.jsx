@@ -6,7 +6,18 @@ import { categorizeGoals } from '../GoalModule/GoalLogic';
 import { Download, Printer, CheckCircle, TrendingUp, AlertTriangle, Clock, Shield } from 'lucide-react';
 import { calculateYearlyInsuranceSummary, getInsuredNamesList, getPolicyColumns } from '../InsuranceModule/InsuranceLogic';
 
-const ReportView = ({ familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies }) => {
+const ReportView = ({ 
+    familyMembers, 
+    income, 
+    expenseCategories, 
+    assetCategories, 
+    liabilityCategories, 
+    goals, 
+    policies,
+    allocations = [],
+    goalMappings = {},
+    onBack
+}) => {
     const profileResults = calculateFamilyProfile(familyMembers);
     const cashFlowResults = calculateCashFlow(income, expenseCategories);
     const assetResults = calculateNetWorth(assetCategories, liabilityCategories);
@@ -28,6 +39,9 @@ const ReportView = ({ familyMembers, income, expenseCategories, assetCategories,
                 <p className="text-muted">Generated for {familyMembers[0]?.name || 'Valued Client'} • {new Date().toLocaleDateString('en-IN')}</p>
 
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
+                    <button className="btn btn-secondary" onClick={onBack}>
+                        Back to Roadmap
+                    </button>
                     <button className="btn btn-primary" onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Printer size={18} /> Print Plan / Save as PDF
                     </button>
@@ -293,6 +307,82 @@ const ReportView = ({ familyMembers, income, expenseCategories, assetCategories,
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                    </section>
+                )}
+
+                {/* Investment Strategy */}
+                {allocations.length > 0 && (
+                    <section className="report-section card" style={{ marginTop: '1.5rem' }}>
+                        <h3>6. Planned Investment Strategy</h3>
+                        <p className="text-muted" style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>
+                            Based on your investible surplus, the following investments are planned to achieve your financial objectives.
+                        </p>
+                        <table className="report-table">
+                            <thead>
+                                <tr>
+                                    <th>Investment</th>
+                                    <th>Type</th>
+                                    <th>Annual Amount</th>
+                                    <th>Expected CAGR</th>
+                                    <th>Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {allocations.map((a, i) => (
+                                    <tr key={i}>
+                                        <td>{a.name || a.type}</td>
+                                        <td>{a.type}</td>
+                                        <td>{formatCurrency(a.amount)}</td>
+                                        <td>{a.expectedReturn}%</td>
+                                        <td>{a.duration} Years (from {a.startYear})</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </section>
+                )}
+
+                {/* Goal Funding Roadmap */}
+                {goals.length > 0 && (
+                    <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                        <h3>7. Goal Funding Roadmap</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {goals.map((g, i) => {
+                                const selectedSources = goalMappings[g.id] || [];
+                                const isMapped = selectedSources.length > 0;
+                                return (
+                                    <div key={i} style={{ 
+                                        padding: '1rem', 
+                                        border: '1px solid var(--border)', 
+                                        borderRadius: '8px',
+                                        background: isMapped ? 'rgba(52, 211, 153, 0.05)' : 'rgba(239, 68, 68, 0.05)'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <strong>{g.name || g.placeholder}</strong>
+                                            <span style={{ fontSize: '0.8rem', color: isMapped ? 'var(--success)' : '#ef4444', fontWeight: 700 }}>
+                                                {isMapped ? 'FUNDING SOURCE ASSIGNED' : 'NO SOURCE ASSIGNED'}
+                                            </span>
+                                        </div>
+                                        {isMapped && (
+                                            <div style={{ marginTop: '8px', fontSize: '0.85rem' }}>
+                                                <span className="text-muted">Funding Sources:</span> 
+                                                <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+                                                    {selectedSources.map(sid => {
+                                                        const source = allocations.find(a => a.id === sid) || 
+                                                                     [{id:'stocks', name:'Existing Stocks'}, {id:'mfEquity', name:'Existing Equity MF'}, {id:'assetPPF', name:'Existing PPF'}, {id:'assetFD', name:'Existing FD'}, {id:'assetGold', name:'Existing Gold'}].find(s => s.id === sid);
+                                                        return (
+                                                            <span key={sid} style={{ background: 'var(--border)', padding: '2px 8px', borderRadius: '4px' }}>
+                                                                {source?.name || sid}
+                                                            </span>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </section>
                 )}
