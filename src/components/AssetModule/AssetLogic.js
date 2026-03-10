@@ -4,26 +4,52 @@ export const calculateNetWorth = (assetCategories, liabilityCategories) => {
     let totalAssets = 0;
     const assetBreakdown = [];
 
-    Object.entries(assetCategories).forEach(([catKey, items]) => {
-        Object.entries(items).forEach(([itemKey, value]) => {
-            const amount = parseFloat(value) || 0;
-            totalAssets += amount;
-            if (amount > 0) {
-                assetBreakdown.push({
-                    name: getItemLabel(itemKey),
-                    category: getCategoryLabel(catKey),
-                    value: amount
+    // Helper to process categories safely
+    const processItems = (categories, isAsset = true) => {
+        let total = 0;
+        if (!categories) return total;
+
+        // Define valid categories to prevent summing ghost/old keys
+        const validCategories = [
+            'realEstate', 'vehicles', 'valuables', 'cash', 'investments', 
+            'insurance', 'retirement', 'others', 'loans', 'custom'
+        ];
+
+        Object.entries(categories).forEach(([catKey, items]) => {
+            // Only process if it's a known category
+            if (!validCategories.includes(catKey)) return;
+
+            if (catKey === 'custom' && Array.isArray(items)) {
+                items.forEach(item => {
+                    const amount = parseFloat(item.value) || 0;
+                    total += amount;
+                    if (isAsset && amount > 0) {
+                        assetBreakdown.push({
+                            name: item.label || 'Other Asset',
+                            category: 'Custom Assets',
+                            value: amount
+                        });
+                    }
+                });
+            } else if (typeof items === 'object' && items !== null) {
+                Object.entries(items).forEach(([itemKey, value]) => {
+                    const amount = parseFloat(value) || 0;
+                    total += amount;
+                    if (isAsset && amount > 0) {
+                        assetBreakdown.push({
+                            name: getItemLabel(itemKey),
+                            category: getCategoryLabel(catKey),
+                            value: amount
+                        });
+                    }
                 });
             }
         });
-    });
+        return total;
+    };
 
-    let totalLiabilities = 0;
-    Object.values(liabilityCategories).forEach(items => {
-        Object.values(items).forEach(value => {
-            totalLiabilities += parseFloat(value) || 0;
-        });
-    });
+    totalAssets = processItems(assetCategories, true);
+    const totalLiabilities = processItems(liabilityCategories, false);
 
     const netWorth = totalAssets - totalLiabilities;
 
@@ -40,7 +66,8 @@ const calculateAllocation = (breakdown, total) => {
     if (total === 0) return [];
     // Group by category for high-level allocation
     const grouped = breakdown.reduce((acc, item) => {
-        acc[item.category] = (acc[item.category] || 0) + item.value;
+        const category = item.category || 'Others';
+        acc[category] = (acc[category] || 0) + item.value;
         return acc;
     }, {});
 
@@ -51,30 +78,50 @@ const calculateAllocation = (breakdown, total) => {
     }));
 };
 
-const getCategoryLabel = (key) => {
+export const getCategoryLabel = (key) => {
     const labels = {
-        equity: 'Equity Assets',
-        debt: 'Fixed Income / Debt',
         realEstate: 'Real Estate',
-        liquid: 'Cash & Cash Equivalents',
-        others: 'Other Assets'
+        vehicles: 'Vehicles',
+        valuables: 'Valuables & Art',
+        cash: 'Liquid Assets',
+        investments: 'Investments',
+        insurance: 'Insurance (Cash Value)',
+        retirement: 'Retirement Accounts',
+        others: 'Other Assets',
+        loans: 'Liabilities / Loans',
+        custom: 'Custom Items'
     };
     return labels[key] || key;
 };
 
-const getItemLabel = (key) => {
+export const getItemLabel = (key) => {
     const labels = {
-        stocks: 'Direct Stocks',
-        mfEquity: 'Equity Mutual Funds',
+        // Assets
+        residential: 'Residential House',
+        secondProperty: 'Second Property',
+        landPlot: 'Land / Plot',
+        idv: 'Vehicles (IDV)',
+        gold: 'Gold Jewellery',
+        art: 'Art / Collectibles',
+        savings: 'Bank Savings',
+        equity: 'Equity Investments',
+        mutualFunds: 'Mutual Funds Portfolio',
+        fixedDeposit: 'Fixed Deposit',
+        recurringDeposit: 'Recurring Deposit',
+        savingPlans: 'Saving Plans',
+        ulip: 'ULIP',
+        epf: 'EPF',
         ppf: 'PPF',
-        epf: 'EPF / VPF',
-        fd: 'Fixed Deposits',
-        bonds: 'Bonds / NCDs',
-        residence: 'Self-Occupied Property',
-        investmentProp: 'Investment Property',
-        cash: 'Savings Account / Cash',
-        gold: 'Gold / Silver',
-        others: 'Other Assets'
+        nps: 'NPS',
+        other: 'Other Assets',
+
+        // Liabilities
+        home: 'Home Loan',
+        personal: 'Personal Loan',
+        car: 'Car Loan',
+        education: 'Education Loan',
+        otherEmis: 'Other EMIs',
+        creditCard: 'Credit Card / Other'
     };
     return labels[key] || key;
 };

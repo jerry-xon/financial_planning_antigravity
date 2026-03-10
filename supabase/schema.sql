@@ -61,8 +61,8 @@ create table if not exists public.financial_plans (
   family_members jsonb default '[]'::jsonb,
   income jsonb default '{"family":"","bonus":"","passive":"","other":""}'::jsonb,
   expense_categories jsonb default '{"household":{"grocery":"","rent":"","education":"","lifestyle":"","medical":"","travel":""},"emi":{"personalLoan":"","homeLoan":"","educationLoan":"","otherEmi":"","healthInsurance":"","carInsurance":"","bikeInsurance":"","otherInsurance":""},"savings":{"rd":"","fd":"","lifeInsurance":"","ppf":"","savingSchemes":"","mfSip":"","otherSaving":""}}'::jsonb,
-  asset_categories jsonb default '{"equity":{"stocks":"","mfEquity":""},"debt":{"ppf":"","fd":""},"realEstate":{"residence":"","investmentProp":""},"others":{"gold":"","others":""}}'::jsonb,
-  liability_categories jsonb default '{"loans":{"home":"","car":"","other":""}}'::jsonb,
+  asset_categories jsonb default '{"realEstate": {"residential": "", "secondProperty": "", "landPlot": ""}, "vehicles": {"idv": ""}, "valuables": {"gold": "", "art": ""}, "cash": {"savings": ""}, "investments": {"equity": "", "mutualFunds": "", "fixedDeposit": "", "recurringDeposit": ""}, "insurance": {"savingPlans": "", "ulip": ""}, "retirement": {"epf": "", "ppf": "", "nps": ""}, "others": {"other": ""}, "custom": []}'::jsonb,
+  liability_categories jsonb default '{"loans": {"home": "", "personal": "", "car": "", "education": "", "otherEmis": "", "creditCard": ""}, "custom": []}'::jsonb,
   goals jsonb default '[]'::jsonb,
   policies jsonb default '[]'::jsonb,
   contingency_fund numeric default 0,
@@ -219,13 +219,19 @@ begin
       'savings', jsonb_build_object('rd', '', 'fd', '', 'lifeInsurance', '', 'ppf', '', 'savingSchemes', '', 'mfSip', '', 'otherSaving', '')
     ),
     jsonb_build_object(
-      'equity', jsonb_build_object('stocks', '', 'mfEquity', ''),
-      'debt', jsonb_build_object('ppf', '', 'fd', ''),
-      'realEstate', jsonb_build_object('residence', '', 'investmentProp', ''),
-      'others', jsonb_build_object('gold', '', 'others', '')
+      'realEstate', jsonb_build_object('residential', '', 'secondProperty', '', 'landPlot', ''),
+      'vehicles', jsonb_build_object('idv', ''),
+      'valuables', jsonb_build_object('gold', '', 'art', ''),
+      'cash', jsonb_build_object('savings', ''),
+      'investments', jsonb_build_object('equity', '', 'mutualFunds', '', 'fixedDeposit', '', 'recurringDeposit', ''),
+      'insurance', jsonb_build_object('savingPlans', '', 'ulip', ''),
+      'retirement', jsonb_build_object('epf', '', 'ppf', '', 'nps', ''),
+      'others', jsonb_build_object('other', ''),
+      'custom', '[]'::jsonb
     ),
     jsonb_build_object(
-      'loans', jsonb_build_object('home', '', 'car', '', 'other', '')
+      'loans', jsonb_build_object('home', '', 'personal', '', 'car', '', 'education', '', 'otherEmis', '', 'creditCard', ''),
+      'custom', '[]'::jsonb
     )
   );
 

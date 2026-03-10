@@ -94,13 +94,19 @@ function App() {
 
   // Asset State
   const [assetCategories, setAssetCategories] = useState({
-    equity: { stocks: '', mfEquity: '' },
-    debt: { ppf: '', fd: '' },
-    realEstate: { residence: '', investmentProp: '' },
-    others: { gold: '', others: '' }
+    realEstate: { residential: '', secondProperty: '', landPlot: '' },
+    vehicles: { idv: '' },
+    valuables: { gold: '', art: '' },
+    cash: { savings: '' },
+    investments: { equity: '', mutualFunds: '', fixedDeposit: '', recurringDeposit: '' },
+    insurance: { savingPlans: '', ulip: '' },
+    retirement: { epf: '', ppf: '', nps: '' },
+    others: { other: '' },
+    custom: []
   });
   const [liabilityCategories, setLiabilityCategories] = useState({
-    loans: { home: '', car: '', other: '' }
+    loans: { home: '', personal: '', car: '', education: '', otherEmis: '', creditCard: '' },
+    custom: []
   });
 
   // Goals State
@@ -169,13 +175,19 @@ function App() {
       savings: { rd: '', fd: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
     });
     setAssetCategories({
-      equity: { stocks: '', mfEquity: '' },
-      debt: { ppf: '', fd: '' },
-      realEstate: { residence: '', investmentProp: '' },
-      others: { gold: '', others: '' }
+      realEstate: { residential: '', secondProperty: '', landPlot: '' },
+      vehicles: { idv: '' },
+      valuables: { gold: '', art: '' },
+      cash: { savings: '' },
+      investments: { equity: '', mutualFunds: '', fixedDeposit: '', recurringDeposit: '' },
+      insurance: { savingPlans: '', ulip: '' },
+      retirement: { epf: '', ppf: '', nps: '' },
+      others: { other: '' },
+      custom: []
     });
     setLiabilityCategories({
-      loans: { home: '', car: '', other: '' }
+      loans: { home: '', personal: '', car: '', education: '', otherEmis: '', creditCard: '' },
+      custom: []
     });
     setGoals([]);
     setPolicies([]);
@@ -281,27 +293,78 @@ function App() {
         
         // Merge loaded asset_categories with default structure
         const defaultAssetCategories = {
-          equity: { stocks: '', mfEquity: '' },
-          debt: { ppf: '', fd: '' },
-          realEstate: { residence: '', investmentProp: '' },
-          others: { gold: '', others: '' }
+          realEstate: { residential: '', secondProperty: '', landPlot: '' },
+          vehicles: { idv: '' },
+          valuables: { gold: '', art: '' },
+          cash: { savings: '' },
+          investments: { equity: '', mutualFunds: '', fixedDeposit: '', recurringDeposit: '' },
+          insurance: { savingPlans: '', ulip: '' },
+          retirement: { epf: '', ppf: '', nps: '' },
+          others: { other: '' },
+          custom: []
         };
         const loadedAssetCategories = data.asset_categories || {};
-        const mergedAssetCategories = {
-          equity: { ...defaultAssetCategories.equity, ...(loadedAssetCategories.equity || {}) },
-          debt: { ...defaultAssetCategories.debt, ...(loadedAssetCategories.debt || {}) },
-          realEstate: { ...defaultAssetCategories.realEstate, ...(loadedAssetCategories.realEstate || {}) },
-          others: { ...defaultAssetCategories.others, ...(loadedAssetCategories.others || {}) }
+        
+        // Surgical migration: Only map known fields and avoid polluting with old top-level keys
+        const migratedAssetCategories = {
+          ...defaultAssetCategories,
+          realEstate: { 
+            ...defaultAssetCategories.realEstate, 
+            ...(loadedAssetCategories.realEstate || {}),
+            residential: loadedAssetCategories.realEstate?.residential || loadedAssetCategories.realEstate?.residence || '',
+            secondProperty: loadedAssetCategories.realEstate?.secondProperty || loadedAssetCategories.realEstate?.investmentProp || ''
+          },
+          vehicles: { ...defaultAssetCategories.vehicles, ...(loadedAssetCategories.vehicles || {}) },
+          valuables: { 
+            ...defaultAssetCategories.valuables, 
+            ...(loadedAssetCategories.valuables || {}),
+            gold: loadedAssetCategories.valuables?.gold || loadedAssetCategories.others?.gold || ''
+          },
+          cash: { ...defaultAssetCategories.cash, ...(loadedAssetCategories.cash || {}) },
+          investments: {
+            ...defaultAssetCategories.investments,
+            ...(loadedAssetCategories.investments || {}),
+            equity: loadedAssetCategories.investments?.equity || loadedAssetCategories.equity?.stocks || '',
+            mutualFunds: loadedAssetCategories.investments?.mutualFunds || loadedAssetCategories.equity?.mfEquity || '',
+            fixedDeposit: loadedAssetCategories.investments?.fixedDeposit || loadedAssetCategories.debt?.fd || ''
+          },
+          insurance: { ...defaultAssetCategories.insurance, ...(loadedAssetCategories.insurance || {}) },
+          retirement: {
+            ...defaultAssetCategories.retirement,
+            ...(loadedAssetCategories.retirement || {}),
+            ppf: loadedAssetCategories.retirement?.ppf || loadedAssetCategories.debt?.ppf || ''
+          },
+          others: {
+            ...defaultAssetCategories.others,
+            ...(loadedAssetCategories.others || {}),
+            other: loadedAssetCategories.others?.other || loadedAssetCategories.others?.others || ''
+          },
+          custom: Array.isArray(loadedAssetCategories.custom) ? loadedAssetCategories.custom : []
         };
-        setAssetCategories(mergedAssetCategories);
+        setAssetCategories(migratedAssetCategories);
         
         // Merge loaded liability_categories with default structure
-        const defaultLiabilityCategories = { loans: { home: '', car: '', other: '' } };
-        const loadedLiabilityCategories = data.liability_categories || {};
-        const mergedLiabilityCategories = {
-          loans: { ...defaultLiabilityCategories.loans, ...(loadedLiabilityCategories.loans || {}) }
+        const defaultLiabilityCategories = { 
+          loans: { home: '', personal: '', car: '', education: '', otherEmis: '', creditCard: '' },
+          custom: []
         };
-        setLiabilityCategories(mergedLiabilityCategories);
+        const loadedLiabilityCategories = data.liability_categories || {};
+        const migratedLiabilityCategories = {
+          loans: { 
+            ...defaultLiabilityCategories.loans, 
+            ...(loadedLiabilityCategories.loans || {}),
+            // Map old keys if they exist and new ones are empty
+            home: loadedLiabilityCategories.loans?.home || '',
+            car: loadedLiabilityCategories.loans?.car || '',
+            otherEmis: loadedLiabilityCategories.loans?.otherEmis || loadedLiabilityCategories.loans?.other || ''
+          },
+          custom: Array.isArray(loadedLiabilityCategories.custom) ? loadedLiabilityCategories.custom : []
+        };
+
+        // Final cleanup: remove ghost keys that might have been accidentally merged via spread
+        delete migratedLiabilityCategories.loans.other; 
+
+        setLiabilityCategories(migratedLiabilityCategories);
         
         setGoals(data.goals || []);
         setPolicies(data.policies || []);

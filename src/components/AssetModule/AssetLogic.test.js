@@ -4,10 +4,10 @@ import { calculateNetWorth } from './AssetLogic';
 describe('AssetLogic', () => {
     it('calculates Net Worth correctly', () => {
         const assetCategories = {
-            equity: { stocks: 100000, mfEquity: 50000 },
-            debt: { ppf: 50000 },
-            realEstate: { residence: 5000000 },
-            others: { gold: 200000 }
+            investments: { equity: 100000, mutualFunds: 50000 },
+            retirement: { ppf: 50000 },
+            realEstate: { residential: 5000000 },
+            valuables: { gold: 200000 }
         };
         const liabilityCategories = {
             loans: { home: 1000000, car: 200000 }
@@ -22,14 +22,13 @@ describe('AssetLogic', () => {
 
     it('calculates asset allocation percentages correctly', () => {
         const assetCategories = {
-            equity: { stocks: 30000 },
-            debt: { fd: 70000 }
+            investments: { equity: 30000, fixedDeposit: 70000 }
         };
         const liabilityCategories = { loans: {} };
 
         const results = calculateNetWorth(assetCategories, liabilityCategories);
 
-        expect(results.allocation).toContainEqual({ name: 'Equity Assets', value: 30000, percentage: 30 });
-        expect(results.allocation).toContainEqual({ name: 'Fixed Income / Debt', value: 70000, percentage: 70 });
+        // All fields are in 'investments' category now, so one slice in allocation
+        expect(results.allocation).toContainEqual({ name: 'Investments', value: 100000, percentage: 100 });
     });
 });
