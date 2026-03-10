@@ -1,4 +1,5 @@
 import React from 'react';
+import { Trash2, Plus } from 'lucide-react';
 
 const GoalInput = ({ goals, setGoals, onCalculate }) => {
 
@@ -6,6 +7,23 @@ const GoalInput = ({ goals, setGoals, onCalculate }) => {
         setGoals(prev => prev.map(goal =>
             goal.id === id ? { ...goal, [field]: value } : goal
         ));
+    };
+
+    const addCustomGoal = () => {
+        const newGoal = {
+            id: `custom_${Date.now()}`,
+            name: '',
+            isPredefined: false,
+            placeholder: 'Enter your goal name',
+            yearsToGoal: '',
+            presentValue: '',
+            inflationRate: 6
+        };
+        setGoals(prev => [...prev, newGoal]);
+    };
+
+    const deleteGoal = (id) => {
+        setGoals(prev => prev.filter(goal => goal.id !== id));
     };
 
     return (
@@ -18,6 +36,7 @@ const GoalInput = ({ goals, setGoals, onCalculate }) => {
                             <th style={{ padding: '1rem' }}>Time (Years)</th>
                             <th style={{ padding: '1rem' }}>Present Value (₹)</th>
                             <th style={{ padding: '1rem' }}>Inflation (%)</th>
+                            <th style={{ padding: '1rem', width: '50px' }}></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -106,6 +125,26 @@ const GoalInput = ({ goals, setGoals, onCalculate }) => {
                                             style={{ width: '80px' }}
                                         />
                                     </td>
+                                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                                        {!goal.isPredefined && (
+                                            <button 
+                                                onClick={() => deleteGoal(goal.id)}
+                                                style={{ 
+                                                    background: 'transparent', 
+                                                    border: 'none', 
+                                                    color: '#ff4d4f', 
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    padding: '4px'
+                                                }}
+                                                title="Delete goal"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        )}
+                                    </td>
                                 </tr>
                             );
                         })}
@@ -113,7 +152,21 @@ const GoalInput = ({ goals, setGoals, onCalculate }) => {
                 </table>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '3rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem' }}>
+                <button 
+                    className="btn btn-secondary" 
+                    onClick={addCustomGoal}
+                    style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem',
+                        padding: '0.75rem 1.5rem',
+                        fontSize: '0.9rem'
+                    }}
+                >
+                    <Plus size={18} /> Add Goals
+                </button>
+
                 <button className="btn btn-primary" onClick={onCalculate} style={{ padding: '1rem 4rem' }}>
                     Project Future Costs
                 </button>

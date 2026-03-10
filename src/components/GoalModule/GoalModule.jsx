@@ -9,11 +9,14 @@ const GoalModule = ({ familyMembers, goals, setGoals, onNext, onBack }) => {
 
     // Sync goals with family members whenever they change
     useEffect(() => {
-        const freshGoals = getPredefinedGoals(familyMembers);
+        const freshPredefined = getPredefinedGoals(familyMembers);
 
         setGoals(prev => {
-            // Map existing data to the fresh list by ID
-            return freshGoals.map(newGoal => {
+            // 1. Separate existing custom goals from predefined ones
+            const existingCustom = prev.filter(g => !g.isPredefined);
+            
+            // 2. Map existing data to the fresh predefined list by ID
+            const updatedPredefined = freshPredefined.map(newGoal => {
                 const existing = prev.find(p => p.id === newGoal.id);
                 if (existing) {
                     return {
@@ -25,9 +28,8 @@ const GoalModule = ({ familyMembers, goals, setGoals, onNext, onBack }) => {
                         inflationRate: existing.inflationRate,
                         profession: existing.profession,
                         courseDuration: existing.courseDuration,
-                        courseDuration: existing.courseDuration,
                         totalCourseCost: existing.totalCourseCost,
-                        name: newGoal.isPredefined ? newGoal.name : existing.name
+                        name: newGoal.name // Always use the name from logic for predefined (includes child names)
                     };
                 }
 
@@ -47,6 +49,9 @@ const GoalModule = ({ familyMembers, goals, setGoals, onNext, onBack }) => {
                     inflationRate: 6
                 };
             });
+
+            // 3. Combine updated predefined goals with existing custom goals
+            return [...updatedPredefined, ...existingCustom];
         });
     }, [familyMembers, setGoals]);
 

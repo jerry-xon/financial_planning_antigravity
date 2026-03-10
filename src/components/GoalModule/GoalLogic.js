@@ -36,20 +36,12 @@ export const categorizeGoals = (goals) => {
 };
 
 export const getPredefinedGoals = (familyMembers) => {
-    const goals = [
-        { id: 'tour', name: 'Foreign/Domestic Tour', isPredefined: true },
-        { id: 'renovation', name: 'House Renovation', isPredefined: true },
-        { id: 'vehicle', name: 'Buying Bike/Car', isPredefined: true },
-    ];
-
-    // Add Child Education and Marriage based on family members
-    // Filtering for children specifically
     const children = familyMembers.filter(m => m.relation === 'Child');
+    const goals = [];
 
+    // 1. Higher Education - [Child Name]
     children.forEach((child, index) => {
         const childName = child.name || `Child ${index + 1}`;
-        
-        // Only add Higher Education goal if child is not currently in College
         if (child.occupation !== 'College') {
             goals.push({
                 id: `edu_${index}`,
@@ -63,7 +55,20 @@ export const getPredefinedGoals = (familyMembers) => {
                 inflationRate: 8 // Default for education
             });
         }
+    });
 
+    // 2. Constructing new house
+    goals.push({ id: 'construction', name: 'Constructing new house', isPredefined: true });
+
+    // 3. Buying a Flat
+    goals.push({ id: 'flat', name: 'Buying a Flat', isPredefined: true });
+
+    // 4. House Renovation
+    goals.push({ id: 'renovation', name: 'House Renovation', isPredefined: true });
+
+    // 5. Marriage - [Child Name]
+    children.forEach((child, index) => {
+        const childName = child.name || `Child ${index + 1}`;
         goals.push({
             id: `marriage_${index}`,
             name: `Marriage - ${childName}`,
@@ -71,16 +76,20 @@ export const getPredefinedGoals = (familyMembers) => {
         });
     });
 
+    // 6. Buying Car
+    goals.push({ id: 'car', name: 'Buying Car', isPredefined: true });
+
+    // 7. Buying Bike
+    goals.push({ id: 'bike', name: 'Buying Bike', isPredefined: true });
+
+    // 8. Domestic Tour
+    goals.push({ id: 'domestic_tour', name: 'Domestic Tour', isPredefined: true });
+
+    // 9. Foreign Tour
+    goals.push({ id: 'foreign_tour', name: 'Foreign Tour', isPredefined: true });
+
+    // 10. Retirement Corpus
     goals.push({ id: 'retirement', name: 'Retirement Corpus', isPredefined: true });
-
-    // Custom slots to reach exactly 11 or more if children count is high
-    // The user wants a specific list of 11 goals.
-    const currentCount = goals.length;
-    const customNeeded = Math.max(0, 11 - currentCount);
-
-    for (let i = 1; i <= customNeeded; i++) {
-        goals.push({ id: `custom_${i}`, name: '', isPredefined: false, placeholder: `Any other goal` });
-    }
 
     return goals;
 };

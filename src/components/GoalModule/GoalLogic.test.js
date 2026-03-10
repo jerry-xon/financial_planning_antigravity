@@ -21,24 +21,41 @@ describe('GoalLogic', () => {
         expect(categorized.long).toHaveLength(1);
     });
 
-    it('generates predefined goals including slots for children and maintains at least 11 goals', () => {
+    it('generates predefined goals including slots for children in correct sequence', () => {
         const familyMembers = [
             { name: 'Self', relation: 'Self' },
             { name: 'Aarav', relation: 'Child' }
         ];
         const goals = getPredefinedGoals(familyMembers);
 
-        expect(goals.some(g => g.name === 'Higher Education - Aarav')).toBe(true);
-        expect(goals.some(g => g.name === 'Marriage - Aarav')).toBe(true);
-        expect(goals.some(g => g.name === 'Retirement Corpus')).toBe(true);
+        // Check sequence
+        expect(goals[0].name).toBe('Higher Education - Aarav');
+        expect(goals[1].name).toBe('Constructing new house');
+        expect(goals[2].name).toBe('Buying a Flat');
+        expect(goals[3].name).toBe('House Renovation');
+        expect(goals[4].name).toBe('Marriage - Aarav');
+        expect(goals[5].name).toBe('Buying Car');
+        expect(goals[6].name).toBe('Buying Bike');
+        expect(goals[7].name).toBe('Domestic Tour');
+        expect(goals[8].name).toBe('Foreign Tour');
+        expect(goals[9].name).toBe('Retirement Corpus');
 
-        // Assert at least 11 goals
-        expect(goals.length).toBeGreaterThanOrEqual(11);
+        expect(goals.some(g => g.id === 'retirement')).toBe(true);
     });
 
-    it('maintains exactly 11 goals when no children are present', () => {
+    it('returns only predefined goals when no custom goals are added and no padding', () => {
         const familyMembers = [{ name: 'Self', relation: 'Self' }];
         const goals = getPredefinedGoals(familyMembers);
-        expect(goals).toHaveLength(11);
+        // 8 goals if no children (Higher Education and Marriage are per-child)
+        // Let's count them:
+        // 1. Construction
+        // 2. Flat
+        // 3. Renovation
+        // 4. Car
+        // 5. Bike
+        // 6. Domestic
+        // 7. Foreign
+        // 8. Retirement
+        expect(goals).toHaveLength(8); 
     });
 });
