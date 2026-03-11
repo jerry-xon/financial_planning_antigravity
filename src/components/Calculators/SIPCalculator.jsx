@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Trash2, TrendingUp, Wallet, Calendar, Calculator, Clock } from 'lucide-react';
 
-const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [] }) => {
+const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [], proposedSIPs = [] }) => {
     const currentYear = new Date().getFullYear();
     
-    // Logic to get years to retire
+    // ... logic to get years to retire ...
     const getYearsToRetire = () => {
         const self = familyMembers.find(m => m.relation?.toLowerCase() === 'self');
         if (!self || !self.dob) return 10; 
@@ -72,9 +72,17 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [] 
             const actualYear = currentYear + relativeYear - 1;
 
             for (let month = 1; month <= 12; month++) {
+                // 1. Manual Increments
                 const increments = events.filter(e => e.type === 'increment' && parseInt(e.month) === month && parseInt(e.year) === actualYear);
                 increments.forEach(inc => {
                     runningSIP += inc.amount;
+                });
+
+                // 2. Proposed SIPs from Allocation Module
+                const autoSIPs = proposedSIPs.filter(s => parseInt(s.startYear) === actualYear && parseInt(s.startMonth) === month);
+                autoSIPs.forEach(s => {
+                    // a.amount is the ANNUAL amount, so we divide by 12 for monthly increment
+                    runningSIP += (parseFloat(s.amount) / 12) || 0;
                 });
 
                 const withdrawals = events.filter(e => e.type === 'withdrawal' && parseInt(e.month) === month && parseInt(e.year) === actualYear);
@@ -102,7 +110,7 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [] 
             });
         }
         return results;
-    }, [monthlySIP, expectedReturns, tenureYears, currentValue, events, currentYear]);
+    }, [monthlySIP, expectedReturns, tenureYears, currentValue, events, currentYear, proposedSIPs]);
 
     return (
         <div className="fade-in" style={{ padding: '1rem' }}>
@@ -175,6 +183,25 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [] 
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {/* Proposed SIPs from Allocation */}
+                                {proposedSIPs.map((s) => (
+                                    <div key={`proposed-${s.id}`} className="card" style={{ padding: '1rem', border: '1px solid var(--primary)', background: '#f0f9ff', position: 'relative' }}>
+                                        <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)', marginBottom: '0.5rem' }}>
+                                            ALLOCATION MODULE: {s.type}
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Amount (₹)</label>
+                                                <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{(parseFloat(s.amount) / 12).toLocaleString('en-IN')} / mo</div>
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Starts</label>
+                                                <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{monthNames[s.startMonth - 1]} {s.startYear}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
                                 {events.map((event) => (
                                     <div key={event.id} className="card" style={{ padding: '1rem', border: `1px solid ${event.type === 'increment' ? '#10b981' : '#f43f5e'}`, background: 'var(--bg-main)', position: 'relative' }}>
                                         <button 
@@ -226,7 +253,7 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [] 
                                         </div>
                                     </div>
                                 ))}
-                                {events.length === 0 && <p className="text-muted" style={{ fontSize: '0.85rem', textAlign: 'center', border: '1px dashed var(--border)', padding: '1rem', borderRadius: '8px' }}>No incremental adjustments added.</p>}
+                                {events.length === 0 && proposedSIPs.length === 0 && <p className="text-muted" style={{ fontSize: '0.85rem', textAlign: 'center', border: '1px dashed var(--border)', padding: '1rem', borderRadius: '8px' }}>No incremental adjustments added.</p>}
                             </div>
                         </div>
                     </div>

@@ -5,15 +5,11 @@ const AllocationModule = ({
     netInvestibleSurplus, 
     allocations, 
     setAllocations, 
+    projections = [],
     onNext, 
     onBack 
 }) => {
-    
-    const totalAllocated = useMemo(() => {
-        return allocations.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-    }, [allocations]);
-
-    const remainingSurplus = netInvestibleSurplus - totalAllocated;
+    const currentYear = new Date().getFullYear();
 
     const addAllocation = () => {
         setAllocations([
@@ -22,11 +18,11 @@ const AllocationModule = ({
                 id: Date.now(), 
                 type: 'SIP', 
                 name: '', 
-                amount: '', 
-                frequency: 'Monthly',
-                expectedReturn: 12,
-                startYear: new Date().getFullYear(),
-                duration: 10
+                amount: '', // This will be monthly for SIP, PPF, NPS and total for others
+                startMonth: new Date().getMonth() + 1,
+                startYear: currentYear,
+                duration: 10,
+                expectedReturn: 12
             }
         ]);
     };
@@ -49,39 +45,26 @@ const AllocationModule = ({
         }).format(val || 0);
     };
 
+    // Derived data for the dynamic table
+    const dynamicColumns = useMemo(() => {
+        const types = new Set();
+        allocations.forEach(a => types.add(a.type));
+        return Array.from(types).sort();
+    }, [allocations]);
+
+    const isRecurring = (type) => ['SIP', 'PPF', 'NPS'].includes(type);
+
     return (
         <div className="allocation-module fade-in">
-            <div className="card" style={{ marginBottom: '1.5rem' }}>
+            <div className="card" style={{ marginBottom: '1.5rem', overflowX: 'auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
                     <PieChart size={24} className="text-primary" />
                     <h2 style={{ margin: 0 }}>Step 9: Investment Allocation</h2>
                 </div>
-                
-                <p className="text-muted" style={{ marginBottom: '2rem' }}>
-                    Allocate your annual Net Investible Surplus into various investment avenues. This will help bridge the gap for your future goals.
-                </p>
 
-                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                    <div className="stat-card" style={{ background: 'var(--bg-main)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Total Annual Surplus</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>{formatCurrency(netInvestibleSurplus)}</div>
-                    </div>
-                    <div className="stat-card" style={{ background: 'var(--bg-main)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Total Allocated</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>{formatCurrency(totalAllocated)}</div>
-                    </div>
-                    <div className="stat-card" style={{ 
-                        background: remainingSurplus < 0 ? 'rgba(239, 68, 68, 0.1)' : 'var(--bg-main)', 
-                        padding: '1.5rem', 
-                        borderRadius: '12px', 
-                        border: remainingSurplus < 0 ? '1px solid #ef4444' : '1px solid var(--border)' 
-                    }}>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Unallocated Surplus</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: remainingSurplus < 0 ? '#ef4444' : 'var(--text-main)' }}>
-                            {formatCurrency(remainingSurplus)}
-                        </div>
-                    </div>
-                </div>
+                <p className="text-muted" style={{ marginBottom: '2rem' }}>
+                    Allocate your annual Net Investible Surplus into various investment avenues.
+                </p>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                     <h3 style={{ margin: 0 }}>Proposed Investments</h3>
@@ -91,90 +74,111 @@ const AllocationModule = ({
                 </div>
 
                 {allocations.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {allocations.map((item) => (
-                            <div key={item.id} className="grid" style={{ 
-                                gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1fr auto', 
-                                gap: '1rem', 
-                                alignItems: 'end',
-                                background: 'var(--bg-main)',
-                                padding: '1.25rem',
-                                borderRadius: '12px',
-                                border: '1px solid var(--border)'
-                            }}>
-                                <div className="input-group" style={{ marginBottom: 0 }}>
-                                    <label>Investment Name</label>
-                                    <input 
-                                        type="text" 
-                                        value={item.name} 
-                                        onChange={(e) => updateAllocation(item.id, 'name', e.target.value)}
-                                        placeholder="e.g. Nifty Index Fund"
-                                    />
-                                </div>
-                                <div className="input-group" style={{ marginBottom: 0 }}>
-                                    <label>Type</label>
-                                    <select 
-                                        value={item.type} 
-                                        onChange={(e) => updateAllocation(item.id, 'type', e.target.value)}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
+                        {allocations.map((item) => {
+                            const recurring = isRecurring(item.type);
+                            return (
+                                <div key={item.id} className="grid" style={{ 
+                                    gridTemplateColumns: '1.5fr 1.5fr 1.5fr 1fr 1fr 1fr auto', 
+                                    gap: '1rem', 
+                                    alignItems: 'end',
+                                    background: 'var(--bg-main)',
+                                    padding: '1.25rem',
+                                    borderRadius: '12px',
+                                    border: '1px solid var(--border)'
+                                }}>
+                                    <div className="input-group" style={{ marginBottom: 0 }}>
+                                        <label>Label</label>
+                                        <input 
+                                            type="text" 
+                                            value={item.name} 
+                                            onChange={(e) => updateAllocation(item.id, 'name', e.target.value)}
+                                            placeholder="e.g. Retirement SIP"
+                                        />
+                                    </div>
+                                    <div className="input-group" style={{ marginBottom: 0 }}>
+                                        <label>Type</label>
+                                        <select 
+                                            value={item.type} 
+                                            onChange={(e) => updateAllocation(item.id, 'type', e.target.value)}
+                                        >
+                                            <option value="SIP">SIP</option>
+                                            <option value="Lumpsum">Lumpsum</option>
+                                            <option value="Gold">Gold</option>
+                                            <option value="PPF">PPF</option>
+                                            <option value="NPS">NPS</option>
+                                            <option value="Equity">Direct Equity</option>
+                                            <option value="ETF">ETF</option>
+                                            <option value="FD">Fixed Deposit</option>
+                                            <option value="Other Investment">Other Investment</option>
+                                        </select>
+                                    </div>
+                                    <div className="input-group" style={{ marginBottom: 0 }}>
+                                        <label>{recurring ? 'Monthly Amount' : 'Amount'}</label>
+                                        <input 
+                                            type="number" 
+                                            value={recurring ? (item.amount / 12 || '') : item.amount} 
+                                            onChange={(e) => {
+                                                const val = parseFloat(e.target.value) || 0;
+                                                updateAllocation(item.id, 'amount', recurring ? val * 12 : val);
+                                            }}
+                                            placeholder="0"
+                                        />
+                                        {recurring && (
+                                            <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
+                                                Yearly: {formatCurrency(item.amount)}
+                                            </small>
+                                        )}
+                                    </div>
+                                    <div className="input-group" style={{ marginBottom: 0 }}>
+                                        <label>Start Month</label>
+                                        <select 
+                                            value={item.startMonth} 
+                                            onChange={(e) => updateAllocation(item.id, 'startMonth', parseInt(e.target.value))}
+                                        >
+                                            {Array.from({ length: 12 }, (_, i) => (
+                                                <option key={i + 1} value={i + 1}>
+                                                    {new Date(0, i).toLocaleString('default', { month: 'short' })}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="input-group" style={{ marginBottom: 0 }}>
+                                        <label>Start Year</label>
+                                        <input 
+                                            type="number" 
+                                            value={item.startYear} 
+                                            onChange={(e) => updateAllocation(item.id, 'startYear', parseInt(e.target.value))}
+                                        />
+                                    </div>
+                                    {recurring && (
+                                        <div className="input-group" style={{ marginBottom: 0 }}>
+                                            <label>Duration (Yrs)</label>
+                                            <input 
+                                                type="number" 
+                                                value={item.duration} 
+                                                onChange={(e) => updateAllocation(item.id, 'duration', parseInt(e.target.value))}
+                                            />
+                                        </div>
+                                    )}
+                                    {!recurring && <div style={{ minWidth: '80px' }}></div>}
+                                    <button 
+                                        onClick={() => removeAllocation(item.id)}
+                                        style={{ 
+                                            background: 'none', 
+                                            border: 'none', 
+                                            color: '#ef4444', 
+                                            cursor: 'pointer',
+                                            padding: '0.75rem',
+                                            display: 'flex',
+                                            alignItems: 'center'
+                                        }}
                                     >
-                                        <option value="SIP">SIP</option>
-                                        <option value="Lumpsum">Lumpsum</option>
-                                        <option value="Gold">Gold</option>
-                                        <option value="PPF">PPF</option>
-                                        <option value="Equity">Direct Equity</option>
-                                        <option value="FD">Fixed Deposit</option>
-                                    </select>
+                                        <Trash2 size={20} />
+                                    </button>
                                 </div>
-                                <div className="input-group" style={{ marginBottom: 0 }}>
-                                    <label>Amount (Annual)</label>
-                                    <input 
-                                        type="number" 
-                                        value={item.amount} 
-                                        onChange={(e) => updateAllocation(item.id, 'amount', e.target.value)}
-                                        placeholder="0"
-                                    />
-                                </div>
-                                <div className="input-group" style={{ marginBottom: 0 }}>
-                                    <label>CAGR (%)</label>
-                                    <input 
-                                        type="number" 
-                                        value={item.expectedReturn} 
-                                        onChange={(e) => updateAllocation(item.id, 'expectedReturn', e.target.value)}
-                                        placeholder="12"
-                                    />
-                                </div>
-                                <div className="input-group" style={{ marginBottom: 0 }}>
-                                    <label>Start Year</label>
-                                    <input 
-                                        type="number" 
-                                        value={item.startYear} 
-                                        onChange={(e) => updateAllocation(item.id, 'startYear', e.target.value)}
-                                    />
-                                </div>
-                                <div className="input-group" style={{ marginBottom: 0 }}>
-                                    <label>Duration (Yrs)</label>
-                                    <input 
-                                        type="number" 
-                                        value={item.duration} 
-                                        onChange={(e) => updateAllocation(item.id, 'duration', e.target.value)}
-                                    />
-                                </div>
-                                <button 
-                                    onClick={() => removeAllocation(item.id)}
-                                    style={{ 
-                                        background: 'none', 
-                                        border: 'none', 
-                                        color: '#ef4444', 
-                                        cursor: 'pointer',
-                                        padding: '0.75rem',
-                                        display: 'flex',
-                                        alignItems: 'center'
-                                    }}
-                                >
-                                    <Trash2 size={20} />
-                                </button>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 ) : (
                     <div style={{ 
@@ -182,7 +186,8 @@ const AllocationModule = ({
                         padding: '3rem', 
                         border: '2px dashed var(--border)', 
                         borderRadius: '12px',
-                        color: 'var(--text-muted)'
+                        color: 'var(--text-muted)',
+                        marginBottom: '3rem'
                     }}>
                         <Wallet size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
                         <p>No investments planned yet. Start allocating your {formatCurrency(netInvestibleSurplus)} annual surplus.</p>
@@ -191,6 +196,61 @@ const AllocationModule = ({
                         </button>
                     </div>
                 )}
+
+                {/* Timeline Table */}
+                <div style={{ marginBottom: '2.5rem' }}>
+                    <h3 style={{ marginBottom: '1rem' }}>Yearly Allocation Timeline</h3>
+                    <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                        <table className="summary-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                            <thead style={{ background: 'var(--bg-main)' }}>
+                                <tr>
+                                    <th rowSpan="2" style={{ border: '1px solid var(--border)', padding: '0.75rem' }}>Year</th>
+                                    <th colSpan="2" style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'center' }}>Investible Surplus</th>
+                                    {dynamicColumns.map(col => (
+                                        <th key={col} rowSpan="2" style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'center' }}>{col}</th>
+                                    ))}
+                                    <th colSpan="2" style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'center' }}>Unallocated Surplus</th>
+                                </tr>
+                                <tr>
+                                    <th style={{ border: '1px solid var(--border)', padding: '0.5rem', textAlign: 'right' }}>Yearly</th>
+                                    <th style={{ border: '1px solid var(--border)', padding: '0.5rem', textAlign: 'right' }}>Monthly</th>
+                                    <th style={{ border: '1px solid var(--border)', padding: '0.5rem', textAlign: 'right' }}>Yearly</th>
+                                    <th style={{ border: '1px solid var(--border)', padding: '0.5rem', textAlign: 'right' }}>Monthly</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {projections.slice(0, 15).map((row) => {
+                                    const allocationsByType = {};
+                                    dynamicColumns.forEach(type => {
+                                        allocationsByType[type] = row.activeAllocations
+                                            ?.filter(a => a.type === type)
+                                            .reduce((sum, a) => sum + (a.impactThisYear || 0), 0) || 0;
+                                    });
+
+                                    return (
+                                        <tr key={row.year}>
+                                            <td style={{ border: '1px solid var(--border)', padding: '0.75rem', fontWeight: 600 }}>{row.year}</td>
+                                            <td style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'right' }}>{formatCurrency(row.netInvestibleSurplus)}</td>
+                                            <td style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'right', color: 'var(--text-muted)' }}>{formatCurrency(row.netInvestibleSurplus / 12)}</td>
+                                            {dynamicColumns.map(type => (
+                                                <td key={type} style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'right', color: allocationsByType[type] > 0 ? 'var(--primary)' : 'inherit' }}>
+                                                    {allocationsByType[type] > 0 ? formatCurrency(allocationsByType[type]) : '-'}
+                                                </td>
+                                            ))}
+                                            <td style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'right', fontWeight: 700, color: row.unallocatedSurplus < 0 ? '#ef4444' : 'var(--success)' }}>
+                                                {formatCurrency(row.unallocatedSurplus)}
+                                            </td>
+                                            <td style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'right', color: row.unallocatedSurplus < 0 ? '#ef4444' : 'var(--text-muted)' }}>
+                                                {formatCurrency(row.unallocatedSurplus / 12)}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>* Showing next 15 years of projection.</p>
+                </div>
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
@@ -200,8 +260,6 @@ const AllocationModule = ({
                 <button 
                     className="btn btn-primary" 
                     onClick={onNext} 
-                    disabled={remainingSurplus < -100} // Small tolerance for rounding
-                    title={remainingSurplus < -100 ? "You have overallocated your surplus" : ""}
                 >
                     Proceed to Portfolio Growth
                 </button>

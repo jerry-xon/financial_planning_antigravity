@@ -390,9 +390,10 @@ function App() {
       goals,
       inflationRates,
       journeyAdjustments,
+      investmentAllocations,
       policies
     });
-  }, [familyMembers, income, expenseCategories, goals, inflationRates, journeyAdjustments, policies]);
+  }, [familyMembers, income, expenseCategories, goals, inflationRates, journeyAdjustments, investmentAllocations, policies]);
 
   const savePlanData = async () => {
     if (!planId) return;
@@ -642,6 +643,7 @@ function App() {
                   }
                   allocations={investmentAllocations}
                   setAllocations={setInvestmentAllocations}
+                  projections={journeyProjections}
                   onNext={() => { setCurrentStep(10); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(8); window.scrollTo(0, 0); }}
                 />
@@ -696,6 +698,7 @@ function App() {
                   expenseCategories={expenseCategories} 
                   assetCategories={assetCategories} 
                   familyMembers={familyMembers}
+                  proposedSIPs={investmentAllocations.filter(a => ['SIP', 'PPF', 'NPS'].includes(a.type))}
                 />
               )}
               {activeCalculator === 'per_loan' && (
@@ -708,7 +711,10 @@ function App() {
                 <CarLoanCalculator />
               )}
               {activeCalculator === 'lumpsum' && (
-                <LumpsumCalculator familyMembers={familyMembers} />
+                <LumpsumCalculator 
+                  familyMembers={familyMembers} 
+                  proposedLumpsums={investmentAllocations.filter(a => !['SIP', 'PPF', 'NPS'].includes(a.type))}
+                />
               )}
               {activeCalculator === 'swp' && (
                 <SWPCalculator />

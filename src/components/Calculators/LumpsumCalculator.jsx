@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Calculator, Calendar, DollarSign, TrendingUp, Clock, Plus, Trash2, Info } from 'lucide-react';
 
-const LumpsumCalculator = ({ familyMembers = [] }) => {
+const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [] }) => {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
 
-    // Logic to get years to retire (same as SIP)
+    // ... logic to get years to retire ...
     const getYearsToRetire = () => {
         const self = familyMembers.find(m => m.relation?.toLowerCase() === 'self');
         if (!self || !self.dob) return 10; 
@@ -80,7 +80,7 @@ const LumpsumCalculator = ({ familyMembers = [] }) => {
                 yearlyRecord.investmentAndAddition += investmentAmount;
             }
 
-            // Check for mid-tenure additions or withdrawals
+            // Check for mid-tenure additions or withdrawals (Manual)
             const monthlyEvents = events.filter(e => parseInt(e.month) === currentMonthVal && parseInt(e.year) === currentYearVal);
             
             monthlyEvents.forEach(e => {
@@ -92,6 +92,14 @@ const LumpsumCalculator = ({ familyMembers = [] }) => {
                     yearlyRecord.withdrawal += amount;
                     runningBalance -= amount;
                 }
+            });
+
+            // Check for Proposed Lumpsums from Allocation Module
+            const autoLumpsums = proposedLumpsums.filter(l => parseInt(l.startYear) === currentYearVal && parseInt(l.startMonth) === currentMonthVal);
+            autoLumpsums.forEach(l => {
+                const amount = parseFloat(l.amount) || 0;
+                runningBalance += amount;
+                yearlyRecord.investmentAndAddition += amount;
             });
 
             // Apply Monthly Growth
@@ -122,7 +130,7 @@ const LumpsumCalculator = ({ familyMembers = [] }) => {
         }
 
         return results;
-    }, [investmentAmount, expectedReturns, tenureYears, startMonth, startYear, events]);
+    }, [investmentAmount, expectedReturns, tenureYears, startMonth, startYear, events, proposedLumpsums]);
 
     const finalValue = calculationData[calculationData.length - 1]?.valueAfterWithdrawal || 0;
     const totalInvested = investmentAmount + events.filter(e => e.type === 'addition').reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
@@ -200,6 +208,25 @@ const LumpsumCalculator = ({ familyMembers = [] }) => {
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {/* Proposed Lumpsums from Allocation */}
+                                {proposedLumpsums.map((l) => (
+                                    <div key={`proposed-${l.id}`} className="card" style={{ padding: '1rem', border: '1px solid #6366f1', background: '#f5f3ff', position: 'relative' }}>
+                                        <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#6366f1', marginBottom: '0.5rem' }}>
+                                            ALLOCATION MODULE: {l.type}
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Amount (₹)</label>
+                                                <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{parseFloat(l.amount).toLocaleString('en-IN')}</div>
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Date</label>
+                                                <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{monthNames[l.startMonth - 1]} {l.startYear}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
                                 {events.map(event => (
                                     <div key={event.id} className="card" style={{ padding: '1rem', position: 'relative', border: `1px solid ${event.type === 'addition' ? '#10b981' : '#f43f5e'}` }}>
                                         <button onClick={() => removeEvent(event.id)} style={{ position: 'absolute', top: '4px', right: '4px', color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={12} /></button>
@@ -221,6 +248,7 @@ const LumpsumCalculator = ({ familyMembers = [] }) => {
                                         />
                                     </div>
                                 ))}
+                                {events.length === 0 && proposedLumpsums.length === 0 && <p className="text-muted" style={{ fontSize: '0.85rem', textAlign: 'center', border: '1px dashed var(--border)', padding: '1rem', borderRadius: '8px' }}>No adjustments added.</p>}
                             </div>
                         </div>
                     </div>

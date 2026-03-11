@@ -27,6 +27,7 @@ export const generateProjections = (params) => {
         goals,
         inflationRates,
         journeyAdjustments = [],
+        investmentAllocations = [],
         policies = [],
         startYear = new Date().getFullYear()
     } = params;
@@ -224,6 +225,46 @@ export const generateProjections = (params) => {
         const savingsAndInvestments = savingsMonthly * 12; 
         const netInvestibleSurplus = surplusBeforeSaving - savingsAndInvestments;
 
+        // 4. Proposed Investment Allocations (Step 9) - These are ADDITIONAL investments proposed from the Allocation Module
+        let yearAllocationsTotal = 0;
+        const activeAllocations = [];
+        
+        investmentAllocations.forEach(alloc => {
+            const allocStartYear = parseInt(alloc.startYear);
+            const allocStartMonth = parseInt(alloc.startMonth) || 1;
+            const allocDuration = parseInt(alloc.duration) || 1;
+            const type = alloc.type;
+            const isRecurring = ['SIP', 'PPF', 'NPS'].includes(type);
+            
+            // For recurring investments, alloc.amount is the ANNUAL amount (Monthly * 12)
+            // For one-time investments, alloc.amount is the TOTAL amount
+            const yearlyAmount = parseFloat(alloc.amount) || 0;
+            const monthlyAmount = isRecurring ? (yearlyAmount / 12) : 0;
+
+            if (isRecurring) {
+                // If the year is between start and end (within duration)
+                if (year >= allocStartYear && year < (allocStartYear + allocDuration)) {
+                    let impactThisYear = yearlyAmount;
+                    
+                    // If it's the starting year, only count from startMonth onwards
+                    if (year === allocStartYear) {
+                        impactThisYear = monthlyAmount * (13 - allocStartMonth);
+                    }
+                    
+                    yearAllocationsTotal += impactThisYear;
+                    activeAllocations.push({ ...alloc, impactThisYear });
+                }
+            } else {
+                // One-time investments only impact the starting year
+                if (year === allocStartYear) {
+                    yearAllocationsTotal += yearlyAmount;
+                    activeAllocations.push({ ...alloc, impactThisYear: yearlyAmount });
+                }
+            }
+        });
+
+        const unallocatedSurplus = netInvestibleSurplus - yearAllocationsTotal;
+
         projections.push({
             year,
             annualInflow,
@@ -238,7 +279,10 @@ export const generateProjections = (params) => {
             totalOutflow,
             surplusBeforeSaving,
             savingsAndInvestments,
-            netInvestibleSurplus
+            netInvestibleSurplus,
+            yearAllocationsTotal,
+            activeAllocations,
+            unallocatedSurplus
         });
     }
 
