@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { PieChart, Plus, Trash2, ArrowRight, Wallet, Target, TrendingUp } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { PieChart, Plus, Trash2, ArrowRight, Wallet, Target, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 
 const AllocationModule = ({ 
     netInvestibleSurplus, 
@@ -10,6 +10,17 @@ const AllocationModule = ({
     onBack 
 }) => {
     const currentYear = new Date().getFullYear();
+    const [collapsedIds, setCollapsedIds] = useState(new Set());
+
+    const toggleCollapse = (id) => {
+        const newCollapsed = new Set(collapsedIds);
+        if (newCollapsed.has(id)) {
+            newCollapsed.delete(id);
+        } else {
+            newCollapsed.add(id);
+        }
+        setCollapsedIds(newCollapsed);
+    };
 
     const addAllocation = () => {
         setAllocations([
@@ -68,117 +79,187 @@ const AllocationModule = ({
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                     <h3 style={{ margin: 0 }}>Proposed Investments</h3>
-                    <button className="btn btn-secondary" onClick={addAllocation} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
-                        <Plus size={16} style={{ marginRight: '6px' }} /> Add Investment
-                    </button>
                 </div>
 
                 {allocations.length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
-                        {allocations.map((item) => {
+                        {allocations.map((item, index) => {
                             const recurring = isRecurring(item.type);
+                            const isCollapsed = collapsedIds.has(item.id);
                             return (
-                                <div key={item.id} className="grid" style={{ 
-                                    gridTemplateColumns: '1.5fr 1.5fr 1.5fr 1fr 1fr 1fr auto', 
-                                    gap: '1rem', 
-                                    alignItems: 'end',
+                                <div key={item.id} style={{ 
                                     background: 'var(--bg-main)',
-                                    padding: '1.25rem',
                                     borderRadius: '12px',
-                                    border: '1px solid var(--border)'
+                                    border: '1px solid var(--border)',
+                                    overflow: 'hidden',
+                                    marginBottom: '0.5rem'
                                 }}>
-                                    <div className="input-group" style={{ marginBottom: 0 }}>
-                                        <label>Label</label>
-                                        <input 
-                                            type="text" 
-                                            value={item.name} 
-                                            onChange={(e) => updateAllocation(item.id, 'name', e.target.value)}
-                                            placeholder="e.g. Retirement SIP"
-                                        />
+                                    {/* Form Header */}
+                                    <div style={{ 
+                                        padding: '0.75rem 1.25rem',
+                                        background: isCollapsed ? 'transparent' : 'rgba(37, 99, 235, 0.05)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        borderBottom: isCollapsed ? 'none' : '1px solid var(--border)',
+                                        cursor: 'pointer'
+                                    }} onClick={() => toggleCollapse(item.id)}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <div style={{ 
+                                                width: '24px', 
+                                                height: '24px', 
+                                                borderRadius: '50%', 
+                                                background: 'var(--primary)', 
+                                                color: 'white', 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 'bold'
+                                            }}>
+                                                {index + 1}
+                                            </div>
+                                            <span style={{ fontWeight: 600 }}>
+                                                {item.name || `Investment ${index + 1}`}
+                                                {item.type && <span style={{ marginLeft: '8px', opacity: 0.6, fontWeight: 400, fontSize: '0.85rem' }}>({item.type})</span>}
+                                            </span>
+                                            {isCollapsed && item.amount > 0 && (
+                                                <span style={{ marginLeft: '12px', color: 'var(--primary)', fontWeight: 600 }}>
+                                                    {formatCurrency(recurring ? item.amount / 12 : item.amount)}
+                                                    {recurring ? ' /mo' : ''}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); removeAllocation(item.id); }}
+                                                style={{ 
+                                                    background: 'none', 
+                                                    border: 'none', 
+                                                    color: '#ef4444', 
+                                                    cursor: 'pointer',
+                                                    padding: '4px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    opacity: 0.8
+                                                }}
+                                                title="Remove"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); toggleCollapse(item.id); }}
+                                                style={{ 
+                                                    background: 'none', 
+                                                    border: 'none', 
+                                                    color: 'var(--text-muted)', 
+                                                    cursor: 'pointer',
+                                                    padding: '4px',
+                                                    display: 'flex',
+                                                    alignItems: 'center'
+                                                }}
+                                            >
+                                                {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="input-group" style={{ marginBottom: 0 }}>
-                                        <label>Type</label>
-                                        <select 
-                                            value={item.type} 
-                                            onChange={(e) => updateAllocation(item.id, 'type', e.target.value)}
-                                        >
-                                            <option value="SIP">SIP</option>
-                                            <option value="Lumpsum">Lumpsum</option>
-                                            <option value="Gold">Gold</option>
-                                            <option value="PPF">PPF</option>
-                                            <option value="NPS">NPS</option>
-                                            <option value="Equity">Direct Equity</option>
-                                            <option value="ETF">ETF</option>
-                                            <option value="FD">Fixed Deposit</option>
-                                            <option value="Other Investment">Other Investment</option>
-                                        </select>
-                                    </div>
-                                    <div className="input-group" style={{ marginBottom: 0 }}>
-                                        <label>{recurring ? 'Monthly Amount' : 'Amount'}</label>
-                                        <input 
-                                            type="number" 
-                                            value={recurring ? (item.amount / 12 || '') : item.amount} 
-                                            onChange={(e) => {
-                                                const val = parseFloat(e.target.value) || 0;
-                                                updateAllocation(item.id, 'amount', recurring ? val * 12 : val);
-                                            }}
-                                            placeholder="0"
-                                        />
-                                        {recurring && (
-                                            <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
-                                                Yearly: {formatCurrency(item.amount)}
-                                            </small>
-                                        )}
-                                    </div>
-                                    <div className="input-group" style={{ marginBottom: 0 }}>
-                                        <label>Start Month</label>
-                                        <select 
-                                            value={item.startMonth} 
-                                            onChange={(e) => updateAllocation(item.id, 'startMonth', parseInt(e.target.value))}
-                                        >
-                                            {Array.from({ length: 12 }, (_, i) => (
-                                                <option key={i + 1} value={i + 1}>
-                                                    {new Date(0, i).toLocaleString('default', { month: 'short' })}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="input-group" style={{ marginBottom: 0 }}>
-                                        <label>Start Year</label>
-                                        <input 
-                                            type="number" 
-                                            value={item.startYear} 
-                                            onChange={(e) => updateAllocation(item.id, 'startYear', parseInt(e.target.value))}
-                                        />
-                                    </div>
-                                    {recurring && (
-                                        <div className="input-group" style={{ marginBottom: 0 }}>
-                                            <label>Duration (Yrs)</label>
-                                            <input 
-                                                type="number" 
-                                                value={item.duration} 
-                                                onChange={(e) => updateAllocation(item.id, 'duration', parseInt(e.target.value))}
-                                            />
+
+                                    {/* Form Body */}
+                                    {!isCollapsed && (
+                                        <div className="grid" style={{ 
+                                            gridTemplateColumns: '1.5fr 1.5fr 1.5fr 1fr 1fr 1fr', 
+                                            gap: '1rem', 
+                                            alignItems: 'end',
+                                            padding: '1.25rem'
+                                        }}>
+                                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                                <label>Label</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={item.name} 
+                                                    onChange={(e) => updateAllocation(item.id, 'name', e.target.value)}
+                                                    placeholder="e.g. Retirement SIP"
+                                                />
+                                            </div>
+                                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                                <label>Type</label>
+                                                <select 
+                                                    value={item.type} 
+                                                    onChange={(e) => updateAllocation(item.id, 'type', e.target.value)}
+                                                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}
+                                                >
+                                                    <option value="SIP">SIP</option>
+                                                    <option value="Lumpsum">Lumpsum</option>
+                                                    <option value="Gold">Gold</option>
+                                                    <option value="PPF">PPF</option>
+                                                    <option value="NPS">NPS</option>
+                                                    <option value="Equity">Direct Equity</option>
+                                                    <option value="ETF">ETF</option>
+                                                    <option value="FD">Fixed Deposit</option>
+                                                    <option value="Other Investment">Other Investment</option>
+                                                </select>
+                                            </div>
+                                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                                <label>{recurring ? 'Monthly Amount' : 'Amount'}</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={recurring ? (item.amount / 12 || '') : item.amount} 
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value) || 0;
+                                                        updateAllocation(item.id, 'amount', recurring ? val * 12 : val);
+                                                    }}
+                                                    placeholder="0"
+                                                />
+                                                {recurring && (
+                                                    <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
+                                                        Yearly: {formatCurrency(item.amount)}
+                                                    </small>
+                                                )}
+                                            </div>
+                                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                                <label>Start Month</label>
+                                                <select 
+                                                    value={item.startMonth} 
+                                                    onChange={(e) => updateAllocation(item.id, 'startMonth', parseInt(e.target.value))}
+                                                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}
+                                                >
+                                                    {Array.from({ length: 12 }, (_, i) => (
+                                                        <option key={i + 1} value={i + 1}>
+                                                            {new Date(0, i).toLocaleString('default', { month: 'short' })}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                                <label>Start Year</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={item.startYear} 
+                                                    onChange={(e) => updateAllocation(item.id, 'startYear', parseInt(e.target.value))}
+                                                />
+                                            </div>
+                                            {recurring ? (
+                                                <div className="input-group" style={{ marginBottom: 0 }}>
+                                                    <label>Duration (Yrs)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={item.duration} 
+                                                        onChange={(e) => updateAllocation(item.id, 'duration', parseInt(e.target.value))}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div style={{ minWidth: '80px' }}></div>
+                                            )}
                                         </div>
                                     )}
-                                    {!recurring && <div style={{ minWidth: '80px' }}></div>}
-                                    <button 
-                                        onClick={() => removeAllocation(item.id)}
-                                        style={{ 
-                                            background: 'none', 
-                                            border: 'none', 
-                                            color: '#ef4444', 
-                                            cursor: 'pointer',
-                                            padding: '0.75rem',
-                                            display: 'flex',
-                                            alignItems: 'center'
-                                        }}
-                                    >
-                                        <Trash2 size={20} />
-                                    </button>
                                 </div>
                             );
                         })}
+                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+                            <button className="btn btn-secondary" onClick={addAllocation} style={{ width: '100%', borderStyle: 'dashed', background: 'transparent' }}>
+                                <Plus size={16} style={{ marginRight: '6px' }} /> Add Another Investment
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <div style={{ 

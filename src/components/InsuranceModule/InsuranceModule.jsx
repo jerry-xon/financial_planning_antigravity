@@ -108,7 +108,7 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                     }}>
                         <h3 style={{ color: '#ef4444', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Premium Mismatch Detected</h3>
                         <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '1.1rem' }}>
-                            The Premium you entered here is <strong>₹{amounts.here.toLocaleString('en-IN')}</strong> amount and premium in cash flow is <strong>₹{amounts.cashFlow.toLocaleString('en-IN')}</strong> amount. (Annual Figures)
+                            The Premium you entered here is <strong>₹{amounts.here.toLocaleString('en-IN')}</strong> and premium in cash flow is <strong>₹{amounts.cashFlow.toLocaleString('en-IN')}</strong> .
                         </p>
                         <p style={{ marginBottom: '2.5rem', fontWeight: 'bold', fontSize: '1.25rem', color: 'var(--text-main)' }}>
                             For accurate Financial Plan fill complete details of all insurance policies
