@@ -130,11 +130,12 @@ function App() {
 
   // Calculator Persistence State
   const [calculatorInputs, setCalculatorInputs] = useState({
-    personal_loan: { amount: 0, rate: 10.5, tenure: 5 },
-    home_loan: { amount: 0, rate: 8.5, tenure: 20 },
-    car_loan: { amount: 0, rate: 9.5, tenure: 5 },
-    lumpsum: { amount: 0, rate: 12, tenure: 10 },
-    swp: { amount: 0, withdrawal: 0, rate: 10, tenure: 15 }
+    personal_loan: { amount: 0, rate: 10.5, tenure: 5, events: [] },
+    home_loan: { amount: 0, rate: 8.5, tenure: 20, events: [] },
+    car_loan: { amount: 0, rate: 9.5, tenure: 5, events: [] },
+    lumpsum: { amount: 0, rate: 12, tenure: 10, events: [] },
+    swp: { amount: 0, withdrawal: 0, rate: 10, tenure: 15, events: [] },
+    sip: { amount: 0, rate: 12, tenure: 10, increments: [] }
   });
 
   // --- Reset All State ---
@@ -210,11 +211,12 @@ function App() {
     setInvestmentAllocations([]);
     setGoalMappings({});
     setCalculatorInputs({
-      personal_loan: { amount: 0, rate: 10.5, tenure: 5 },
-      home_loan: { amount: 0, rate: 8.5, tenure: 20 },
-      car_loan: { amount: 0, rate: 9.5, tenure: 5 },
-      lumpsum: { amount: 0, rate: 12, tenure: 10 },
-      swp: { amount: 0, withdrawal: 0, rate: 10, tenure: 15 }
+      personal_loan: { amount: 0, rate: 10.5, tenure: 5, events: [] },
+      home_loan: { amount: 0, rate: 8.5, tenure: 20, events: [] },
+      car_loan: { amount: 0, rate: 9.5, tenure: 5, events: [] },
+      lumpsum: { amount: 0, rate: 12, tenure: 10, events: [] },
+      swp: { amount: 0, withdrawal: 0, rate: 10, tenure: 15, events: [] },
+      sip: { amount: 0, rate: 12, tenure: 10, increments: [] }
     });
   };
 
@@ -457,7 +459,7 @@ function App() {
     }, 1000); // Debounce for 1 second
 
     return () => clearTimeout(timeoutId);
-  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, journeyAdjustments, investmentAllocations, goalMappings, insuranceMode]);
+  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, journeyAdjustments, investmentAllocations, goalMappings, insuranceMode, calculatorInputs]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -719,6 +721,8 @@ function App() {
                   assetCategories={assetCategories} 
                   familyMembers={familyMembers}
                   proposedSIPs={investmentAllocations.filter(a => ['SIP', 'PPF', 'NPS'].includes(a.type))}
+                  data={calculatorInputs.sip}
+                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, sip: val }))}
                 />
               )}
               {activeCalculator === 'per_loan' && (

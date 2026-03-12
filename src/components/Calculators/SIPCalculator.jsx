@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Trash2, TrendingUp, Wallet, Calendar, Calculator, Clock } from 'lucide-react';
 
-const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [], proposedSIPs = [] }) => {
+const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [], proposedSIPs = [], data, setData }) => {
     const currentYear = new Date().getFullYear();
     
     // ... logic to get years to retire ...
@@ -27,14 +27,18 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
     const defaultCorpus = parseFloat(assetCategories?.equity?.mfEquity) || parseFloat(assetCategories?.equity?.stocks) || 0;
     const defaultTenure = getYearsToRetire() || 10;
 
-    // State for inputs
-    const [monthlySIP, setMonthlySIP] = useState(defaultSIP);
-    const [expectedReturns, setExpectedReturns] = useState(12);
-    const [tenureYears, setTenureYears] = useState(defaultTenure);
-    const [currentValue, setCurrentValue] = useState(defaultCorpus);
-    
-    // State for dynamic events (increments and withdrawals)
-    const [events, setEvents] = useState([]);
+    // Use props if available, otherwise defaults
+    const monthlySIP = data?.amount ?? 0;
+    const expectedReturns = data?.rate ?? 12;
+    const tenureYears = data?.tenure ?? defaultTenure;
+    const currentValue = data?.currentValue ?? 0;
+    const events = data?.increments ?? [];
+
+    const setMonthlySIP = (val) => setData({ ...data, amount: val });
+    const setExpectedReturns = (val) => setData({ ...data, rate: val });
+    const setTenureYears = (val) => setData({ ...data, tenure: val });
+    const setCurrentValue = (val) => setData({ ...data, currentValue: val });
+    const setEvents = (val) => setData({ ...data, increments: typeof val === 'function' ? val(events) : val });
 
     // Month Names Helper
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
