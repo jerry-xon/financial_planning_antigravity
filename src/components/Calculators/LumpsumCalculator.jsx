@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Calculator, Calendar, DollarSign, TrendingUp, Clock, Plus, Trash2, Info } from 'lucide-react';
 
-const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [] }) => {
+const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [], data, setData }) => {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
 
@@ -25,15 +25,20 @@ const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [] }) => {
 
     const defaultTenure = getYearsToRetire() || 10;
 
+    // Use props if available, otherwise defaults
+    const investmentAmount = data?.amount ?? 0;
+    const expectedReturns = data?.rate ?? 12;
+    const tenureYears = data?.tenure ?? defaultTenure; // Use defaultTenure here
+    const events = data?.events ?? [];
+
+    const setInvestmentAmount = (val) => setData({ ...data, amount: val });
+    const setExpectedReturns = (val) => setData({ ...data, rate: val });
+    const setTenureYears = (val) => setData({ ...data, tenure: val });
+    const setEvents = (val) => setData({ ...data, events: typeof val === 'function' ? val(events) : val });
+
     // State for inputs
-    const [investmentAmount, setInvestmentAmount] = useState(100000);
-    const [expectedReturns, setExpectedReturns] = useState(12);
-    const [tenureYears, setTenureYears] = useState(defaultTenure);
     const [startMonth, setStartMonth] = useState(currentMonth);
     const [startYear, setStartYear] = useState(currentYear);
-
-    // State for dynamic events (Additions and Withdrawals)
-    const [events, setEvents] = useState([]);
 
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const yearOptions = Array.from({ length: 51 }, (_, i) => currentYear - 5 + i);

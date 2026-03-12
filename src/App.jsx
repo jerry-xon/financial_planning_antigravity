@@ -128,6 +128,15 @@ function App() {
   const [investmentAllocations, setInvestmentAllocations] = useState([]);
   const [goalMappings, setGoalMappings] = useState({});
 
+  // Calculator Persistence State
+  const [calculatorInputs, setCalculatorInputs] = useState({
+    personal_loan: { amount: 0, rate: 10.5, tenure: 5 },
+    home_loan: { amount: 0, rate: 8.5, tenure: 20 },
+    car_loan: { amount: 0, rate: 9.5, tenure: 5 },
+    lumpsum: { amount: 0, rate: 12, tenure: 10 },
+    swp: { amount: 0, withdrawal: 0, rate: 10, tenure: 15 }
+  });
+
   // --- Reset All State ---
   const resetState = () => {
     setPlanId(null);
@@ -200,6 +209,13 @@ function App() {
     setJourneyAdjustments([]);
     setInvestmentAllocations([]);
     setGoalMappings({});
+    setCalculatorInputs({
+      personal_loan: { amount: 0, rate: 10.5, tenure: 5 },
+      home_loan: { amount: 0, rate: 8.5, tenure: 20 },
+      car_loan: { amount: 0, rate: 9.5, tenure: 5 },
+      lumpsum: { amount: 0, rate: 12, tenure: 10 },
+      swp: { amount: 0, withdrawal: 0, rate: 10, tenure: 15 }
+    });
   };
 
   // --- Load Financial Plan from Supabase ---
@@ -236,14 +252,14 @@ function App() {
         
         // Handle migration from old flat structure to new per-person structure
         const migrationIncome = {
-            self: loadedIncome.self || loadedIncome.family || '',
-            selfBonus: loadedIncome.selfBonus || loadedIncome.bonus || '',
-            selfPassive: loadedIncome.selfPassive || loadedIncome.passive || '',
-            selfOther: loadedIncome.selfOther || loadedIncome.other || '',
-            spouse: loadedIncome.spouse || '',
-            spouseBonus: loadedIncome.spouseBonus || '',
-            spousePassive: loadedIncome.spousePassive || '',
-            spouseOther: loadedIncome.spouseOther || ''
+            self: loadedIncome.self ?? loadedIncome.family ?? '',
+            selfBonus: loadedIncome.selfBonus ?? loadedIncome.bonus ?? '',
+            selfPassive: loadedIncome.selfPassive ?? loadedIncome.passive ?? '',
+            selfOther: loadedIncome.selfOther ?? loadedIncome.other ?? '',
+            spouse: loadedIncome.spouse ?? '',
+            spouseBonus: loadedIncome.spouseBonus ?? '',
+            spousePassive: loadedIncome.spousePassive ?? '',
+            spouseOther: loadedIncome.spouseOther ?? ''
         };
         
         setIncome(migrationIncome);
@@ -275,10 +291,10 @@ function App() {
         const mergedExpenseCategories = {
           household: { ...defaultExpenseCategories.household, ...(loadedExpenseCategories.household || {}) },
           emi: { 
-            personalLoan: loadedExpenseCategories.emi?.personalLoan || '',
-            homeLoan: loadedExpenseCategories.emi?.homeLoan || '',
-            educationLoan: loadedExpenseCategories.emi?.educationLoan || '',
-            otherEmi: loadedExpenseCategories.emi?.otherEmi || ''
+            personalLoan: loadedExpenseCategories.emi?.personalLoan ?? '',
+            homeLoan: loadedExpenseCategories.emi?.homeLoan ?? '',
+            educationLoan: loadedExpenseCategories.emi?.educationLoan ?? '',
+            otherEmi: loadedExpenseCategories.emi?.otherEmi ?? ''
           },
           insurance: migratedInsurance,
           savings: { 
@@ -373,6 +389,9 @@ function App() {
         setJourneyAdjustments(data.journey_adjustments || []);
         setInvestmentAllocations(data.investment_allocations || []);
         setGoalMappings(data.goal_mappings || {});
+        if (data.calculator_inputs) {
+            setCalculatorInputs(data.calculator_inputs);
+        }
       }
       
       setLoading(false);
@@ -413,7 +432,8 @@ function App() {
         journey_adjustments: journeyAdjustments,
         investment_allocations: investmentAllocations,
         goal_mappings: goalMappings,
-        insurance_mode: insuranceMode
+        insurance_mode: insuranceMode,
+        calculator_inputs: calculatorInputs
       });
       
       if (error) {
@@ -702,22 +722,36 @@ function App() {
                 />
               )}
               {activeCalculator === 'per_loan' && (
-                <PersonalLoanCalculator />
+                <PersonalLoanCalculator 
+                  data={calculatorInputs.personal_loan}
+                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, personal_loan: val }))}
+                />
               )}
               {activeCalculator === 'home_loan' && (
-                <HomeLoanCalculator />
+                <HomeLoanCalculator 
+                  data={calculatorInputs.home_loan}
+                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, home_loan: val }))}
+                />
               )}
               {activeCalculator === 'car_loan' && (
-                <CarLoanCalculator />
+                <CarLoanCalculator 
+                  data={calculatorInputs.car_loan}
+                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, car_loan: val }))}
+                />
               )}
               {activeCalculator === 'lumpsum' && (
                 <LumpsumCalculator 
                   familyMembers={familyMembers} 
                   proposedLumpsums={investmentAllocations.filter(a => !['SIP', 'PPF', 'NPS'].includes(a.type))}
+                  data={calculatorInputs.lumpsum}
+                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, lumpsum: val }))}
                 />
               )}
               {activeCalculator === 'swp' && (
-                <SWPCalculator />
+                <SWPCalculator 
+                  data={calculatorInputs.swp}
+                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, swp: val }))}
+                />
               )}
             </>
           )}

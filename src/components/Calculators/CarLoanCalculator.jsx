@@ -1,16 +1,22 @@
 import React, { useState, useMemo } from 'react';
 import { Calculator, Calendar, DollarSign, TrendingDown, Clock, Info, Car } from 'lucide-react';
 
-const CarLoanCalculator = () => {
+const CarLoanCalculator = ({ data, setData }) => {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
 
-    // State for inputs
-    const [loanAmount, setLoanAmount] = useState(800000);
-    const [interestRate, setInterestRate] = useState(9.5);
-    const [tenureYears, setTenureYears] = useState(5);
-    const [startMonth, setStartMonth] = useState(currentMonth);
-    const [startYear, setStartYear] = useState(currentYear);
+    // Use props if available, otherwise defaults
+    const loanAmount = data?.amount ?? 0;
+    const interestRate = data?.rate ?? 9.5;
+    const tenureYears = data?.tenure ?? 5;
+    const startMonth = data?.startMonth ?? currentMonth;
+    const startYear = data?.startYear ?? currentYear;
+
+    const setLoanAmount = (val) => setData({ ...data, amount: val });
+    const setInterestRate = (val) => setData({ ...data, rate: val });
+    const setTenureYears = (val) => setData({ ...data, tenure: val });
+    const setStartMonth = (val) => setData({ ...data, startMonth: val });
+    const setStartYear = (val) => setData({ ...data, startYear: val });
 
     // Derived values
     const tenureMonths = tenureYears * 12;

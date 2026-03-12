@@ -1,19 +1,24 @@
 import React, { useState, useMemo } from 'react';
 import { Calculator, Calendar, DollarSign, TrendingDown, Clock, Plus, Trash2, Info } from 'lucide-react';
 
-const HomeLoanCalculator = () => {
+const HomeLoanCalculator = ({ data, setData }) => {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
 
-    // State for inputs
-    const [loanAmount, setLoanAmount] = useState(5000000);
-    const [interestRate, setInterestRate] = useState(8.5);
-    const [tenureYears, setTenureYears] = useState(20);
-    const [startMonth, setStartMonth] = useState(currentMonth);
-    const [startYear, setStartYear] = useState(currentYear);
+    // Use props if available, otherwise defaults
+    const loanAmount = data?.amount ?? 0;
+    const interestRate = data?.rate ?? 8.5;
+    const tenureYears = data?.tenure ?? 20;
+    const startMonth = data?.startMonth ?? currentMonth;
+    const startYear = data?.startYear ?? currentYear;
+    const events = data?.events ?? [];
 
-    // State for events (Prepayments and Rate Changes)
-    const [events, setEvents] = useState([]);
+    const setLoanAmount = (val) => setData({ ...data, amount: val });
+    const setInterestRate = (val) => setData({ ...data, rate: val });
+    const setTenureYears = (val) => setData({ ...data, tenure: val });
+    const setStartMonth = (val) => setData({ ...data, startMonth: val });
+    const setStartYear = (val) => setData({ ...data, startYear: val });
+    const setEvents = (val) => setData({ ...data, events: typeof val === 'function' ? val(events) : val });
 
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const yearOptions = Array.from({ length: 51 }, (_, i) => currentYear - 5 + i);
@@ -254,27 +259,27 @@ const HomeLoanCalculator = () => {
                         {/* Summary Header */}
                         <div style={{ 
                             padding: '2rem', 
-                            background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)', 
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', 
                             borderRadius: '16px', 
                             color: 'white',
                             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                         }}>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
                                 <div>
-                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.85rem' }}>Monthly EMI</p>
-                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>₹{Math.round(calculationData.baseEMI).toLocaleString('en-IN')}</h3>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.85rem', color: 'white' }}>Monthly EMI</p>
+                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'white' }}>₹{Math.round(calculationData.baseEMI).toLocaleString('en-IN')}</h3>
                                 </div>
-                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
-                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.85rem' }}>Total Principal</p>
-                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>₹{loanAmount.toLocaleString('en-IN')}</h3>
+                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.3)', paddingLeft: '1.5rem' }}>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.85rem', color: 'white' }}>Total Principal</p>
+                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'white' }}>₹{loanAmount.toLocaleString('en-IN')}</h3>
                                 </div>
-                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
-                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.85rem' }}>Total Interest</p>
-                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>₹{Math.round(totalInterest).toLocaleString('en-IN')}</h3>
+                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.3)', paddingLeft: '1.5rem' }}>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.85rem', color: 'white' }}>Total Interest</p>
+                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'white' }}>₹{Math.round(totalInterest).toLocaleString('en-IN')}</h3>
                                 </div>
-                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
-                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.85rem' }}>Total Payable</p>
-                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>₹{Math.round(totalPaid).toLocaleString('en-IN')}</h3>
+                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.3)', paddingLeft: '1.5rem' }}>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.85rem', color: 'white' }}>Total Payable</p>
+                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'white' }}>₹{Math.round(totalPaid).toLocaleString('en-IN')}</h3>
                                 </div>
                             </div>
                         </div>

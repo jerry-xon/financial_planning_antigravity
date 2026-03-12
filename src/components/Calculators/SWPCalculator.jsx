@@ -1,22 +1,30 @@
 import React, { useState, useMemo } from 'react';
 import { Calculator, Calendar, DollarSign, TrendingUp, Clock, Plus, Trash2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
-const SWPCalculator = () => {
+const SWPCalculator = ({ data, setData }) => {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
 
-    // State for inputs
-    const [investmentAmount, setInvestmentAmount] = useState(1000000);
-    const [monthlyWithdrawal, setMonthlyWithdrawal] = useState(10000);
-    const [expectedReturns, setExpectedReturns] = useState(10);
+    // Use props if available, otherwise defaults
+    const investmentAmount = data?.amount ?? 0;
+    const monthlyWithdrawal = data?.withdrawal ?? 0;
+    const expectedReturns = data?.rate ?? 10;
+    const tenureYears = data?.tenure ?? 15;
+    const events = data?.events ?? [];
+
+    // Setters using setData
+    const setInvestmentAmount = (val) => setData({ ...data, amount: val });
+    const setMonthlyWithdrawal = (val) => setData({ ...data, withdrawal: val });
+    const setExpectedReturns = (val) => setData({ ...data, rate: val });
+    const setTenureYears = (val) => setData({ ...data, tenure: val });
+    const setEvents = (val) => setData({ ...data, events: typeof val === 'function' ? val(events) : val });
+
+    // State for inputs (remaining useState)
     const [startAfterYears, setStartAfterYears] = useState(0);
-    const [tenureYears, setTenureYears] = useState(15);
     const [startMonth, setStartMonth] = useState(currentMonth);
     const [startYear, setStartYear] = useState(currentYear);
     const [annualIncrement, setAnnualIncrement] = useState(0); // Yearly % increase in withdrawal
 
-    // State for Events (Adjustment and Lumpsum Withdrawal)
-    const [events, setEvents] = useState([]);
 
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const yearOptions = Array.from({ length: 41 }, (_, i) => currentYear - 5 + i);
