@@ -168,10 +168,10 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                             <input 
                                 type="number" 
                                 value={expenseCategories.household.education} 
-                                onChange={(e) => handleExpenseChange('household', 'education', e.target.value)} 
+                                readOnly
                                 onWheel={(e) => e.target.blur()} 
                                 placeholder="Auto-calculated from Profile"
-                                style={{ background: 'var(--bg-card)', fontWeight: 600, color: 'var(--primary)' }}
+                                style={{ background: 'var(--bg-card)', fontWeight: 600, color: 'var(--primary)', cursor: 'not-allowed' }}
                             />
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                                 (Auto-filled from Profile Module)

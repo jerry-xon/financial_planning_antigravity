@@ -65,7 +65,9 @@ export const generateProjections = (params) => {
         (parseFloat(income.spouseOther) || 0)
     ) * 12;
 
-    const householdMonthly = Object.values(expenseCategories.household || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+    const householdMonthly = Object.entries(expenseCategories.household || {})
+        .filter(([key]) => key !== 'education')
+        .reduce((sum, [_, val]) => sum + (parseFloat(val) || 0), 0);
     const emiMonthly = Object.values(expenseCategories.emi || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
     const savingsMonthly = Object.values(expenseCategories.savings || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
 
@@ -279,6 +281,14 @@ export const generateProjections = (params) => {
             totalOutflow,
             surplusBeforeSaving,
             savingsAndInvestments,
+            savingsBreakdown: {
+                rd: (parseFloat(expenseCategories.savings?.rd) || 0) * 12,
+                fd: (parseFloat(expenseCategories.savings?.fd) || 0) * 12,
+                ppf: (parseFloat(expenseCategories.savings?.ppf) || 0) * 12,
+                savingSchemes: (parseFloat(expenseCategories.savings?.savingSchemes) || 0) * 12,
+                mfSip: (parseFloat(expenseCategories.savings?.mfSip) || 0) * 12,
+                otherSaving: (parseFloat(expenseCategories.savings?.otherSaving) || 0) * 12
+            },
             netInvestibleSurplus,
             yearAllocationsTotal,
             activeAllocations,

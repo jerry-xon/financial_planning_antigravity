@@ -42,12 +42,12 @@ const JourneyTable = ({ projections }) => {
                             <td style={{ position: 'relative' }}>
                                 <button 
                                     className="outflow-btn"
-                                    onClick={() => setSelectedRow(selectedRow === idx ? null : idx)}
+                                    onClick={() => setSelectedRow(selectedRow === `outflow-${idx}` ? null : `outflow-${idx}`)}
                                 >
                                     {formatCurrency(row.totalOutflow)}
                                 </button>
                                 
-                                {selectedRow === idx && (
+                                {selectedRow === `outflow-${idx}` && (
                                     <div className="breakdown-popover fade-in" ref={popoverRef}>
                                         <div className="breakdown-item">
                                             <span>Household expenses (Inflation adjusted)</span>
@@ -90,7 +90,52 @@ const JourneyTable = ({ projections }) => {
                                 )}
                             </td>
                             <td style={{ fontWeight: 600 }}>{formatCurrency(row.surplusBeforeSaving)}</td>
-                            <td>{formatCurrency(row.savingsAndInvestments)}</td>
+                            <td style={{ position: 'relative' }}>
+                                <button 
+                                    className="outflow-btn"
+                                    onClick={() => setSelectedRow(selectedRow === `savings-${idx}` ? null : `savings-${idx}`)}
+                                >
+                                    {formatCurrency(row.savingsAndInvestments)}
+                                </button>
+
+                                {selectedRow === `savings-${idx}` && (
+                                    <div className="breakdown-popover fade-in" ref={popoverRef}>
+                                        <div style={{ marginBottom: '0.75rem', fontSize: '0.750rem', color: 'var(--primary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                            Savings & Investments Breakdown
+                                        </div>
+                                        <div className="breakdown-item">
+                                            <span>RD</span>
+                                            <strong>{formatCurrency(row.savingsBreakdown.rd)}</strong>
+                                        </div>
+                                        <div className="breakdown-item">
+                                            <span>FD</span>
+                                            <strong>{formatCurrency(row.savingsBreakdown.fd)}</strong>
+                                        </div>
+                                        <div className="breakdown-item">
+                                            <span>PPF</span>
+                                            <strong>{formatCurrency(row.savingsBreakdown.ppf)}</strong>
+                                        </div>
+                                        <div className="breakdown-item">
+                                            <span>Saving Schemes</span>
+                                            <strong>{formatCurrency(row.savingsBreakdown.savingSchemes)}</strong>
+                                        </div>
+                                        <div className="breakdown-item">
+                                            <span>MFs – SIP</span>
+                                            <strong>{formatCurrency(row.savingsBreakdown.mfSip)}</strong>
+                                        </div>
+                                        <div className="breakdown-item">
+                                            <span>Other Saving</span>
+                                            <strong>{formatCurrency(row.savingsBreakdown.otherSaving)}</strong>
+                                        </div>
+
+                                        <div className="breakdown-divider"></div>
+                                        <div className="breakdown-total">
+                                            <span>Total Savings</span>
+                                            <strong>{formatCurrency(row.savingsAndInvestments)}</strong>
+                                        </div>
+                                    </div>
+                                )}
+                            </td>
                             <td style={{ 
                                 fontWeight: 700, 
                                 color: row.netInvestibleSurplus >= 0 ? 'var(--accent)' : '#ef4444' 
