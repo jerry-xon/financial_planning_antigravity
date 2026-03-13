@@ -73,14 +73,19 @@ export const generateProjections = (params) => {
 
     // --- Insurance Logic ---
     const getMonthly = (item) => {
-        if (!item) return 0;
-        const val = parseFloat(item.value) || 0;
-        const freq = item.frequency || 'Annual';
-        if (freq === 'Annual') return val / 12;
-        if (freq === 'Half Yearly') return val / 6;
-        if (freq === 'Quarterly') return val / 3;
-        return val;
-    };
+    if (!item || !item.value) return 0;
+    const val = parseFloat(item.value) || 0;
+    const freq = item.frequency || 'Annual';
+    switch (freq) {
+        case 'Annual':
+        case 'Annually': return val / 12;
+        case 'Half Yearly':
+        case 'Half-Yearly': return val / 6;
+        case 'Quarterly': return val / 3;
+        case 'Monthly': return val;
+        default: return val / 12;
+    }
+};
 
     const genInsuranceAnnual = (
         getMonthly(expenseCategories.insurance?.health) +
@@ -89,7 +94,9 @@ export const generateProjections = (params) => {
         getMonthly(expenseCategories.insurance?.others)
     ) * 12;
 
-    const cashFlowLifeAnnual = getMonthly(expenseCategories.insurance?.life) * 12;
+    const cashFlowLifeAnnual = Object.values(expenseCategories.insurance?.life || {}).reduce((sum, item) => {
+        return sum + getMonthly(item);
+    }, 0) * 12;
 
     // Find detailed premiums active in startYear to determine unallocated amount
     let detailedLifeStartYear = 0;

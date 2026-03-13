@@ -114,7 +114,13 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, onCalculate }) =
                                             </div>
                                             <div className="input-group">
                                                 <label>Policy Start Date</label>
-                                                <input type="date" value={p.startDate} onChange={e => updatePolicy(p.id, 'startDate', e.target.value)} className="input-field" />
+                                                <input 
+                                                    type="date" 
+                                                    value={p.startDate} 
+                                                    max={new Date().toISOString().split('T')[0]}
+                                                    onChange={e => updatePolicy(p.id, 'startDate', e.target.value)} 
+                                                    className="input-field" 
+                                                />
                                             </div>
                                             <div className="input-group">
                                                 <label>Premium Amount</label>

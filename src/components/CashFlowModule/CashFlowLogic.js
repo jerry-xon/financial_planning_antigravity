@@ -1,8 +1,10 @@
 export const convertToMonthly = (value, frequency) => {
     const val = parseFloat(value) || 0;
     switch (frequency) {
-        case 'Annual': return val / 12;
-        case 'Half Yearly': return val / 6;
+        case 'Annual':
+        case 'Annually': return val / 12;
+        case 'Half Yearly':
+        case 'Half-Yearly': return val / 6;
         case 'Quarterly': return val / 3;
         case 'Monthly': return val;
         default: return val;
@@ -12,8 +14,10 @@ export const convertToMonthly = (value, frequency) => {
 export const convertToAnnual = (value, frequency) => {
     const val = parseFloat(value) || 0;
     switch (frequency) {
-        case 'Annual': return val;
-        case 'Half Yearly': return val * 2;
+        case 'Annual':
+        case 'Annually': return val;
+        case 'Half Yearly':
+        case 'Half-Yearly': return val * 2;
         case 'Quarterly': return val * 4;
         case 'Monthly': return val * 12;
         default: return val;
@@ -33,7 +37,16 @@ export const calculateCashFlow = (income, expenseCategories) => {
 
     const householdSum = Object.values(expenseCategories.household || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
     const emiSum = Object.values(expenseCategories.emi || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-    const insuranceSum = Object.values(expenseCategories.insurance || {}).reduce((sum, item) => sum + convertToMonthly(item.value, item.frequency), 0);
+    
+    // Insurance specialized handling for nested life insurance
+    const insuranceSum = Object.entries(expenseCategories.insurance || {}).reduce((sum, [key, item]) => {
+        if (key === 'life') {
+            const lifeTotalMonthly = Object.values(item || {}).reduce((lSum, lItem) => lSum + convertToMonthly(lItem.value, lItem.frequency), 0);
+            return sum + lifeTotalMonthly;
+        }
+        return sum + convertToMonthly(item.value, item.frequency);
+    }, 0);
+
     const savingsSum = Object.values(expenseCategories.savings || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
 
     const categorySums = {
@@ -70,13 +83,26 @@ export const calculateCashFlow = (income, expenseCategories) => {
     });
     // Insurance specialized handling
     Object.entries(expenseCategories.insurance || {}).forEach(([itemKey, item]) => {
-        const monthlyAmount = convertToMonthly(item.value, item.frequency);
-        if (monthlyAmount > 0) {
-            expenseBreakdown.push({
-                name: getItemLabel(itemKey),
-                category: getCategoryLabel('insurance'),
-                value: monthlyAmount
+        if (itemKey === 'life') {
+            Object.entries(item || {}).forEach(([memberName, lItem]) => {
+                const monthlyAmount = convertToMonthly(lItem.value, lItem.frequency);
+                if (monthlyAmount > 0) {
+                    expenseBreakdown.push({
+                        name: `Life Insurance Premium (${memberName})`,
+                        category: getCategoryLabel('insurance'),
+                        value: monthlyAmount
+                    });
+                }
             });
+        } else {
+            const monthlyAmount = convertToMonthly(item.value, item.frequency);
+            if (monthlyAmount > 0) {
+                expenseBreakdown.push({
+                    name: getItemLabel(itemKey),
+                    category: getCategoryLabel('insurance'),
+                    value: monthlyAmount
+                });
+            }
         }
     });
 

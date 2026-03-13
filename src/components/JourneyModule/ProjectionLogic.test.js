@@ -15,6 +15,9 @@ describe('ProjectionLogic', () => {
         income: { self: 100000 }, // 12L per year
         expenseCategories: {
             household: { rent: 20000, education: 5000 }, // 2.4L per year (excluding education)
+            insurance: {
+                life: { 'Self': { value: 1000, frequency: 'Monthly' } } // 12k per year
+            },
             emi: { car: 10000 }, // 1.2L per year
             savings: { sip: 10000 } // 1.2L per year
         },

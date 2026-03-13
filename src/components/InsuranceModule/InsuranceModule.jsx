@@ -3,11 +3,13 @@ import { createPortal } from 'react-dom';
 import InsuranceInput from './InsuranceInput';
 import InsuranceOutput from './InsuranceOutput';
 import { calculateYearlyInsuranceSummary, getInsuredNamesList } from './InsuranceLogic';
+import { convertToAnnual } from '../CashFlowModule/CashFlowLogic';
 
 const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategories, setExpenseCategories, onNext, onBack, setCurrentStep }) => {
     const [results, setResults] = useState(null);
     const [showMismatchModal, setShowMismatchModal] = useState(false);
     const [amounts, setAmounts] = useState({ here: 0, cashFlow: 0 });
+    const [showDetailedPolicies, setShowDetailedPolicies] = useState(false);
 
     const handleCalculate = () => {
         const calculated = calculateYearlyInsuranceSummary(policies);
@@ -24,17 +26,12 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
         }, 0);
 
         // B. Premium from Cash Flow module (converted to Annual)
-        const lifeInsData = expenseCategories.insurance?.life || { value: '0', frequency: 'Annual' };
-        const val = parseFloat(lifeInsData.value) || 0;
-        const freq = lifeInsData.frequency || 'Annual';
+        const lifeInsData = expenseCategories.insurance?.life || {};
         let totalAnnualCashFlow = 0;
-        switch (freq) {
-            case 'Annual': totalAnnualCashFlow = val; break;
-            case 'Half Yearly': totalAnnualCashFlow = val * 2; break;
-            case 'Quarterly': totalAnnualCashFlow = val * 4; break;
-            case 'Monthly': totalAnnualCashFlow = val * 12; break;
-            default: totalAnnualCashFlow = val;
-        }
+        
+        Object.values(lifeInsData).forEach(item => {
+            totalAnnualCashFlow += convertToAnnual(item.value, item.frequency);
+        });
 
         if (Math.round(totalAnnualHere) !== Math.round(totalAnnualCashFlow)) {
             setAmounts({ here: Math.round(totalAnnualHere), cashFlow: Math.round(totalAnnualCashFlow) });
@@ -53,12 +50,81 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                         Record existing life insurance plans for each family member to analyze premium outflows and total coverage.
                     </p>
 
-                    <InsuranceInput
-                        familyMembers={familyMembers}
-                        policies={policies}
-                        setPolicies={setPolicies}
-                        onCalculate={handleCalculate}
-                    />
+                    <div className="premium-summary" style={{ marginBottom: '2.5rem', padding: '1.5rem', background: 'var(--bg-main)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                        <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Life Insurance Premium Summary (from Cash Flow)</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                            {familyMembers.map(member => {
+                                const data = expenseCategories.insurance?.life?.[member.name || member.relation] || { value: 0, frequency: 'Annual' };
+                                return (
+                                    <div key={member.name || member.relation} className="input-group">
+                                        <label>Premium ({member.name || member.relation})</label>
+                                        <div style={{ 
+                                            padding: '0.75rem 1rem', 
+                                            background: 'var(--bg-card)', 
+                                            border: '1px solid var(--border)', 
+                                            borderRadius: '8px',
+                                            color: 'var(--primary)',
+                                            fontWeight: 600,
+                                            fontSize: '1rem'
+                                        }}>
+                                            ₹{parseFloat(data.value || 0).toLocaleString('en-IN')} ({data.frequency})
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        
+                        <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>Total Life Insurance Premium:</span>
+                            <span style={{ 
+                                fontSize: '1.5rem', 
+                                fontWeight: 800, 
+                                color: 'var(--primary)',
+                                background: 'rgba(37, 99, 235, 0.1)',
+                                padding: '0.5rem 1.5rem',
+                                borderRadius: '8px'
+                            }}>
+                                ₹{(Object.values(expenseCategories.insurance?.life || {}).reduce((sum, item) => {
+                                    return sum + convertToAnnual(item.value, item.frequency);
+                                }, 0)).toLocaleString('en-IN')}/year
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5rem' }}>
+                        <button 
+                            className="btn btn-secondary" 
+                            onClick={() => setShowDetailedPolicies(!showDetailedPolicies)}
+                            style={{ 
+                                width: '100%', 
+                                borderStyle: 'dashed', 
+                                background: 'transparent',
+                                padding: '1.5rem',
+                                fontSize: '1.1rem',
+                                fontWeight: 600,
+                                color: 'var(--primary)',
+                                borderColor: 'var(--primary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '12px'
+                            }}
+                        >
+                            <span style={{ fontSize: '1.5rem' }}>{showDetailedPolicies ? '-' : '+'}</span>
+                            For accurate financial planning provide complete details of each policy
+                        </button>
+                    </div>
+
+                    {showDetailedPolicies && (
+                        <div className="fade-in">
+                            <InsuranceInput
+                                familyMembers={familyMembers}
+                                policies={policies}
+                                setPolicies={setPolicies}
+                                onCalculate={handleCalculate}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>

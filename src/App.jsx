@@ -86,7 +86,7 @@ function App() {
       health: { value: '', frequency: 'Annual' },
       car: { value: '', frequency: 'Annual' },
       bike: { value: '', frequency: 'Annual' },
-      life: { value: '', frequency: 'Annual' },
+      life: {},
       others: { value: '', frequency: 'Annual' }
     },
     savings: { rd: '', fd: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
@@ -179,7 +179,7 @@ function App() {
         health: { value: '', frequency: 'Annual' },
         car: { value: '', frequency: 'Annual' },
         bike: { value: '', frequency: 'Annual' },
-        life: { value: '', frequency: 'Annual' },
+        life: {},
         others: { value: '', frequency: 'Annual' }
       },
       savings: { rd: '', fd: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
@@ -274,7 +274,7 @@ function App() {
             health: { value: '', frequency: 'Annual' },
             car: { value: '', frequency: 'Annual' },
             bike: { value: '', frequency: 'Annual' },
-            life: { value: '', frequency: 'Annual' },
+            life: {},
             others: { value: '', frequency: 'Annual' }
           },
           savings: { rd: '', fd: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
@@ -282,12 +282,42 @@ function App() {
         const loadedExpenseCategories = data.expense_categories || {};
         
         // Migration logic for insurance and savings
+        const loadedInsurance = loadedExpenseCategories.insurance || {};
+        
+        // Ensure life premiums are migrated to a member-specific structure if they exist in old format
+        let migratedLife = {};
+        const selfMember = (data.family_members || []).find(m => m.relation === 'Self') || { name: '', relation: 'Self' };
+        const selfKey = selfMember.name || selfMember.relation;
+
+        if (loadedInsurance.life && typeof loadedInsurance.life === 'object' && 'value' in loadedInsurance.life) {
+            // Check if it actually has members (already partially migrated or polluted)
+            const hasMembers = Object.keys(loadedInsurance.life).some(k => k !== 'value' && k !== 'frequency');
+            if (hasMembers) {
+                // Keep only the members
+                migratedLife = { ...loadedInsurance.life };
+                delete migratedLife.value;
+                delete migratedLife.frequency;
+            } else {
+                // Pure old format
+                migratedLife = { [selfKey]: { value: loadedInsurance.life.value, frequency: loadedInsurance.life.frequency || 'Annual' } };
+            }
+        } else if (loadedInsurance.life) {
+            // Already a member-specific object, but check for 'Self' pollution if name exists
+            migratedLife = { ...loadedInsurance.life };
+            if (selfMember.name && migratedLife['Self']) {
+                if (!migratedLife[selfMember.name]) {
+                    migratedLife[selfMember.name] = migratedLife['Self'];
+                }
+                delete migratedLife['Self'];
+            }
+        }
+
         const migratedInsurance = {
-            health: loadedExpenseCategories.insurance?.health || { value: loadedExpenseCategories.emi?.healthInsurance || '', frequency: 'Annual' },
-            car: loadedExpenseCategories.insurance?.car || { value: loadedExpenseCategories.emi?.carInsurance || '', frequency: 'Annual' },
-            bike: loadedExpenseCategories.insurance?.bike || { value: loadedExpenseCategories.emi?.bikeInsurance || '', frequency: 'Annual' },
-            life: loadedExpenseCategories.insurance?.life || { value: loadedExpenseCategories.emi?.lifeInsurancePremium || '', frequency: 'Annual' },
-            others: loadedExpenseCategories.insurance?.others || { value: loadedExpenseCategories.emi?.otherInsurance || '', frequency: 'Annual' }
+            health: loadedInsurance.health || { value: loadedExpenseCategories.emi?.healthInsurance || '', frequency: 'Annual' },
+            car: loadedInsurance.car || { value: loadedExpenseCategories.emi?.carInsurance || '', frequency: 'Annual' },
+            bike: loadedInsurance.bike || { value: loadedExpenseCategories.emi?.bikeInsurance || '', frequency: 'Annual' },
+            life: migratedLife,
+            others: loadedInsurance.others || { value: loadedExpenseCategories.emi?.otherInsurance || '', frequency: 'Annual' }
         };
 
         const mergedExpenseCategories = {

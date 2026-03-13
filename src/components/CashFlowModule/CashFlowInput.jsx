@@ -30,6 +30,22 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
         }));
     };
 
+    const handleLifeInsuranceChange = (memberName, field, value) => {
+        setExpenseCategories(prev => ({
+            ...prev,
+            insurance: {
+                ...prev.insurance,
+                life: {
+                    ...prev.insurance.life,
+                    [memberName]: {
+                        ...(prev.insurance.life[memberName] || { value: '', frequency: 'Annual' }),
+                        [field]: value
+                    }
+                }
+            }
+        }));
+    };
+
     // Auto-fill Children Education Expense
     React.useEffect(() => {
         let totalEducationMonthly = 0;
@@ -223,7 +239,6 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                             { key: 'health', label: 'Health Insurance' },
                             { key: 'car', label: 'Car Insurance' },
                             { key: 'bike', label: 'Two-wheeler Insurance' },
-                            { key: 'life', label: 'Life Insurance Premium' },
                             { key: 'others', label: 'Others (Insurance)' }
                         ].map((ins) => (
                             <div key={ins.key} className="insurance-input-row" style={{ display: 'grid', gridTemplateColumns: '1.2fr 140px 140px', gap: '1rem', marginBottom: '1rem', alignItems: 'end' }}>
@@ -265,6 +280,56 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                         fontSize: '0.9rem'
                                     }}>
                                         {Math.round(convertToMonthly(expenseCategories.insurance[ins.key].value, expenseCategories.insurance[ins.key].frequency)).toLocaleString('en-IN')}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="insurance-grid" style={{ marginTop: '1rem' }}>
+                        {familyMembers.map((member) => (
+                            <div key={member.name || member.relation} className="insurance-input-row" style={{ display: 'grid', gridTemplateColumns: '1.2fr 140px 140px', gap: '1rem', marginBottom: '1rem', alignItems: 'end' }}>
+                                <div className="input-group" style={{ marginBottom: 0 }}>
+                                    <label>Life Insurance Premium ({member.name || member.relation})</label>
+                                    <input 
+                                        type="number" 
+                                        value={expenseCategories.insurance.life[member.name || member.relation]?.value || ''} 
+                                        onChange={(e) => handleLifeInsuranceChange(member.name || member.relation, 'value', e.target.value)} 
+                                        onWheel={(e) => e.target.blur()} 
+                                        placeholder="0" 
+                                    />
+                                </div>
+                                <div className="input-group" style={{ marginBottom: 0 }}>
+                                    <label>Frequency</label>
+                                    <select 
+                                        value={expenseCategories.insurance.life[member.name || member.relation]?.frequency || 'Annual'} 
+                                        onChange={(e) => handleLifeInsuranceChange(member.name || member.relation, 'frequency', e.target.value)}
+                                        style={{ height: '42px' }}
+                                    >
+                                        <option value="Annual">Annual</option>
+                                        <option value="Half Yearly">Half Yearly</option>
+                                        <option value="Quarterly">Quarterly</option>
+                                        <option value="Monthly">Monthly</option>
+                                    </select>
+                                </div>
+                                <div className="input-group" style={{ marginBottom: 0 }}>
+                                    <label>Monthly Premium (₹)</label>
+                                    <div style={{ 
+                                        height: '42px', 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        padding: '0 1rem', 
+                                        background: 'var(--bg-card)', 
+                                        border: '1px solid var(--border)', 
+                                        borderRadius: '6px',
+                                        color: 'var(--primary)',
+                                        fontWeight: 600,
+                                        fontSize: '0.9rem'
+                                    }}>
+                                        {Math.round(convertToMonthly(
+                                            expenseCategories.insurance.life[member.name || member.relation]?.value || 0, 
+                                            expenseCategories.insurance.life[member.name || member.relation]?.frequency || 'Annual'
+                                        )).toLocaleString('en-IN')}
                                     </div>
                                 </div>
                             </div>
