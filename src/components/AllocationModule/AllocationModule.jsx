@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { PieChart, Plus, Trash2, ArrowRight, Wallet, Target, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 
 const AllocationModule = ({ 
+    familyMembers = [],
     netInvestibleSurplus, 
     allocations, 
     setAllocations, 
@@ -29,11 +30,12 @@ const AllocationModule = ({
                 id: Date.now(), 
                 type: 'SIP', 
                 name: '', 
-                amount: '', // This will be monthly for SIP, PPF, NPS and total for others
+                amount: '', // This will be monthly for SIP, PPF, NPS, Life Insurance and total for others
                 startMonth: new Date().getMonth() + 1,
                 startYear: currentYear,
                 duration: 10,
-                expectedReturn: 12
+                expectedReturn: 12,
+                frequency: 'Monthly'
             }
         ]);
     };
@@ -63,7 +65,7 @@ const AllocationModule = ({
         return Array.from(types).sort();
     }, [allocations]);
 
-    const isRecurring = (type) => ['SIP', 'PPF', 'NPS'].includes(type);
+    const isRecurring = (type) => ['SIP', 'PPF', 'NPS', 'Life Insurance'].includes(type);
 
     return (
         <div className="allocation-module fade-in">
@@ -125,8 +127,8 @@ const AllocationModule = ({
                                             </span>
                                             {isCollapsed && item.amount > 0 && (
                                                 <span style={{ marginLeft: '12px', color: 'var(--primary)', fontWeight: 600 }}>
-                                                    {formatCurrency(recurring ? item.amount / 12 : item.amount)}
-                                                    {recurring ? ' /mo' : ''}
+                                                    {formatCurrency(recurring ? (item.type === 'Life Insurance' ? item.amount : item.amount / 12) : item.amount)}
+                                                    {item.type === 'Life Insurance' ? ` /${item.frequency || 'Monthly'}` : (recurring ? ' /mo' : '')}
                                                 </span>
                                             )}
                                         </div>
@@ -167,7 +169,7 @@ const AllocationModule = ({
                                     {/* Form Body */}
                                     {!isCollapsed && (
                                         <div className="grid" style={{ 
-                                            gridTemplateColumns: '1.5fr 1.5fr 1.5fr 1fr 1fr 1fr', 
+                                            gridTemplateColumns: item.type === 'Life Insurance' ? '1.2fr 1fr 1fr 1fr 1fr 0.8fr 0.8fr 0.8fr' : '1.5fr 1.5fr 1.5fr 1fr 1fr 1fr', 
                                             gap: '1rem', 
                                             alignItems: 'end',
                                             padding: '1.25rem'
@@ -190,6 +192,7 @@ const AllocationModule = ({
                                                 >
                                                     <option value="SIP">SIP</option>
                                                     <option value="Lumpsum">Lumpsum</option>
+                                                    <option value="Life Insurance">Life Insurance</option>
                                                     <option value="Gold">Gold</option>
                                                     <option value="PPF">PPF</option>
                                                     <option value="NPS">NPS</option>
@@ -199,23 +202,57 @@ const AllocationModule = ({
                                                     <option value="Other Investment">Other Investment</option>
                                                 </select>
                                             </div>
+                                            {item.type === 'Life Insurance' && (
+                                                <div className="input-group" style={{ marginBottom: 0 }}>
+                                                    <label>Insured Member</label>
+                                                    <select 
+                                                        value={item.insuredMember} 
+                                                        onChange={(e) => updateAllocation(item.id, 'insuredMember', e.target.value)}
+                                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}
+                                                    >
+                                                        <option value="">Select Member</option>
+                                                        {familyMembers.map((m, idx) => (
+                                                            <option key={idx} value={m.name || m.relation}>{m.name || m.relation}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
                                             <div className="input-group" style={{ marginBottom: 0 }}>
-                                                <label>{recurring ? 'Monthly Amount' : 'Amount'}</label>
+                                                <label>{item.type === 'Life Insurance' ? 'Premium Amount' : (recurring ? 'Monthly Amount' : 'Amount')}</label>
                                                 <input 
                                                     type="number" 
-                                                    value={recurring ? (item.amount / 12 || '') : item.amount} 
+                                                    value={item.type === 'Life Insurance' ? (item.amount || '') : (recurring ? (item.amount / 12 || '') : item.amount)} 
                                                     onChange={(e) => {
                                                         const val = parseFloat(e.target.value) || 0;
-                                                        updateAllocation(item.id, 'amount', recurring ? val * 12 : val);
+                                                        if (item.type === 'Life Insurance') {
+                                                            updateAllocation(item.id, 'amount', val);
+                                                        } else {
+                                                            updateAllocation(item.id, 'amount', recurring ? val * 12 : val);
+                                                        }
                                                     }}
                                                     placeholder="0"
                                                 />
                                                 {recurring && (
                                                     <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
-                                                        Yearly: {formatCurrency(item.amount)}
+                                                        {item.type === 'Life Insurance' ? `Mode: ${item.frequency || 'Monthly'}` : `Yearly: ${formatCurrency(item.amount)}`}
                                                     </small>
                                                 )}
                                             </div>
+                                            {item.type === 'Life Insurance' && (
+                                                <div className="input-group" style={{ marginBottom: 0 }}>
+                                                    <label>Frequency</label>
+                                                    <select 
+                                                        value={item.frequency || 'Monthly'} 
+                                                        onChange={(e) => updateAllocation(item.id, 'frequency', e.target.value)}
+                                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}
+                                                    >
+                                                        <option value="Monthly">Monthly</option>
+                                                        <option value="Quarterly">Quarterly</option>
+                                                        <option value="Half-Yearly">Half-Yearly</option>
+                                                        <option value="Annual">Annual</option>
+                                                    </select>
+                                                </div>
+                                            )}
                                             <div className="input-group" style={{ marginBottom: 0 }}>
                                                 <label>Start Month</label>
                                                 <select 

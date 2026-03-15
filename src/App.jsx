@@ -649,6 +649,7 @@ function App() {
                   setPolicies={setPolicies}
                   expenseCategories={expenseCategories}
                   setExpenseCategories={setExpenseCategories}
+                  investmentAllocations={investmentAllocations}
                   onNext={() => { setCurrentStep(6); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(4); window.scrollTo(0, 0); }}
                   setCurrentStep={setCurrentStep}
@@ -690,6 +691,7 @@ function App() {
               )}
               {currentStep === 9 && (
                 <AllocationModule
+                  familyMembers={familyMembers}
                   netInvestibleSurplus={
                     (journeyProjections.find(p => p.year === new Date().getFullYear()))?.netInvestibleSurplus || 0
                   }

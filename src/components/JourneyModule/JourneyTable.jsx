@@ -57,10 +57,7 @@ const JourneyTable = ({ projections }) => {
                                             <span>EMIs</span>
                                             <strong>{formatCurrency(row.emiOutflow)}</strong>
                                         </div>
-                                        <div className="breakdown-item">
-                                            <span>Insurance Premiums</span>
-                                            <strong>{formatCurrency(row.insurancePremium)}</strong>
-                                        </div>
+
                                         <div className="breakdown-item">
                                             <span>Education expenses</span>
                                             <strong>{formatCurrency(row.educationExpenses)}</strong>
@@ -102,6 +99,10 @@ const JourneyTable = ({ projections }) => {
                                     <div className="breakdown-popover fade-in" ref={popoverRef}>
                                         <div style={{ marginBottom: '0.75rem', fontSize: '0.750rem', color: 'var(--primary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                             Savings & Investments Breakdown
+                                        </div>
+                                        <div className="breakdown-item">
+                                            <span>Insurance Premiums</span>
+                                            <strong>{formatCurrency(row.insurancePremium)}</strong>
                                         </div>
                                         <div className="breakdown-item">
                                             <span>RD</span>

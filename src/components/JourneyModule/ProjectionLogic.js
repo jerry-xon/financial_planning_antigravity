@@ -19,19 +19,17 @@ export const EDUCATION_STANDARDS = [
     "12th Standard"
 ];
 
-export const generateProjections = (params) => {
-    const {
-        familyMembers,
-        income,
-        expenseCategories,
-        goals,
-        inflationRates,
-        journeyAdjustments = [],
-        investmentAllocations = [],
-        policies = [],
-        startYear = new Date().getFullYear()
-    } = params;
-
+export const generateProjections = ({ 
+    familyMembers, 
+    income, 
+    expenseCategories, 
+    goals, 
+    inflationRates, 
+    startYear = new Date().getFullYear(),
+    policies = [], 
+    journeyAdjustments = [], 
+    investmentAllocations = [] 
+}) => {
     const {
         incomeIncrement = 0,
         householdInflation = 0,
@@ -159,7 +157,39 @@ export const generateProjections = (params) => {
             }
         });
 
-        const totalInsuranceOutflow = genInsuranceAnnual + detailedLifeThisYear + unallocatedLifeAnnual;
+        // Add Future Life Insurance from Allocation Module
+        let futureLifeAllocationsThisYear = 0;
+        investmentAllocations.forEach(alloc => {
+            if (alloc.type !== 'Life Insurance') return;
+            
+            const allocStartYear = parseInt(alloc.startYear);
+            const allocStartMonth = parseInt(alloc.startMonth) || 1;
+            const allocDuration = parseInt(alloc.duration) || 1;
+            const installmentAmount = parseFloat(alloc.amount) || 0;
+            const freq = alloc.frequency || 'Monthly';
+            
+            const interval = freq === 'Monthly' ? 1 : 
+                           freq === 'Quarterly' ? 3 : 
+                           freq === 'Half-Yearly' ? 6 : 
+                           12; // Annual
+            const installmentsPerYear = 12 / interval;
+            const yearlyAmount = installmentAmount * installmentsPerYear;
+
+            if (year >= allocStartYear && year < (allocStartYear + allocDuration)) {
+                if (year === allocStartYear) {
+                    // Calculate how many installments fall in the remaining months of the start year
+                    let installmentsThisYear = 0;
+                    for (let m = allocStartMonth; m <= 12; m += interval) {
+                        installmentsThisYear++;
+                    }
+                    futureLifeAllocationsThisYear += installmentAmount * installmentsThisYear;
+                } else {
+                    futureLifeAllocationsThisYear += yearlyAmount;
+                }
+            }
+        });
+
+        const totalInsuranceOutflow = genInsuranceAnnual + detailedLifeThisYear + unallocatedLifeAnnual + futureLifeAllocationsThisYear;
         const annualOutflow = householdOutflow + fixedOutflow;
         
         let totalEducationExpenses = 0;
@@ -229,9 +259,9 @@ export const generateProjections = (params) => {
             }
         });
 
-        const totalOutflow = annualOutflow + totalEducationExpenses + totalInsuranceOutflow + yearAdjustmentsTotal;
+        const totalOutflow = annualOutflow + totalEducationExpenses + yearAdjustmentsTotal;
         const surplusBeforeSaving = netInflowAfterTax - totalOutflow;
-        const savingsAndInvestments = savingsMonthly * 12; 
+        const savingsAndInvestments = (savingsMonthly * 12) + totalInsuranceOutflow; 
         const netInvestibleSurplus = surplusBeforeSaving - savingsAndInvestments;
 
         // 4. Proposed Investment Allocations (Step 9) - These are ADDITIONAL investments proposed from the Allocation Module
@@ -243,12 +273,31 @@ export const generateProjections = (params) => {
             const allocStartMonth = parseInt(alloc.startMonth) || 1;
             const allocDuration = parseInt(alloc.duration) || 1;
             const type = alloc.type;
-            const isRecurring = ['SIP', 'PPF', 'NPS'].includes(type);
+            const isRecurring = ['SIP', 'PPF', 'NPS', 'Life Insurance'].includes(type);
             
-            // For recurring investments, alloc.amount is the ANNUAL amount (Monthly * 12)
-            // For one-time investments, alloc.amount is the TOTAL amount
-            const yearlyAmount = parseFloat(alloc.amount) || 0;
-            const monthlyAmount = isRecurring ? (yearlyAmount / 12) : 0;
+            // If it's Life Insurance, it's already accounted for in totalInsuranceOutflow
+            // We want it to show up in the Allocation Table, so we will add it to activeAllocations
+            // but we MUST NOT subtract it from unallocatedSurplus (i.e., don't add to yearAllocationsTotal)
+            const isLifeInsurance = type === 'Life Insurance';
+
+            let yearlyAmount = 0;
+            let monthlyAmount = 0;
+
+            if (isLifeInsurance) {
+                const freq = alloc.frequency || 'Monthly';
+                const interval = freq === 'Monthly' ? 1 : 
+                               freq === 'Quarterly' ? 3 : 
+                               freq === 'Half-Yearly' ? 6 : 
+                               12;
+                const installmentAmount = parseFloat(alloc.amount) || 0;
+                yearlyAmount = installmentAmount * (12 / interval);
+                monthlyAmount = yearlyAmount / 12;
+            } else {
+                // For recurring investments, alloc.amount is the ANNUAL amount (Monthly * 12)
+                // For one-time investments, alloc.amount is the TOTAL amount
+                yearlyAmount = parseFloat(alloc.amount) || 0;
+                monthlyAmount = isRecurring ? (yearlyAmount / 12) : 0;
+            }
 
             if (isRecurring) {
                 // If the year is between start and end (within duration)
@@ -257,16 +306,33 @@ export const generateProjections = (params) => {
                     
                     // If it's the starting year, only count from startMonth onwards
                     if (year === allocStartYear) {
-                        impactThisYear = monthlyAmount * (13 - allocStartMonth);
+                        if (isLifeInsurance) {
+                            const freq = alloc.frequency || 'Monthly';
+                            const interval = freq === 'Monthly' ? 1 : 
+                                           freq === 'Quarterly' ? 3 : 
+                                           freq === 'Half-Yearly' ? 6 : 
+                                           12;
+                            let installmentsThisYear = 0;
+                            for (let m = allocStartMonth; m <= 12; m += interval) {
+                                installmentsThisYear++;
+                            }
+                            impactThisYear = (parseFloat(alloc.amount) || 0) * installmentsThisYear;
+                        } else {
+                            impactThisYear = monthlyAmount * (13 - allocStartMonth);
+                        }
                     }
                     
-                    yearAllocationsTotal += impactThisYear;
+                    if (!isLifeInsurance) {
+                        yearAllocationsTotal += impactThisYear;
+                    }
                     activeAllocations.push({ ...alloc, impactThisYear });
                 }
             } else {
                 // One-time investments only impact the starting year
                 if (year === allocStartYear) {
-                    yearAllocationsTotal += yearlyAmount;
+                    if (!isLifeInsurance) {
+                        yearAllocationsTotal += yearlyAmount;
+                    }
                     activeAllocations.push({ ...alloc, impactThisYear: yearlyAmount });
                 }
             }

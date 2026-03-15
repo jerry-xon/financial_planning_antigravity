@@ -2,9 +2,26 @@ import React from 'react';
 import { Trash2, Plus, User } from 'lucide-react';
 import { calculatePolicyEndDate } from './InsuranceLogic';
 
-const InsuranceInput = ({ familyMembers, policies, setPolicies, onCalculate }) => {
+const InsuranceInput = ({ familyMembers, policies, setPolicies, isProposed = false, investmentAllocations = [] }) => {
 
     const addPolicy = (memberName) => {
+        let prefill = {};
+        if (isProposed && investmentAllocations.length > 0) {
+            const alloc = investmentAllocations.find(a => a.type === 'Life Insurance' && a.insuredMember === memberName);
+            if (alloc) {
+                const year = parseInt(alloc.startYear) || new Date().getFullYear();
+                const month = parseInt(alloc.startMonth) || 1;
+                const dateStr = `${year}-${String(month).padStart(2, '0')}-01`;
+                
+                prefill = {
+                    premium: alloc.amount || '',
+                    frequency: alloc.frequency || 'Monthly',
+                    paymentTerm: alloc.duration || '',
+                    startDate: dateStr
+                };
+            }
+        }
+
         setPolicies([
             ...policies,
             {
@@ -13,13 +30,14 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, onCalculate }) =
                 company: '',
                 planName: '',
                 planType: 'Term Insurance',
-                startDate: '',
+                isProposed,
+                startDate: prefill.startDate || '',
                 endDate: '',
                 sumAssured: '',
-                paymentTerm: '',
+                paymentTerm: prefill.paymentTerm || '',
                 policyTerm: '',
-                premium: '',
-                frequency: 'Annually',
+                premium: prefill.premium || '',
+                frequency: prefill.frequency || 'Annually',
                 maturityAmount: ''
             }
         ]);
@@ -46,7 +64,7 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, onCalculate }) =
     return (
         <div className="insurance-input">
             {familyMembers.map((member, mIdx) => {
-                const memberPolicies = policies.filter(p => p.insuredName === member.name);
+                const memberPolicies = policies.filter(p => p.insuredName === member.name && !!p.isProposed === isProposed);
 
                 return (
                     <div key={mIdx} className="member-section" style={{
@@ -61,7 +79,7 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, onCalculate }) =
                                 <User size={18} /> {member.name || 'Unnamed Member'} ({member.relation})
                             </h3>
                             <button className="btn btn-secondary btn-sm" onClick={() => addPolicy(member.name)}>
-                                <Plus size={16} /> Add Policy
+                                <Plus size={16} /> {isProposed ? 'Add Proposed Policy' : 'Add Policy'}
                             </button>
                         </div>
 
@@ -113,12 +131,23 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, onCalculate }) =
                                                 </select>
                                             </div>
                                             <div className="input-group">
-                                                <label>Policy Start Date</label>
+                                                <label>{isProposed ? 'Proposed Start Date' : 'Policy Start Date'}</label>
                                                 <input 
                                                     type="date" 
                                                     value={p.startDate} 
-                                                    max={new Date().toISOString().split('T')[0]}
+                                                    min={isProposed ? new Date().toISOString().split('T')[0] : undefined}
+                                                    max={!isProposed ? new Date().toISOString().split('T')[0] : undefined}
                                                     onChange={e => updatePolicy(p.id, 'startDate', e.target.value)} 
+                                                    onBlur={e => {
+                                                        const val = e.target.value;
+                                                        if (!val) return;
+                                                        const today = new Date().toISOString().split('T')[0];
+                                                        if (isProposed && val < today) {
+                                                            updatePolicy(p.id, 'startDate', today);
+                                                        } else if (!isProposed && val > today) {
+                                                            updatePolicy(p.id, 'startDate', today);
+                                                        }
+                                                    }}
                                                     className="input-field" 
                                                 />
                                             </div>
@@ -163,12 +192,6 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, onCalculate }) =
                     </div>
                 );
             })}
-
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
-                <button className="btn btn-primary" onClick={onCalculate} style={{ padding: '1rem 3rem', fontSize: '1.1rem' }}>
-                    Generate Insurance Report
-                </button>
-            </div>
 
             <style>{`
                 .member-section h3 { font-size: 1.1rem; }
