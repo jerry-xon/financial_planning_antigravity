@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PieChart, Plus, Target, Info, TrendingUp } from 'lucide-react';
 import InsuranceInput from './InsuranceInput';
@@ -12,19 +12,108 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
     const [amounts, setAmounts] = useState({ here: 0, cashFlow: 0 });
     const [showDetailedPolicies, setShowDetailedPolicies] = useState(false);
     const [showProposedPolicies, setShowProposedPolicies] = useState(false);
+    const [policyCounts, setPolicyCounts] = useState({});
 
-    const currentYear = new Date().getFullYear();
-    const allocationPremiums = (investmentAllocations || []).filter(a => a.type === 'Life Insurance' && parseInt(a.startYear) === currentYear);
+    // Sync frequency from allocation module if it changes
+    useEffect(() => {
+        if (investmentAllocations && investmentAllocations.length > 0) {
+            setPolicies(prev => {
+                let updated = false;
+                const newPolicies = prev.map(p => {
+                    if (p.isProposed) {
+                        const alloc = investmentAllocations.find(a => a.type === 'Life Insurance' && a.insuredMember === p.insuredName);
+                        if (alloc) {
+                            const mappedFrequency = alloc.frequency === 'Annual' ? 'Annually' : (alloc.frequency || 'Monthly');
+                            const allocAmount = alloc.amount || '';
+                            const allocDuration = alloc.duration || '';
+                            
+                            const year = parseInt(alloc.startYear) || new Date().getFullYear();
+                            const month = parseInt(alloc.startMonth) || 1;
+                            const allocStartDate = `${year}-${String(month).padStart(2, '0')}-01`;
+
+                            if (mappedFrequency !== p.frequency || allocAmount !== p.premium || allocDuration !== p.paymentTerm || allocStartDate !== p.startDate) {
+                                updated = true;
+                                return { ...p, frequency: mappedFrequency, premium: allocAmount, paymentTerm: allocDuration, startDate: allocStartDate };
+                            }
+                        }
+                    }
+                    return p;
+                });
+                return updated ? newPolicies : prev;
+            });
+        }
+    }, [investmentAllocations, setPolicies]);
+
+    const getPolicyCount = (memberName, isProposed) => {
+        const key = `${memberName}_${isProposed ? 'proposed' : 'existing'}`;
+        if (policyCounts[key] !== undefined) return policyCounts[key];
+        return policies.filter(p => p.insuredName === memberName && !!p.isProposed === isProposed).length;
+    };
+
+    const handlePolicyCountChange = (memberName, countStr, isProposed) => {
+        const key = `${memberName}_${isProposed ? 'proposed' : 'existing'}`;
+        
+        if (countStr === '') {
+            setPolicyCounts(prev => ({ ...prev, [key]: '' }));
+            return;
+        }
+
+        const newCount = Math.max(0, parseInt(countStr) || 0);
+        setPolicyCounts(prev => ({ ...prev, [key]: newCount }));
+        
+        const currentMemberPolicies = policies.filter(p => p.insuredName === memberName && !!p.isProposed === isProposed);
+        const otherPolicies = policies.filter(p => !(p.insuredName === memberName && !!p.isProposed === isProposed));
+        
+        if (newCount > currentMemberPolicies.length) {
+            const toAdd = newCount - currentMemberPolicies.length;
+            const newPolicies = Array(toAdd).fill(null).map((_, i) => {
+                let prefill = {};
+                if (isProposed && investmentAllocations.length > 0) {
+                    const alloc = investmentAllocations.find(a => a.type === 'Life Insurance' && a.insuredMember === memberName);
+                    if (alloc) {
+                        const year = parseInt(alloc.startYear) || new Date().getFullYear();
+                        const month = parseInt(alloc.startMonth) || 1;
+                        const dateStr = `${year}-${String(month).padStart(2, '0')}-01`;
+                        
+                        const mappedFrequency = alloc.frequency === 'Annual' ? 'Annually' : (alloc.frequency || 'Monthly');
+                        prefill = {
+                            premium: alloc.amount || '',
+                            frequency: mappedFrequency,
+                            paymentTerm: alloc.duration || '',
+                            startDate: dateStr
+                        };
+                    }
+                }
+                return {
+                    id: Date.now() + i + Math.random(),
+                    insuredName: memberName,
+                    company: '',
+                    planName: '',
+                    planType: 'Term Insurance',
+                    isProposed,
+                    startDate: prefill.startDate || '',
+                    endDate: '',
+                    sumAssured: '',
+                    paymentTerm: prefill.paymentTerm || '',
+                    policyTerm: '',
+                    premium: prefill.premium || '',
+                    frequency: prefill.frequency || 'Annually',
+                    maturityAmount: ''
+                };
+            });
+            setPolicies([...otherPolicies, ...currentMemberPolicies, ...newPolicies]);
+        } else if (newCount < currentMemberPolicies.length) {
+            const keptPolicies = currentMemberPolicies.slice(0, newCount);
+            setPolicies([...otherPolicies, ...keptPolicies]);
+        }
+    };
+
+    const allocationPremiums = (investmentAllocations || []).filter(a => a.type === 'Life Insurance');
 
     const allocationAnnual = allocationPremiums.reduce((sum, item) => {
         const freq = item.frequency || 'Monthly';
-        const interval = freq === 'Monthly' ? 1 : freq === 'Quarterly' ? 3 : freq === 'Half-Yearly' ? 6 : 12;
-        const allocStartMonth = parseInt(item.startMonth) || 1;
-        let installmentsThisYear = 0;
-        for (let m = allocStartMonth; m <= 12; m += interval) {
-            installmentsThisYear++;
-        }
-        return sum + ((parseFloat(item.amount) || 0) * installmentsThisYear);
+        const multiplier = freq === 'Monthly' ? 12 : freq === 'Quarterly' ? 4 : freq === 'Half-Yearly' ? 2 : 1;
+        return sum + ((parseFloat(item.amount) || 0) * multiplier);
     }, 0);
 
     const cashFlowAnnual = Object.values(expenseCategories.insurance?.life || {}).reduce((sum, item) => {
@@ -34,7 +123,19 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
     const totalExpectedPremium = cashFlowAnnual + allocationAnnual;
 
     const handleCalculate = () => {
-        const calculated = calculateYearlyInsuranceSummary(policies);
+        // Filter out proposed policies for members who no longer have allocations
+        const validPolicies = policies.filter(p => {
+            if (p.isProposed) {
+                return (investmentAllocations || []).some(a => a.type === 'Life Insurance' && a.insuredMember === p.insuredName);
+            }
+            return true;
+        });
+
+        if (validPolicies.length !== policies.length) {
+            setPolicies(validPolicies);
+        }
+
+        const calculated = calculateYearlyInsuranceSummary(validPolicies);
         setResults(calculated);
     };
 
@@ -75,23 +176,47 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
 
                     <div className="premium-summary" style={{ marginBottom: '2.5rem', padding: '1.5rem', background: 'var(--bg-main)', borderRadius: '12px', border: '1px solid var(--border)' }}>
                         <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Life Insurance Premium Summary (from Cash Flow)</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
                             {familyMembers.map(member => {
                                 const data = expenseCategories.insurance?.life?.[member.name || member.relation] || { value: 0, frequency: 'Annual' };
                                 if (!data || data.value === 0) return null;
+                                const memberName = member.name || member.relation;
                                 return (
-                                    <div key={member.name || member.relation} className="input-group">
-                                        <label>Premium ({member.name || member.relation})</label>
-                                        <div style={{ 
-                                            padding: '0.75rem 1rem', 
-                                            background: 'var(--bg-card)', 
-                                            border: '1px solid var(--border)', 
-                                            borderRadius: '8px',
-                                            color: 'var(--primary)',
-                                            fontWeight: 600,
-                                            fontSize: '1rem'
-                                        }}>
-                                            ₹{parseFloat(data.value || 0).toLocaleString('en-IN')} ({data.frequency})
+                                    <div key={memberName} style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '0.75rem',
+                                        padding: '1rem',
+                                        background: 'rgba(37, 99, 235, 0.05)',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '8px',
+                                        borderLeft: '4px solid var(--primary)'
+                                    }}>
+                                        <div className="input-group">
+                                            <label>Premium ({memberName})</label>
+                                            <div style={{ 
+                                                padding: '0.75rem 1rem', 
+                                                background: 'var(--bg-card)', 
+                                                border: '1px solid var(--border)', 
+                                                borderRadius: '8px',
+                                                color: 'var(--text-main)',
+                                                fontWeight: 600,
+                                                fontSize: '1rem'
+                                            }}>
+                                                ₹{parseFloat(data.value || 0).toLocaleString('en-IN')} ({data.frequency})
+                                            </div>
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Number of policies</label>
+                                            <input 
+                                                type="number" 
+                                                min="0"
+                                                className="input-field" 
+                                                value={getPolicyCount(memberName, false)}
+                                                onChange={(e) => handlePolicyCountChange(memberName, e.target.value, false)}
+                                                placeholder="Enter number of policies"
+                                                style={{ width: '100%' }}
+                                            />
                                         </div>
                                     </div>
                                 );
@@ -100,7 +225,7 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                         
                         {allocationPremiums.length > 0 && (
                             <>
-                                <h3 style={{ marginTop: '2rem', marginBottom: '1.5rem', color: 'var(--primary)' }}>Life Insurance Premium Summary (from Allocation - Current Year)</h3>
+                                <h3 style={{ marginTop: '2rem', marginBottom: '1.5rem', color: 'var(--primary)' }}>Life Insurance Premium Summary (from Allocation)</h3>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
                                     {allocationPremiums.map((item, idx) => (
                                         <div key={idx} className="input-group">
@@ -188,26 +313,55 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                         <div style={{ marginTop: '2rem', marginBottom: '2.5rem' }}>
                             <h4 style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)' }}>
                                 <TrendingUp size={18} />
-                                Future Proposed Policies (from Allocation Module)
+                                Proposed Policies (from Allocation Module)
                             </h4>
-                            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-                                {investmentAllocations.filter(a => a.type === 'Life Insurance').map((item, idx) => (
+                            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                                {Object.entries(investmentAllocations.filter(a => a.type === 'Life Insurance').reduce((acc, item) => {
+                                    const memberName = item.insuredMember || 'Unspecified';
+                                    if (!acc[memberName]) acc[memberName] = [];
+                                    acc[memberName].push(item);
+                                    return acc;
+                                }, {})).map(([memberName, items], idx) => (
                                     <div key={idx} style={{ 
                                         padding: '1rem', 
                                         background: 'rgba(37, 99, 235, 0.05)', 
                                         borderRadius: '8px', 
                                         border: '1px solid var(--border)',
-                                        borderLeft: '4px solid var(--primary)'
+                                        borderLeft: '4px solid var(--secondary-dark, var(--accent))',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '0.75rem'
                                     }}>
-                                        <div style={{ fontWeight: 600, marginBottom: '4px' }}>{item.name || `Future Policy ${idx + 1}`}</div>
-                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                            Insured: <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{item.insuredMember || 'Not Specified'}</span>
+                                        <div style={{ fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            Proposed Policies for {memberName}
                                         </div>
-                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                            Starts: <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{new Date(0, item.startMonth - 1).toLocaleString('default', { month: 'short' })} {item.startYear}</span>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                            {items.map((item, iIdx) => (
+                                                <div key={iIdx} style={{ 
+                                                    padding: '0.75rem', 
+                                                    background: 'var(--bg-card)', 
+                                                    border: '1px solid var(--border)', 
+                                                    borderRadius: '6px',
+                                                }}>
+                                                    <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '4px' }}>{item.name || `Policy ${iIdx + 1}`}</div>
+                                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+                                                        <span>Starts: {new Date(0, (parseInt(item.startMonth) || 1) - 1).toLocaleString('default', { month: 'short' })} {item.startYear}</span>
+                                                        <span style={{ fontWeight: 600, color: 'var(--primary)' }}>₹{(parseFloat(item.amount) || 0).toLocaleString('en-IN')} ({item.frequency || 'Monthly'})</span>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                        <div style={{ marginTop: '8px', fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>
-                                            ₹{(parseFloat(item.amount) || 0).toLocaleString('en-IN')} ({item.frequency || 'Monthly'})
+                                        <div className="input-group" style={{ marginTop: '0.5rem' }}>
+                                            <label>Number of proposed policies</label>
+                                            <input 
+                                                type="number" 
+                                                min="0"
+                                                className="input-field" 
+                                                value={getPolicyCount(memberName, true)}
+                                                onChange={(e) => handlePolicyCountChange(memberName, e.target.value, true)}
+                                                placeholder="Enter number of policies"
+                                                style={{ width: '100%', borderColor: 'var(--secondary-dark, var(--accent))' }}
+                                            />
                                         </div>
                                     </div>
                                 ))}
@@ -303,10 +457,10 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                     }}>
                         <h3 style={{ color: '#ef4444', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Premium Mismatch Detected</h3>
                         <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '1.1rem' }}>
-                            The Premium you entered here is <strong>₹{amounts.here.toLocaleString('en-IN')}</strong> and total expected premium (Cash Flow + Current Year Allocation) is <strong>₹{amounts.cashFlow.toLocaleString('en-IN')}</strong>.
+                            The Premium you entered here is <strong>₹{amounts.here.toLocaleString('en-IN')}</strong> and total expected premium (Cash Flow + Allocation) is <strong>₹{amounts.cashFlow.toLocaleString('en-IN')}</strong>.
                         </p>
                         <p style={{ marginBottom: '2.5rem', fontWeight: 'bold', fontSize: '1.25rem', color: 'var(--text-main)' }}>
-                            For accurate Financial Plan fill complete details of all insurance policies
+                            For accurate Financial Plan fill correct & complete details of all insurance policies
                         </p>
                         
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

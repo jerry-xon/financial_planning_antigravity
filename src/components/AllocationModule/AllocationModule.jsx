@@ -277,7 +277,7 @@ const AllocationModule = ({
                                             </div>
                                             {recurring ? (
                                                 <div className="input-group" style={{ marginBottom: 0 }}>
-                                                    <label>Duration (Yrs)</label>
+                                                    <label>{item.type === 'Life Insurance' ? 'Premium Payment Term (Years)' : 'Duration (Yrs)'}</label>
                                                     <input 
                                                         type="number" 
                                                         value={item.duration} 

@@ -4,45 +4,6 @@ import { calculatePolicyEndDate } from './InsuranceLogic';
 
 const InsuranceInput = ({ familyMembers, policies, setPolicies, isProposed = false, investmentAllocations = [] }) => {
 
-    const addPolicy = (memberName) => {
-        let prefill = {};
-        if (isProposed && investmentAllocations.length > 0) {
-            const alloc = investmentAllocations.find(a => a.type === 'Life Insurance' && a.insuredMember === memberName);
-            if (alloc) {
-                const year = parseInt(alloc.startYear) || new Date().getFullYear();
-                const month = parseInt(alloc.startMonth) || 1;
-                const dateStr = `${year}-${String(month).padStart(2, '0')}-01`;
-                
-                prefill = {
-                    premium: alloc.amount || '',
-                    frequency: alloc.frequency || 'Monthly',
-                    paymentTerm: alloc.duration || '',
-                    startDate: dateStr
-                };
-            }
-        }
-
-        setPolicies([
-            ...policies,
-            {
-                id: Date.now(),
-                insuredName: memberName,
-                company: '',
-                planName: '',
-                planType: 'Term Insurance',
-                isProposed,
-                startDate: prefill.startDate || '',
-                endDate: '',
-                sumAssured: '',
-                paymentTerm: prefill.paymentTerm || '',
-                policyTerm: '',
-                premium: prefill.premium || '',
-                frequency: prefill.frequency || 'Annually',
-                maturityAmount: ''
-            }
-        ]);
-    };
-
     const updatePolicy = (id, field, value) => {
         setPolicies(policies.map(p => {
             if (p.id === id) {
@@ -57,9 +18,7 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, isProposed = fal
         }));
     };
 
-    const removePolicy = (id) => {
-        setPolicies(policies.filter(p => p.id !== id));
-    };
+
 
     return (
         <div className="insurance-input">
@@ -78,9 +37,6 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, isProposed = fal
                             <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--primary)' }}>
                                 <User size={18} /> {member.name || 'Unnamed Member'} ({member.relation})
                             </h3>
-                            <button className="btn btn-secondary btn-sm" onClick={() => addPolicy(member.name)}>
-                                <Plus size={16} /> {isProposed ? 'Add Proposed Policy' : 'Add Policy'}
-                            </button>
                         </div>
 
                         {memberPolicies.length === 0 ? (
@@ -97,18 +53,6 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, isProposed = fal
                                         border: '1px solid var(--border)',
                                         position: 'relative'
                                     }}>
-                                        <button onClick={() => removePolicy(p.id)} style={{
-                                            position: 'absolute',
-                                            top: '0.5rem',
-                                            right: '0.5rem',
-                                            color: '#ef4444',
-                                            background: 'none',
-                                            border: 'none',
-                                            cursor: 'pointer'
-                                        }}>
-                                            <Trash2 size={16} />
-                                        </button>
-
                                         <div className="input-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                                             <div className="input-group">
                                                 <label>Insured Name</label>
@@ -132,32 +76,51 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, isProposed = fal
                                             </div>
                                             <div className="input-group">
                                                 <label>{isProposed ? 'Proposed Start Date' : 'Policy Start Date'}</label>
-                                                <input 
-                                                    type="date" 
-                                                    value={p.startDate} 
-                                                    min={isProposed ? new Date().toISOString().split('T')[0] : undefined}
-                                                    max={!isProposed ? new Date().toISOString().split('T')[0] : undefined}
-                                                    onChange={e => updatePolicy(p.id, 'startDate', e.target.value)} 
-                                                    onBlur={e => {
-                                                        const val = e.target.value;
-                                                        if (!val) return;
-                                                        const today = new Date().toISOString().split('T')[0];
-                                                        if (isProposed && val < today) {
-                                                            updatePolicy(p.id, 'startDate', today);
-                                                        } else if (!isProposed && val > today) {
-                                                            updatePolicy(p.id, 'startDate', today);
-                                                        }
-                                                    }}
-                                                    className="input-field" 
-                                                />
+                                                {isProposed ? (
+                                                    <input 
+                                                        type="month" 
+                                                        value={p.startDate ? p.startDate.substring(0, 7) : ''} 
+                                                        readOnly 
+                                                        className="input-field read-only" 
+                                                    />
+                                                ) : (
+                                                    <input 
+                                                        type="date" 
+                                                        value={p.startDate} 
+                                                        max={new Date().toISOString().split('T')[0]}
+                                                        onChange={e => updatePolicy(p.id, 'startDate', e.target.value)} 
+                                                        onBlur={e => {
+                                                            const val = e.target.value;
+                                                            if (!val) return;
+                                                            const today = new Date().toISOString().split('T')[0];
+                                                            if (val > today) {
+                                                                updatePolicy(p.id, 'startDate', today);
+                                                            }
+                                                        }}
+                                                        className="input-field" 
+                                                    />
+                                                )}
                                             </div>
                                             <div className="input-group">
                                                 <label>Premium Amount</label>
-                                                <input type="number" placeholder="₹" value={p.premium} onWheel={(e) => e.target.blur()} onChange={e => updatePolicy(p.id, 'premium', e.target.value)} className="input-field" />
+                                                <input 
+                                                    type="number" 
+                                                    placeholder="₹" 
+                                                    value={p.premium} 
+                                                    readOnly={isProposed}
+                                                    className={isProposed ? "input-field read-only" : "input-field"}
+                                                    onWheel={(e) => e.target.blur()} 
+                                                    onChange={e => updatePolicy(p.id, 'premium', e.target.value)} 
+                                                />
                                             </div>
                                             <div className="input-group">
                                                 <label>Premium Frequency</label>
-                                                <select value={p.frequency} onChange={e => updatePolicy(p.id, 'frequency', e.target.value)} className="input-field">
+                                                <select 
+                                                    value={p.frequency} 
+                                                    disabled={isProposed}
+                                                    onChange={e => updatePolicy(p.id, 'frequency', e.target.value)} 
+                                                    className={isProposed ? "input-field read-only" : "input-field"}
+                                                >
                                                     <option value="Monthly">Monthly</option>
                                                     <option value="Quarterly">Quarterly</option>
                                                     <option value="Half-Yearly">Half-Yearly</option>
@@ -166,7 +129,15 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, isProposed = fal
                                             </div>
                                             <div className="input-group">
                                                 <label>Premium Payment Term (Years)</label>
-                                                <input type="number" placeholder="Years" value={p.paymentTerm} onWheel={(e) => e.target.blur()} onChange={e => updatePolicy(p.id, 'paymentTerm', e.target.value)} className="input-field" />
+                                                <input 
+                                                    type="number" 
+                                                    placeholder="Years" 
+                                                    value={p.paymentTerm} 
+                                                    readOnly={isProposed}
+                                                    className={isProposed ? "input-field read-only" : "input-field"}
+                                                    onWheel={(e) => e.target.blur()} 
+                                                    onChange={e => updatePolicy(p.id, 'paymentTerm', e.target.value)} 
+                                                />
                                             </div>
                                             <div className="input-group">
                                                 <label>Policy Term (Years)</label>
