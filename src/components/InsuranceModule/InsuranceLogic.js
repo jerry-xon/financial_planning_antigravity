@@ -25,30 +25,24 @@ export const calculateYearlyInsuranceSummary = (policies) => {
         else if (freq === 'Quarterly') { intervalMonths = 3; multiplier = 4; }
         else if (freq === 'Half-Yearly') { intervalMonths = 6; multiplier = 2; }
 
-        const annualPremium = premium * multiplier;
         const startMonth = startDate.getMonth(); // 0-indexed (Jan = 0)
         
-        // Calculate installments for the very first year (from startMonth to end of year)
-        let firstYearInstallments = 0;
-        for (let m = startMonth; m < 12; m += intervalMonths) {
-            firstYearInstallments++;
-        }
-        const firstYearPremium = premium * firstYearInstallments;
-
         const policyId = policy.id;
         const insuredName = policy.insuredName || 'Unspecified';
         const planName = policy.planName || 'Plan';
 
         // 1. Premium Summary (Year-wise)
-        for (let i = 0; i < paymentTerm; i++) {
-            const year = startYear + i;
+        const totalPayments = paymentTerm * multiplier;
+        for (let i = 0; i < totalPayments; i++) {
+            // Absolute month offset from start of the starting year
+            const paymentMonthTotal = startMonth + (i * intervalMonths);
+            const year = startYear + Math.floor(paymentMonthTotal / 12);
+
             if (!summary[year]) summary[year] = { year, totalPremium: 0, policyPremiums: {}, coverage: {}, maturities: [] };
 
-            const premiumForThisYear = i === 0 ? firstYearPremium : annualPremium;
-
-            summary[year].totalPremium += premiumForThisYear;
+            summary[year].totalPremium += premium;
             if (!summary[year].policyPremiums[policyId]) summary[year].policyPremiums[policyId] = 0;
-            summary[year].policyPremiums[policyId] += premiumForThisYear;
+            summary[year].policyPremiums[policyId] += premium;
         }
 
         // 2. Coverage Summary (Year-wise per Insured)

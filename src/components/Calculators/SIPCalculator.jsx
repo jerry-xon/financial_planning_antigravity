@@ -34,6 +34,25 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
     const currentValue = data?.currentValue ?? 0;
     const events = data?.increments ?? [];
 
+    useEffect(() => {
+        let updated = false;
+        let newData = { ...data };
+        
+        if ((!data?.amount) && defaultSIP > 0) {
+            newData.amount = defaultSIP;
+            updated = true;
+        }
+        
+        if ((!data?.currentValue) && defaultCorpus > 0) {
+            newData.currentValue = defaultCorpus;
+            updated = true;
+        }
+        
+        if (updated && setData) {
+            setData(newData);
+        }
+    }, [defaultSIP, defaultCorpus]);
+
     const setMonthlySIP = (val) => setData({ ...data, amount: val });
     const setExpectedReturns = (val) => setData({ ...data, rate: val });
     const setTenureYears = (val) => setData({ ...data, tenure: val });

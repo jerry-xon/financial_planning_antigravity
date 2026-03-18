@@ -67,4 +67,58 @@ describe('InsuranceLogic', () => {
         expect(names).toContain('Neha');
         expect(names).toHaveLength(2);
     });
+
+    it('handles monthly premium across years with correct distribution', () => {
+        const testPolicies = [{
+            id: 'p3',
+            insuredName: 'Rahul',
+            planName: 'Monthly Plan',
+            startDate: '2026-04-01',
+            premium: '5000',
+            frequency: 'Monthly',
+            paymentTerm: '5',
+            policyTerm: '10',
+            sumAssured: '1000000',
+            maturityAmount: '0'
+        }];
+        const results = calculateYearlyInsuranceSummary(testPolicies);
+        
+        // 2026: Apr to Dec = 9 months
+        expect(results.find(r => r.year === 2026).totalPremium).toBe(9 * 5000);
+        
+        // 2027 to 2030: 12 months each year
+        for(let year = 2027; year <= 2030; year++) {
+             expect(results.find(r => r.year === year).totalPremium).toBe(12 * 5000);
+        }
+        
+        // 2031: Jan to Mar = 3 months
+        expect(results.find(r => r.year === 2031).totalPremium).toBe(3 * 5000);
+    });
+
+    it('handles half-yearly premium with mid-year start', () => {
+        const testPolicies = [{
+            id: 'p4',
+            insuredName: 'Neha',
+            planName: 'Half-yearly Plan',
+            startDate: '2026-08-10', // Aug 2026
+            premium: '30000',
+            frequency: 'Half-Yearly',
+            paymentTerm: '5',
+            policyTerm: '10',
+            sumAssured: '1000000',
+            maturityAmount: '0'
+        }];
+        const results = calculateYearlyInsuranceSummary(testPolicies);
+        
+        // 2026: Aug = 1 payment
+        expect(results.find(r => r.year === 2026).totalPremium).toBe(30000);
+        
+        // 2027 to 2030: Feb, Aug = 2 payments each year
+        for(let year = 2027; year <= 2030; year++) {
+             expect(results.find(r => r.year === year).totalPremium).toBe(2 * 30000);
+        }
+        
+        // 2031: Feb = 1 payment
+        expect(results.find(r => r.year === 2031).totalPremium).toBe(30000);
+    });
 });
