@@ -1,6 +1,81 @@
 import React, { useState, useMemo } from 'react';
 import { Calculator, Calendar, DollarSign, TrendingUp, Clock, Plus, Trash2, Info } from 'lucide-react';
 
+export const computeLumpsumData = (investmentAmount, expectedReturns, tenureYears, startMonth, startYear, events, proposedLumpsums) => {
+    let results = [];
+    let runningBalance = investmentAmount;
+    const monthlyMultiplier = Math.pow(1 + expectedReturns / 100, 1/12);
+    
+    let currentMonthVal = startMonth;
+    let currentYearVal = startYear;
+    const totalMonths = tenureYears * 12;
+
+    let yearlyRecord = {
+        year: currentYearVal,
+        investmentAndAddition: 0,
+        withdrawal: 0,
+        endValueBeforeWithdrawal: 0,
+        valueAfterWithdrawal: 0
+    };
+
+    for (let m = 0; m < totalMonths; m++) {
+        // Initial investment at start of first loop
+        if (m === 0) {
+            yearlyRecord.investmentAndAddition += investmentAmount;
+        }
+
+        // Check for mid-tenure additions or withdrawals (Manual)
+        const monthlyEvents = events.filter(e => parseInt(e.month) === currentMonthVal && parseInt(e.year) === currentYearVal);
+        
+        monthlyEvents.forEach(e => {
+            if (e.type === 'addition') {
+                runningBalance += parseFloat(e.amount) || 0;
+                yearlyRecord.investmentAndAddition += parseFloat(e.amount) || 0;
+            } else if (e.type === 'withdrawal') {
+                const amount = parseFloat(e.amount) || 0;
+                yearlyRecord.withdrawal += amount;
+                runningBalance -= amount;
+            }
+        });
+
+        // Check for Proposed Lumpsums from Allocation Module
+        const autoLumpsums = proposedLumpsums.filter(l => parseInt(l.startYear) === currentYearVal && parseInt(l.startMonth) === currentMonthVal);
+        autoLumpsums.forEach(l => {
+            const amount = parseFloat(l.amount) || 0;
+            runningBalance += amount;
+            yearlyRecord.investmentAndAddition += amount;
+        });
+
+        // Apply Monthly Growth
+        runningBalance *= monthlyMultiplier;
+
+        // Rollup to Yearly Results (Calendar Year)
+        // Push if it's December or the absolute last month of the tenure
+        if (currentMonthVal === 12 || m === totalMonths - 1) {
+            yearlyRecord.valueAfterWithdrawal = runningBalance;
+            yearlyRecord.endValueBeforeWithdrawal = runningBalance + yearlyRecord.withdrawal;
+            results.push({ ...yearlyRecord });
+
+            // Prepare for next year if tenure continues
+            if (m < totalMonths - 1) {
+                currentYearVal++;
+                yearlyRecord = {
+                    year: currentYearVal,
+                    investmentAndAddition: 0,
+                    withdrawal: 0,
+                    endValueBeforeWithdrawal: 0,
+                    valueAfterWithdrawal: 0
+                };
+            }
+        }
+
+        // Increment Month
+        currentMonthVal = (currentMonthVal % 12) + 1;
+    }
+
+    return results;
+};
+
 const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [], data, setData }) => {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
@@ -63,78 +138,7 @@ const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [], data, se
 
     // Calculation Logic: CAGR (Monthly logic for accuracy over full tenure)
     const calculationData = useMemo(() => {
-        let results = [];
-        let runningBalance = investmentAmount;
-        const monthlyMultiplier = Math.pow(1 + expectedReturns / 100, 1/12);
-        
-        let currentMonthVal = startMonth;
-        let currentYearVal = startYear;
-        const totalMonths = tenureYears * 12;
-
-        let yearlyRecord = {
-            year: currentYearVal,
-            investmentAndAddition: 0,
-            withdrawal: 0,
-            endValueBeforeWithdrawal: 0,
-            valueAfterWithdrawal: 0
-        };
-
-        for (let m = 0; m < totalMonths; m++) {
-            // Initial investment at start of first loop
-            if (m === 0) {
-                yearlyRecord.investmentAndAddition += investmentAmount;
-            }
-
-            // Check for mid-tenure additions or withdrawals (Manual)
-            const monthlyEvents = events.filter(e => parseInt(e.month) === currentMonthVal && parseInt(e.year) === currentYearVal);
-            
-            monthlyEvents.forEach(e => {
-                if (e.type === 'addition') {
-                    runningBalance += parseFloat(e.amount) || 0;
-                    yearlyRecord.investmentAndAddition += parseFloat(e.amount) || 0;
-                } else if (e.type === 'withdrawal') {
-                    const amount = parseFloat(e.amount) || 0;
-                    yearlyRecord.withdrawal += amount;
-                    runningBalance -= amount;
-                }
-            });
-
-            // Check for Proposed Lumpsums from Allocation Module
-            const autoLumpsums = proposedLumpsums.filter(l => parseInt(l.startYear) === currentYearVal && parseInt(l.startMonth) === currentMonthVal);
-            autoLumpsums.forEach(l => {
-                const amount = parseFloat(l.amount) || 0;
-                runningBalance += amount;
-                yearlyRecord.investmentAndAddition += amount;
-            });
-
-            // Apply Monthly Growth
-            runningBalance *= monthlyMultiplier;
-
-            // Rollup to Yearly Results (Calendar Year)
-            // Push if it's December or the absolute last month of the tenure
-            if (currentMonthVal === 12 || m === totalMonths - 1) {
-                yearlyRecord.valueAfterWithdrawal = runningBalance;
-                yearlyRecord.endValueBeforeWithdrawal = runningBalance + yearlyRecord.withdrawal;
-                results.push({ ...yearlyRecord });
-
-                // Prepare for next year if tenure continues
-                if (m < totalMonths - 1) {
-                    currentYearVal++;
-                    yearlyRecord = {
-                        year: currentYearVal,
-                        investmentAndAddition: 0,
-                        withdrawal: 0,
-                        endValueBeforeWithdrawal: 0,
-                        valueAfterWithdrawal: 0
-                    };
-                }
-            }
-
-            // Increment Month
-            currentMonthVal = (currentMonthVal % 12) + 1;
-        }
-
-        return results;
+        return computeLumpsumData(investmentAmount, expectedReturns, tenureYears, startMonth, startYear, events, proposedLumpsums);
     }, [investmentAmount, expectedReturns, tenureYears, startMonth, startYear, events, proposedLumpsums]);
 
     const finalValue = calculationData[calculationData.length - 1]?.valueAfterWithdrawal || 0;

@@ -1,6 +1,57 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Trash2, TrendingUp, Wallet, Calendar, Calculator, Clock } from 'lucide-react';
 
+export const computeSIPData = (currentYear, monthlySIP, expectedReturns, tenureYears, currentValue, events, proposedSIPs) => {
+    let results = [];
+    let runningBalance = currentValue;
+    let runningSIP = monthlySIP;
+
+    for (let relativeYear = 1; relativeYear <= tenureYears; relativeYear++) {
+        let yearlyInvestment = 0;
+        let yearlyWithdrawal = 0;
+        const actualYear = currentYear + relativeYear - 1;
+
+        for (let month = 1; month <= 12; month++) {
+            // 1. Manual Increments
+            const increments = events.filter(e => e.type === 'increment' && parseInt(e.month) === month && parseInt(e.year) === actualYear);
+            increments.forEach(inc => {
+                runningSIP += inc.amount;
+            });
+
+            // 2. Proposed SIPs from Allocation Module
+            const autoSIPs = proposedSIPs.filter(s => parseInt(s.startYear) === actualYear && parseInt(s.startMonth) === month);
+            autoSIPs.forEach(s => {
+                // a.amount is the ANNUAL amount, so we divide by 12 for monthly increment
+                runningSIP += (parseFloat(s.amount) / 12) || 0;
+            });
+
+            const withdrawals = events.filter(e => e.type === 'withdrawal' && parseInt(e.month) === month && parseInt(e.year) === actualYear);
+            let currentMonthWithdrawal = withdrawals.reduce((sum, w) => sum + w.amount, 0);
+
+            const monthlyInvestment = runningSIP;
+            yearlyInvestment += monthlyInvestment;
+            
+            const monthlyRate = expectedReturns / 1200;
+            const valueBeforeGrowth = runningBalance + monthlyInvestment;
+            const growth = valueBeforeGrowth * monthlyRate;
+            const valueBeforeWithdrawal = valueBeforeGrowth + growth;
+            
+            runningBalance = valueBeforeWithdrawal - currentMonthWithdrawal;
+            yearlyWithdrawal += currentMonthWithdrawal;
+        }
+
+        results.push({
+            year: actualYear,
+            monthlyInvestment: runningSIP,
+            annualInvestment: yearlyInvestment,
+            endValueBeforeWithdrawal: runningBalance + yearlyWithdrawal,
+            withdrawal: yearlyWithdrawal,
+            valueAfterWithdrawal: runningBalance
+        });
+    }
+    return results;
+};
+
 const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [], proposedSIPs = [], data, setData }) => {
     const currentYear = new Date().getFullYear();
     
@@ -28,7 +79,7 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
     const defaultTenure = getYearsToRetire() || 10;
 
     // Use props if available, otherwise defaults
-    const monthlySIP = data?.amount ?? 0;
+    const monthlySIP = defaultSIP;
     const expectedReturns = data?.rate ?? 12;
     const tenureYears = data?.tenure ?? defaultTenure;
     const currentValue = data?.currentValue ?? 0;
@@ -85,54 +136,7 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
 
     // Calculation Logic
     const calculationData = useMemo(() => {
-        let results = [];
-        let runningBalance = currentValue;
-        let runningSIP = monthlySIP;
-
-        for (let relativeYear = 1; relativeYear <= tenureYears; relativeYear++) {
-            let yearlyInvestment = 0;
-            let yearlyWithdrawal = 0;
-            const actualYear = currentYear + relativeYear - 1;
-
-            for (let month = 1; month <= 12; month++) {
-                // 1. Manual Increments
-                const increments = events.filter(e => e.type === 'increment' && parseInt(e.month) === month && parseInt(e.year) === actualYear);
-                increments.forEach(inc => {
-                    runningSIP += inc.amount;
-                });
-
-                // 2. Proposed SIPs from Allocation Module
-                const autoSIPs = proposedSIPs.filter(s => parseInt(s.startYear) === actualYear && parseInt(s.startMonth) === month);
-                autoSIPs.forEach(s => {
-                    // a.amount is the ANNUAL amount, so we divide by 12 for monthly increment
-                    runningSIP += (parseFloat(s.amount) / 12) || 0;
-                });
-
-                const withdrawals = events.filter(e => e.type === 'withdrawal' && parseInt(e.month) === month && parseInt(e.year) === actualYear);
-                let currentMonthWithdrawal = withdrawals.reduce((sum, w) => sum + w.amount, 0);
-
-                const monthlyInvestment = runningSIP;
-                yearlyInvestment += monthlyInvestment;
-                
-                const monthlyRate = expectedReturns / 1200;
-                const valueBeforeGrowth = runningBalance + monthlyInvestment;
-                const growth = valueBeforeGrowth * monthlyRate;
-                const valueBeforeWithdrawal = valueBeforeGrowth + growth;
-                
-                runningBalance = valueBeforeWithdrawal - currentMonthWithdrawal;
-                yearlyWithdrawal += currentMonthWithdrawal;
-            }
-
-            results.push({
-                year: actualYear,
-                monthlyInvestment: runningSIP,
-                annualInvestment: yearlyInvestment,
-                endValueBeforeWithdrawal: runningBalance + yearlyWithdrawal,
-                withdrawal: yearlyWithdrawal,
-                valueAfterWithdrawal: runningBalance
-            });
-        }
-        return results;
+        return computeSIPData(currentYear, monthlySIP, expectedReturns, tenureYears, currentValue, events, proposedSIPs);
     }, [monthlySIP, expectedReturns, tenureYears, currentValue, events, currentYear, proposedSIPs]);
 
     return (
@@ -156,8 +160,9 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
                             <input 
                                 type="number" 
                                 value={monthlySIP} 
-                                onChange={(e) => setMonthlySIP(parseFloat(e.target.value) || 0)} 
-                                className="form-input" 
+                                readOnly
+                                className="form-input bg-muted" 
+                                style={{ opacity: 0.7, cursor: 'not-allowed' }}
                             />
                         </div>
 

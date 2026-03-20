@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { PieChart, Plus, Trash2, ArrowRight, Wallet, Target, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 
 const AllocationModule = ({ 
@@ -23,12 +23,12 @@ const AllocationModule = ({
         setCollapsedIds(newCollapsed);
     };
 
-    const addAllocation = () => {
+    const addAllocation = (type) => {
         setAllocations([
             ...allocations,
             { 
                 id: Date.now(), 
-                type: 'SIP', 
+                type: type, 
                 name: '', 
                 amount: '', // This will be monthly for SIP, PPF, NPS, Life Insurance and total for others
                 startMonth: new Date().getMonth() + 1,
@@ -58,6 +58,52 @@ const AllocationModule = ({
         }).format(val || 0);
     };
 
+    // Global PPF constraints auto-correction
+    useEffect(() => {
+        const ppfAllocations = allocations.filter(a => a.type === 'PPF');
+        if (ppfAllocations.length === 0) return;
+
+        const earliest = ppfAllocations.reduce((min, p) => 
+            (p.startYear < min.startYear || (p.startYear === min.startYear && p.startMonth < min.startMonth)) ? p : min
+        , ppfAllocations[0]);
+
+        const globalPpfEndAbsolute = (earliest.startYear + 15) * 12 + earliest.startMonth - 1;
+        let totalPpfAnnualAmount = 0;
+        let needsCorrection = false;
+        
+        const correctedAllocations = allocations.map(item => {
+            if (item.type !== 'PPF') return item;
+            
+            let correctedItem = { ...item };
+            
+            // Amount Constraint
+            totalPpfAnnualAmount += parseFloat(correctedItem.amount || 0);
+            if (totalPpfAnnualAmount > 150000) {
+                const excess = totalPpfAnnualAmount - 150000;
+                correctedItem.amount -= excess;
+                totalPpfAnnualAmount = 150000;
+                if (correctedItem.amount < 0) correctedItem.amount = 0;
+                needsCorrection = true;
+            }
+            
+            // Duration Constraint
+            const itemStartAbsolute = correctedItem.startYear * 12 + correctedItem.startMonth;
+            const diffMonths = globalPpfEndAbsolute - itemStartAbsolute + 1;
+            const maxAllowedDuration = Math.max(0, Math.min(15, Math.floor(diffMonths / 12)));
+            
+            if (correctedItem.duration !== maxAllowedDuration && correctedItem.duration > maxAllowedDuration) {
+                correctedItem.duration = maxAllowedDuration;
+                needsCorrection = true;
+            }
+            
+            return correctedItem;
+        });
+
+        if (needsCorrection) {
+            setAllocations(correctedAllocations);
+        }
+    }, [allocations, setAllocations]);
+
     // Derived data for the dynamic table
     const dynamicColumns = useMemo(() => {
         const types = new Set();
@@ -65,7 +111,8 @@ const AllocationModule = ({
         return Array.from(types).sort();
     }, [allocations]);
 
-    const isRecurring = (type) => ['SIP', 'PPF', 'NPS', 'Life Insurance'].includes(type);
+    const isRecurring = (type) => ['SIP', 'PPF', 'NPS', 'Life Insurance', 'Recurring Deposit'].includes(type);
+    const hasDuration = (type) => isRecurring(type) || type === 'Fixed Deposit';
 
     return (
         <div className="allocation-module fade-in">
@@ -127,7 +174,7 @@ const AllocationModule = ({
                                             </span>
                                             {isCollapsed && item.amount > 0 && (
                                                 <span style={{ marginLeft: '12px', color: 'var(--primary)', fontWeight: 600 }}>
-                                                    {formatCurrency(recurring ? (item.type === 'Life Insurance' ? item.amount : item.amount / 12) : item.amount)}
+                                                    {formatCurrency(Math.round(recurring ? (item.type === 'Life Insurance' ? item.amount : item.amount / 12) : item.amount))}
                                                     {item.type === 'Life Insurance' ? ` /${item.frequency || 'Monthly'}` : (recurring ? ' /mo' : '')}
                                                 </span>
                                             )}
@@ -169,7 +216,7 @@ const AllocationModule = ({
                                     {/* Form Body */}
                                     {!isCollapsed && (
                                         <div className="grid" style={{ 
-                                            gridTemplateColumns: item.type === 'Life Insurance' ? '1.2fr 1fr 1fr 1fr 1fr 0.8fr 0.8fr 0.8fr' : '1.5fr 1.5fr 1.5fr 1fr 1fr 1fr', 
+                                            gridTemplateColumns: item.type === 'Life Insurance' ? '1.5fr 1.5fr 1fr 1fr 0.8fr 0.8fr 0.8fr' : '2fr 1.5fr 1fr 1fr 1fr', 
                                             gap: '1rem', 
                                             alignItems: 'end',
                                             padding: '1.25rem'
@@ -182,25 +229,6 @@ const AllocationModule = ({
                                                     onChange={(e) => updateAllocation(item.id, 'name', e.target.value)}
                                                     placeholder="e.g. Retirement SIP"
                                                 />
-                                            </div>
-                                            <div className="input-group" style={{ marginBottom: 0 }}>
-                                                <label>Type</label>
-                                                <select 
-                                                    value={item.type} 
-                                                    onChange={(e) => updateAllocation(item.id, 'type', e.target.value)}
-                                                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}
-                                                >
-                                                    <option value="SIP">SIP</option>
-                                                    <option value="Lumpsum">Lumpsum</option>
-                                                    <option value="Life Insurance">Life Insurance</option>
-                                                    <option value="Gold">Gold</option>
-                                                    <option value="PPF">PPF</option>
-                                                    <option value="NPS">NPS</option>
-                                                    <option value="Equity">Direct Equity</option>
-                                                    <option value="ETF">ETF</option>
-                                                    <option value="FD">Fixed Deposit</option>
-                                                    <option value="Other Investment">Other Investment</option>
-                                                </select>
                                             </div>
                                             {item.type === 'Life Insurance' && (
                                                 <div className="input-group" style={{ marginBottom: 0 }}>
@@ -221,9 +249,18 @@ const AllocationModule = ({
                                                 <label>{item.type === 'Life Insurance' ? 'Premium Amount' : (recurring ? 'Monthly Amount' : 'Amount')}</label>
                                                 <input 
                                                     type="number" 
-                                                    value={item.type === 'Life Insurance' ? (item.amount || '') : (recurring ? (item.amount / 12 || '') : item.amount)} 
+                                                    value={item.type === 'Life Insurance' ? (Math.round(item.amount) || '') : (recurring ? (Math.round(item.amount / 12) || '') : Math.round(item.amount))} 
                                                     onChange={(e) => {
-                                                        const val = parseFloat(e.target.value) || 0;
+                                                        let val = Math.round(parseFloat(e.target.value)) || 0;
+                                                        if (item.type === 'PPF') {
+                                                            const otherPpfsAnnualSum = allocations
+                                                                .filter(a => a.type === 'PPF' && a.id !== item.id)
+                                                                .reduce((sum, a) => sum + parseFloat(a.amount || 0), 0);
+                                                            const maxMonthly = Math.max(0, Math.floor((150000 - otherPpfsAnnualSum) / 12));
+                                                            if (val > maxMonthly) {
+                                                                val = maxMonthly;
+                                                            }
+                                                        }
                                                         if (item.type === 'Life Insurance') {
                                                             updateAllocation(item.id, 'amount', val);
                                                         } else {
@@ -275,13 +312,29 @@ const AllocationModule = ({
                                                     onChange={(e) => updateAllocation(item.id, 'startYear', parseInt(e.target.value))}
                                                 />
                                             </div>
-                                            {recurring ? (
+                                            {hasDuration(item.type) ? (
                                                 <div className="input-group" style={{ marginBottom: 0 }}>
-                                                    <label>{item.type === 'Life Insurance' ? 'Premium Payment Term (Years)' : 'Duration (Yrs)'}</label>
+                                                    <label>{item.type === 'Life Insurance' ? 'Premium Payment Term (Years)' : (item.type === 'Fixed Deposit' ? 'Tenure (Yrs)' : 'Duration (Yrs)')}</label>
                                                     <input 
                                                         type="number" 
                                                         value={item.duration} 
-                                                        onChange={(e) => updateAllocation(item.id, 'duration', parseInt(e.target.value))}
+                                                        onChange={(e) => {
+                                                            let val = parseInt(e.target.value) || 0;
+                                                            if (item.type === 'PPF') {
+                                                                const ppfAllocations = allocations.filter(a => a.type === 'PPF');
+                                                                const earliest = ppfAllocations.reduce((min, p) => 
+                                                                    (p.startYear < min.startYear || (p.startYear === min.startYear && p.startMonth < min.startMonth)) ? p : min
+                                                                , ppfAllocations[0]);
+                                                                const globalPpfEndAbsolute = (earliest.startYear + 15) * 12 + earliest.startMonth - 1;
+                                                                const itemStartAbsolute = item.startYear * 12 + item.startMonth;
+                                                                const diffMonths = globalPpfEndAbsolute - itemStartAbsolute + 1;
+                                                                const maxAllowedDuration = Math.max(0, Math.min(15, Math.floor(diffMonths / 12)));
+                                                                if (val > maxAllowedDuration) {
+                                                                    val = maxAllowedDuration;
+                                                                }
+                                                            }
+                                                            updateAllocation(item.id, 'duration', val);
+                                                        }}
                                                     />
                                                 </div>
                                             ) : (
@@ -292,10 +345,12 @@ const AllocationModule = ({
                                 </div>
                             );
                         })}
-                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
-                            <button className="btn btn-secondary" onClick={addAllocation} style={{ width: '100%', borderStyle: 'dashed', background: 'transparent' }}>
-                                <Plus size={16} style={{ marginRight: '6px' }} /> Add Another Investment
-                            </button>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.75rem', marginTop: '1.5rem', marginBottom: '1rem' }}>
+                            {['SIP', 'Lumpsum', 'Life Insurance', 'Gold', 'PPF', 'NPS', 'Direct Equity', 'ETF', 'FD', 'RD', 'Other Investment'].map(type => (
+                                <button key={type} className="btn btn-secondary" onClick={() => addAllocation(type === 'FD' ? 'Fixed Deposit' : (type === 'RD' ? 'Recurring Deposit' : (type === 'Direct Equity' ? 'Equity' : type)))} style={{ borderStyle: 'solid', background: 'var(--bg-card)', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
+                                    <Plus size={14} style={{ marginRight: '4px' }} /> {type}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 ) : (
@@ -309,9 +364,13 @@ const AllocationModule = ({
                     }}>
                         <Wallet size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
                         <p>No investments planned yet. Start allocating your {formatCurrency(netInvestibleSurplus)} annual surplus.</p>
-                        <button className="btn btn-secondary" onClick={addAllocation} style={{ marginTop: '1rem' }}>
-                            <Plus size={16} /> Add First Investment
-                        </button>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
+                            {['SIP', 'Lumpsum', 'Life Insurance', 'Gold', 'PPF', 'NPS', 'Direct Equity', 'ETF', 'FD', 'RD', 'Other Investment'].map(type => (
+                                <button key={type} className="btn btn-secondary" onClick={() => addAllocation(type === 'FD' ? 'Fixed Deposit' : (type === 'RD' ? 'Recurring Deposit' : (type === 'Direct Equity' ? 'Equity' : type)))} style={{ borderStyle: 'solid', background: 'var(--bg-main)', padding: '0.5rem 1rem' }}>
+                                    <Plus size={16} /> {type}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
 

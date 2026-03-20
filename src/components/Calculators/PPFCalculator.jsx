@@ -1,0 +1,212 @@
+import React, { useMemo } from 'react';
+import { Calculator, TrendingUp } from 'lucide-react';
+
+export const computePPFData = (proposedPPFs, expectedReturns) => {
+    if (proposedPPFs.length === 0) return [];
+    
+    let results = [];
+    
+    // Find earliest start year and month
+    let baseStartYear = Math.min(...proposedPPFs.map(p => p.startYear));
+    let earliestPPF = proposedPPFs.find(p => p.startYear === baseStartYear);
+    let baseStartMonth = earliestPPF ? earliestPPF.startMonth : 1;
+    
+    // Find max duration in months to cover all PPFs
+    let maxMonths = 0;
+    proposedPPFs.forEach(p => {
+        const monthsOffset = ((p.startYear - baseStartYear) * 12) + (p.startMonth - baseStartMonth);
+        // PPF duration is strictly 15 years
+        const endMonth = monthsOffset + (15 * 12);
+        if (endMonth > maxMonths) maxMonths = endMonth;
+    });
+
+    const totalMonths = maxMonths > 0 ? maxMonths : 180;
+    
+    let currentYearVal = baseStartYear;
+    let currentMonthVal = baseStartMonth;
+    
+    let openingBalance = 0;
+    let yearlyInvestment = 0;
+
+    for (let m = 0; m < totalMonths; m++) {
+        // Add monthly investments
+        proposedPPFs.forEach(p => {
+            const monthsSinceStart = ((currentYearVal - p.startYear) * 12) + (currentMonthVal - p.startMonth);
+            // PPF duration is strictly 15 years (180 months)
+            if (monthsSinceStart >= 0 && monthsSinceStart < 180) {
+                yearlyInvestment += (parseFloat(p.amount) / 12) || 0;
+            }
+        });
+
+        // Rollover logic at the end of the calendar year or absolute end of tenure
+        if (currentMonthVal === 12 || m === totalMonths - 1) {
+            // Annual compounding: Interest based on Opening Balance + any investments made during the year
+            const interest = (openingBalance + yearlyInvestment) * ((parseFloat(expectedReturns) || 0) / 100);
+            const endValue = openingBalance + yearlyInvestment + interest;
+
+            results.push({
+                year: currentYearVal,
+                investment: yearlyInvestment,
+                interest: interest,
+                endValue: endValue
+            });
+
+            // Prep next year
+            openingBalance = endValue;
+            yearlyInvestment = 0;
+            if (m < totalMonths - 1) {
+                currentYearVal++;
+            }
+        }
+
+        // Increment month
+        currentMonthVal = (currentMonthVal % 12) + 1;
+    }
+
+    return results;
+};
+
+const PPFCalculator = ({ allocations = [], data, setData }) => {
+    const expectedReturns = data?.rate ?? 7.10;
+    const setExpectedReturns = (val) => setData({ ...data, rate: val });
+
+    const proposedPPFs = useMemo(() => {
+        return allocations.filter(a => a.type === 'PPF');
+    }, [allocations]);
+
+    const calculationData = useMemo(() => {
+        return computePPFData(proposedPPFs, expectedReturns);
+    }, [proposedPPFs, expectedReturns]);
+
+    const finalValue = calculationData.length > 0 ? calculationData[calculationData.length - 1].endValue : 0;
+    const totalInvested = calculationData.reduce((sum, row) => sum + row.investment, 0);
+
+    return (
+        <div className="fade-in" style={{ padding: '1rem' }}>
+            <div className="card" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+                    <Calculator size={32} color="var(--primary)" />
+                    <div>
+                        <h1 style={{ margin: 0 }}>PPF Calculator</h1>
+                        <p className="text-muted" style={{ margin: 0 }}>Public Provident Fund projections based on your proposed allocations.</p>
+                    </div>
+                </div>
+
+                {proposedPPFs.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '3rem', border: '2px dashed var(--border)', borderRadius: '12px', color: 'var(--text-muted)' }}>
+                        <p>No PPF investments proposed in the Allocation Module.</p>
+                        <p style={{ fontSize: '0.9rem' }}>Go back to Step 9 and add a PPF allocation to see projections here.</p>
+                    </div>
+                ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '2.5rem' }}>
+                        {/* Left Column: Inputs */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <div className="form-group">
+                                <label><TrendingUp size={16} /> Expected Returns (CAGR %)</label>
+                                <input 
+                                    type="number" 
+                                    step="0.01"
+                                    min="5"
+                                    max="9"
+                                    value={expectedReturns} 
+                                    onChange={(e) => {
+                                        let val = parseFloat(e.target.value);
+                                        setExpectedReturns(isNaN(val) ? '' : val);
+                                    }} 
+                                    onBlur={(e) => {
+                                        let val = parseFloat(e.target.value);
+                                        if (isNaN(val)) val = 7.10;
+                                        if (val < 5) val = 5;
+                                        if (val > 9) val = 9;
+                                        setExpectedReturns(val.toFixed(2));
+                                    }}
+                                    className="form-input" 
+                                />
+                                <small className="text-muted">Range: 5.00% to 9.00%. Default: 7.10%.</small>
+                            </div>
+
+                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+                                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem' }}>Fetched PPF Allocations</h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    {proposedPPFs.map((p) => (
+                                        <div key={p.id} className="card" style={{ padding: '1rem', border: '1px solid #6366f1', background: '#f5f3ff' }}>
+                                            <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#6366f1', marginBottom: '0.5rem' }}>
+                                                {p.name || 'PPF Allocation'}
+                                            </div>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                    <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Yearly Amount</label>
+                                                    <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{Math.round(p.amount).toLocaleString('en-IN')}</div>
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                    <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Start Date</label>
+                                                    <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                                        {new Date(0, p.startMonth - 1).toLocaleString('default', { month: 'short' })} {p.startYear}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right Column: Visualization */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                            {/* Summary Header */}
+                            <div style={{ 
+                                padding: '2rem', 
+                                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', 
+                                borderRadius: '16px', 
+                                color: 'white',
+                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                            }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+                                    <div>
+                                        <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Projected Value</p>
+                                        <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 800 }}>₹{Math.round(finalValue).toLocaleString('en-IN')}</h2>
+                                    </div>
+                                    <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                        <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Total Invested</p>
+                                        <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>₹{Math.round(totalInvested).toLocaleString('en-IN')}</h3>
+                                    </div>
+                                    <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                        <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Wealth Created</p>
+                                        <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>₹{Math.round(finalValue - totalInvested).toLocaleString('en-IN')}</h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Amortization Table */}
+                            <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                                <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto' }}>
+                                    <table className="summary-table" style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
+                                        <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', borderBottom: '2px solid var(--border)', zIndex: 10 }}>
+                                            <tr>
+                                                <th style={{ padding: '1.25rem', textAlign: 'left' }}>Year</th>
+                                                <th style={{ padding: '1.25rem', textAlign: 'right' }}>Investment Amount</th>
+                                                <th style={{ padding: '1.25rem', textAlign: 'right' }}>Interest</th>
+                                                <th style={{ padding: '1.25rem', textAlign: 'right' }}>End Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {calculationData.map((row, idx) => (
+                                                <tr key={row.year} style={{ borderBottom: '1px solid var(--border)', background: idx % 2 === 0 ? 'transparent' : '#f8fafc' }}>
+                                                    <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--primary)' }}>{row.year}</td>
+                                                    <td style={{ padding: '1rem', textAlign: 'right' }}>₹{Math.round(row.investment).toLocaleString('en-IN')}</td>
+                                                    <td style={{ padding: '1rem', textAlign: 'right', color: '#059669' }}>₹{Math.round(row.interest).toLocaleString('en-IN')}</td>
+                                                    <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 800, color: 'var(--text-main)' }}>₹{Math.round(row.endValue).toLocaleString('en-IN')}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+export default PPFCalculator;

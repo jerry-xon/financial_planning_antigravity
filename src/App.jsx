@@ -23,6 +23,10 @@ import HomeLoanCalculator from './components/Calculators/HomeLoanCalculator';
 import CarLoanCalculator from './components/Calculators/CarLoanCalculator';
 import LumpsumCalculator from './components/Calculators/LumpsumCalculator';
 import SWPCalculator from './components/Calculators/SWPCalculator';
+import PPFCalculator from './components/Calculators/PPFCalculator';
+import NPSCalculator from './components/Calculators/NPSCalculator';
+import FDCalculator from './components/Calculators/FDCalculator';
+import RDCalculator from './components/Calculators/RDCalculator';
 import { useAuth } from './contexts/AuthContext';
 import { signOut } from './services/authService';
 import { getActivePlan, updateFinancialPlan } from './services/financialPlanService';
@@ -135,7 +139,11 @@ function App() {
     car_loan: { amount: 0, rate: 9.5, tenure: 5, events: [] },
     lumpsum: { amount: 0, rate: 12, tenure: 10, events: [] },
     swp: { amount: 0, withdrawal: 0, rate: 10, tenure: 15, events: [] },
-    sip: { amount: 0, rate: 12, tenure: 10, increments: [] }
+    sip: { amount: 0, rate: 12, tenure: 10, increments: [] },
+    ppf: { rate: 7.10 },
+    nps: { rate: 10.00, annuity: 40, annuityRate: 6.00 },
+    fd: { rate: 7.00, frequency: 'Quarterly' },
+    rd: { rate: 7.00 }
   });
 
   // --- Reset All State ---
@@ -216,7 +224,11 @@ function App() {
       car_loan: { amount: 0, rate: 9.5, tenure: 5, events: [] },
       lumpsum: { amount: 0, rate: 12, tenure: 10, events: [] },
       swp: { amount: 0, withdrawal: 0, rate: 10, tenure: 15, events: [] },
-      sip: { amount: 0, rate: 12, tenure: 10, increments: [] }
+      sip: { amount: 0, rate: 12, tenure: 10, increments: [] },
+      ppf: { rate: 7.10 },
+      nps: { rate: 10.00, annuity: 40, annuityRate: 6.00 },
+      fd: { rate: 7.00, frequency: 'Quarterly' },
+      rd: { rate: 7.00 }
     });
   };
 
@@ -571,6 +583,10 @@ function App() {
                 {[
                   { id: 'tax', label: 'Income Tax' },
                   { id: 'sip', label: 'SIP' },
+                  { id: 'ppf', label: 'PPF' },
+                  { id: 'nps', label: 'NPS' },
+                  { id: 'fd', label: 'Fixed Deposit' },
+                  { id: 'rd', label: 'Recurring Deposit' },
                   { id: 'per_loan', label: 'Personal Loan' },
                   { id: 'home_loan', label: 'Home Loan' },
                   { id: 'car_loan', label: 'Car Loan' },
@@ -709,6 +725,9 @@ function App() {
                   expenseCategories={expenseCategories}
                   allocations={investmentAllocations}
                   goals={goals}
+                  calculatorInputs={calculatorInputs}
+                  journeyProjections={journeyProjections}
+                  policies={policies}
                   onNext={() => { setCurrentStep(11); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
                 />
@@ -781,6 +800,35 @@ function App() {
                   proposedLumpsums={investmentAllocations.filter(a => !['SIP', 'PPF', 'NPS'].includes(a.type))}
                   data={calculatorInputs.lumpsum}
                   setData={(val) => setCalculatorInputs(prev => ({ ...prev, lumpsum: val }))}
+                />
+              )}
+              {activeCalculator === 'ppf' && (
+                <PPFCalculator 
+                  allocations={investmentAllocations}
+                  data={calculatorInputs.ppf || { rate: 7.10 }}
+                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, ppf: val }))}
+                />
+              )}
+              {activeCalculator === 'nps' && (
+                <NPSCalculator 
+                  allocations={investmentAllocations}
+                  familyMembers={familyMembers}
+                  data={calculatorInputs.nps || { rate: 10.00, annuity: 40, annuityRate: 6.00 }}
+                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, nps: val }))}
+                />
+              )}
+              {activeCalculator === 'fd' && (
+                <FDCalculator 
+                  allocations={investmentAllocations}
+                  data={calculatorInputs.fd || { rate: 7.00, frequency: 'Quarterly' }}
+                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, fd: val }))}
+                />
+              )}
+              {activeCalculator === 'rd' && (
+                <RDCalculator 
+                  allocations={investmentAllocations}
+                  data={calculatorInputs.rd || { rate: 7.00 }}
+                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, rd: val }))}
                 />
               )}
               {activeCalculator === 'swp' && (
