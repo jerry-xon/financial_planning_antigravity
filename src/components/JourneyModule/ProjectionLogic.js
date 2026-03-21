@@ -273,7 +273,7 @@ export const generateProjections = ({
             const allocStartMonth = parseInt(alloc.startMonth) || 1;
             const allocDuration = parseInt(alloc.duration) || 1;
             const type = alloc.type;
-            const isRecurring = ['SIP', 'PPF', 'NPS', 'Life Insurance'].includes(type);
+            const isRecurring = ['SIP', 'PPF', 'NPS', 'Life Insurance', 'Recurring Deposit'].includes(type);
             
             // If it's Life Insurance, it's already accounted for in totalInsuranceOutflow
             // We want it to show up in the Allocation Table, so we will add it to activeAllocations

@@ -99,7 +99,7 @@ export const getItemLabel = (key) => {
         // Assets
         residential: 'Residential House',
         secondProperty: 'Second Property',
-        landPlot: 'Land / Plot',
+        landPlot: 'Land / Plot (Investment Purpose)',
         idv: 'Vehicles (IDV)',
         gold: 'Gold Jewellery',
         art: 'Art / Collectibles',

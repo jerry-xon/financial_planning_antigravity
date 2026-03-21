@@ -159,7 +159,7 @@ const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, 
                             <input type="number" value={safeAssetValue('realEstate', 'secondProperty')} onChange={(e) => handleAssetChange('realEstate', 'secondProperty', e.target.value)} placeholder="0" />
                         </div>
                         <div className="input-group">
-                            <label>Land / Plot</label>
+                            <label>Land / Plot (Investment Purpose)</label>
                             <input type="number" value={safeAssetValue('realEstate', 'landPlot')} onChange={(e) => handleAssetChange('realEstate', 'landPlot', e.target.value)} placeholder="0" />
                         </div>
                         <div className="input-group">

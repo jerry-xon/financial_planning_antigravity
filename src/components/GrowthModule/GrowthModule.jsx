@@ -90,8 +90,8 @@ const GrowthModule = ({
     // 3. Static Equity Lookup
     const staticEquityVal = useMemo(() => {
         let val = 0;
-        if (assetCategories && assetCategories.equity) {
-            val += parseFloat(assetCategories.equity.stocks) || 0;
+        if (assetCategories && assetCategories.investments) {
+            val += parseFloat(assetCategories.investments.equity) || 0;
         }
         return val;
     }, [assetCategories]);
@@ -127,10 +127,10 @@ const GrowthModule = ({
             const insMaturity = iRow ? (iRow.maturities || []).reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0) : 0;
 
             const fRow = fdData.find(r => r.year === y);
-            const fdBal = fRow ? fRow.endValue : 0;
+            const fdBal = fRow ? (fRow.endValue || 0) + (fRow.maturityValue || 0) : 0;
 
             const rRow = rdData.find(r => r.year === y);
-            const rdBal = rRow ? rRow.endValue : 0;
+            const rdBal = rRow ? (rRow.endValue || 0) + (rRow.maturityValue || 0) : 0;
 
             const total = unallocated + sipBal + lsBal + staticEquityVal + ppfBal + npsBal + insMaturity + fdBal + rdBal;
 
