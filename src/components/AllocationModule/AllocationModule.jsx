@@ -346,8 +346,8 @@ const AllocationModule = ({
                             );
                         })}
                         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.75rem', marginTop: '1.5rem', marginBottom: '1rem' }}>
-                            {['SIP', 'Lumpsum', 'Life Insurance', 'Gold', 'PPF', 'NPS', 'Direct Equity', 'ETF', 'FD', 'RD', 'Other Investment'].map(type => (
-                                <button key={type} className="btn btn-secondary" onClick={() => addAllocation(type === 'FD' ? 'Fixed Deposit' : (type === 'RD' ? 'Recurring Deposit' : (type === 'Direct Equity' ? 'Equity' : type)))} style={{ borderStyle: 'solid', background: 'var(--bg-card)', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
+                            {['SIP', 'Lumpsum', 'Life Insurance', 'Gold', 'PPF', 'NPS', 'Direct Equity & ETFs', 'FD', 'RD', 'Other Investment'].map(type => (
+                                <button key={type} className="btn btn-secondary" onClick={() => addAllocation(type === 'FD' ? 'Fixed Deposit' : (type === 'RD' ? 'Recurring Deposit' : type))} style={{ borderStyle: 'solid', background: 'var(--bg-card)', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
                                     <Plus size={14} style={{ marginRight: '4px' }} /> {type}
                                 </button>
                             ))}
@@ -365,8 +365,8 @@ const AllocationModule = ({
                         <Wallet size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
                         <p>No investments planned yet. Start allocating your {formatCurrency(netInvestibleSurplus)} annual surplus.</p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
-                            {['SIP', 'Lumpsum', 'Life Insurance', 'Gold', 'PPF', 'NPS', 'Direct Equity', 'ETF', 'FD', 'RD', 'Other Investment'].map(type => (
-                                <button key={type} className="btn btn-secondary" onClick={() => addAllocation(type === 'FD' ? 'Fixed Deposit' : (type === 'RD' ? 'Recurring Deposit' : (type === 'Direct Equity' ? 'Equity' : type)))} style={{ borderStyle: 'solid', background: 'var(--bg-main)', padding: '0.5rem 1rem' }}>
+                            {['SIP', 'Lumpsum', 'Life Insurance', 'Gold', 'PPF', 'NPS', 'Direct Equity & ETFs', 'FD', 'RD', 'Other Investment'].map(type => (
+                                <button key={type} className="btn btn-secondary" onClick={() => addAllocation(type === 'FD' ? 'Fixed Deposit' : (type === 'RD' ? 'Recurring Deposit' : type))} style={{ borderStyle: 'solid', background: 'var(--bg-main)', padding: '0.5rem 1rem' }}>
                                     <Plus size={16} /> {type}
                                 </button>
                             ))}

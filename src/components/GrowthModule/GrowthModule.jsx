@@ -3,6 +3,7 @@ import { BarChart3, TrendingUp, Info } from 'lucide-react';
 
 import { computeSIPData } from '../Calculators/SIPCalculator';
 import { computeLumpsumData } from '../Calculators/LumpsumCalculator';
+import { computeEquityData } from '../Calculators/EquityCalculator';
 import { computePPFData } from '../Calculators/PPFCalculator';
 import { computeNPSData } from '../Calculators/NPSCalculator';
 import { computeFDData } from '../Calculators/FDCalculator';
@@ -12,10 +13,13 @@ import { calculateYearlyInsuranceSummary } from '../InsuranceModule/InsuranceLog
 const GrowthModule = ({ 
     familyMembers = [], 
     assetCategories = {}, 
+    expenseCategories = {},
     allocations = [], 
     calculatorInputs = {},
     journeyProjections = [],
     policies = [],
+    goalMappings = {},
+    goals = [],
     onNext, 
     onBack 
 }) => {
@@ -39,16 +43,21 @@ const GrowthModule = ({
     // 2. Fetch Raw Schedules
     const sipData = useMemo(() => {
         const c = calculatorInputs.sip || {};
+        const defaultSIP = parseFloat(expenseCategories?.savings?.mfSip) || 0;
+        const defaultCorpus = parseFloat(assetCategories?.investments?.mutualFunds) || parseFloat(assetCategories?.equity?.mfEquity) || parseFloat(assetCategories?.equity?.stocks) || 0;
+
         return computeSIPData(
             currentYear, 
-            parseFloat(c.amount) || 0, 
+            defaultSIP, 
             parseFloat(c.rate) || 12, 
             parseInt(c.tenure) || (retirementYear - currentYear), 
-            parseFloat(c.currentValue) || 0, 
-            c.increments || [], 
-            allocations.filter(a => a.type === 'SIP')
+            defaultCorpus, 
+            c.increments || c.events || [],  
+            allocations.filter(a => a.type === 'SIP'),
+            goalMappings,
+            goals
         );
-    }, [calculatorInputs.sip, allocations, currentYear, retirementYear]);
+    }, [calculatorInputs.sip, allocations, currentYear, retirementYear, goalMappings, goals]);
 
     const lumpsumData = useMemo(() => {
         const c = calculatorInputs.lumpsum || {};
@@ -59,9 +68,11 @@ const GrowthModule = ({
             currentMonth,
             currentYear,
             c.events || [],
-            allocations.filter(a => a.type === 'Lumpsum' || a.type === 'Lump Sum')
+            allocations.filter(a => a.type === 'Lumpsum' || a.type === 'Lump Sum'),
+            goalMappings,
+            goals
         );
-    }, [calculatorInputs.lumpsum, allocations, currentYear, currentMonth, retirementYear]);
+    }, [calculatorInputs.lumpsum, allocations, currentYear, currentMonth, retirementYear, goalMappings, goals]);
 
     const ppfData = useMemo(() => {
         const c = calculatorInputs.ppf || {};
@@ -87,14 +98,21 @@ const GrowthModule = ({
         return calculateYearlyInsuranceSummary(policies) || [];
     }, [policies]);
 
-    // 3. Static Equity Lookup
-    const staticEquityVal = useMemo(() => {
-        let val = 0;
-        if (assetCategories && assetCategories.investments) {
-            val += parseFloat(assetCategories.investments.equity) || 0;
-        }
-        return val;
-    }, [assetCategories]);
+    const equityData = useMemo(() => {
+        const c = calculatorInputs.equity || {};
+        const defaultCorpus = parseFloat(assetCategories?.investments?.equity) || parseFloat(assetCategories?.equity?.stocks) || 0;
+        return computeEquityData(
+            defaultCorpus,
+            parseFloat(c.rate) || 15,
+            parseInt(c.tenure) || (retirementYear - currentYear),
+            currentMonth,
+            currentYear,
+            c.events || [],
+            allocations.filter(a => a.type === 'Direct Equity & ETFs'),
+            goalMappings,
+            goals
+        );
+    }, [calculatorInputs.equity, allocations, currentYear, currentMonth, retirementYear, goalMappings, goals, assetCategories]);
 
     // 4. Construct Master Table
     const masterProjections = useMemo(() => {
@@ -132,14 +150,17 @@ const GrowthModule = ({
             const rRow = rdData.find(r => r.year === y);
             const rdBal = rRow ? (rRow.endValue || 0) + (rRow.maturityValue || 0) : 0;
 
-            const total = unallocated + sipBal + lsBal + staticEquityVal + ppfBal + npsBal + insMaturity + fdBal + rdBal;
+            const eRow = equityData.find(r => r.year === y);
+            const equityBal = eRow ? eRow.valueAfterWithdrawal : 0;
+            
+            const total = unallocated + sipBal + lsBal + equityBal + ppfBal + npsBal + insMaturity + fdBal + rdBal;
 
             rows.push({
                 year: y,
                 unallocated,
                 sipBal,
                 lsBal,
-                staticEquityVal,
+                equityBal,
                 ppfBal,
                 npsBal,
                 insMaturity,
@@ -149,7 +170,7 @@ const GrowthModule = ({
             });
         }
         return rows;
-    }, [currentYear, retirementYear, journeyProjections, sipData, lumpsumData, ppfData, npsData, insuranceData, fdData, rdData, staticEquityVal]);
+    }, [currentYear, retirementYear, journeyProjections, sipData, lumpsumData, equityData, ppfData, npsData, insuranceData, fdData, rdData]);
 
     const formatCurrency = (val) => {
         return new Intl.NumberFormat('en-IN', {
@@ -223,7 +244,7 @@ const GrowthModule = ({
                                     <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--text-muted)' }}>{formatCurrency(row.unallocated)}</td>
                                     <td style={{ padding: '1rem', textAlign: 'right' }}>{formatCurrency(row.sipBal)}</td>
                                     <td style={{ padding: '1rem', textAlign: 'right' }}>{formatCurrency(row.lsBal)}</td>
-                                    <td style={{ padding: '1rem', textAlign: 'right' }}>{formatCurrency(row.staticEquityVal)}</td>
+                                    <td style={{ padding: '1rem', textAlign: 'right' }}>{formatCurrency(row.equityBal)}</td>
                                     <td style={{ padding: '1rem', textAlign: 'right' }}>{formatCurrency(row.ppfBal)}</td>
                                     <td style={{ padding: '1rem', textAlign: 'right' }}>{formatCurrency(row.npsBal)}</td>
                                     <td style={{ padding: '1rem', textAlign: 'right', color: '#10b981' }}>{formatCurrency(row.insMaturity)}</td>

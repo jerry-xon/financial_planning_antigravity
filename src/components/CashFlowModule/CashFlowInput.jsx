@@ -1,7 +1,7 @@
 import React from 'react';
 import { convertToMonthly } from './CashFlowLogic';
 
-const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, onCalculate, onNext, setCurrentStep }) => {
+const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, currentYearLedger, setCurrentYearLedger, subStep }) => {
     const handleIncomeChange = (e) => {
         const { name, value } = e.target;
         setIncome(prev => ({ ...prev, [name]: value }));
@@ -69,16 +69,151 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
     const selfMember = familyMembers.find(m => m.relation?.toLowerCase() === 'self') || { name: 'Self' };
     const spouseMember = familyMembers.find(m => m.relation?.toLowerCase() === 'spouse');
     
-    // Determine if spouse is a housewife (case-insensitive check)
     const isSpouseHousewife = spouseMember?.occupation?.toLowerCase() === 'housewife';
 
-    const totalHouseholdIncome = (parseFloat(income.self) || 0) + (parseFloat(income.spouse) || 0);
+    const totalHouseholdIncome = (parseFloat(income.self) || 0) + (parseFloat(income.selfBonus) || 0) + (parseFloat(income.selfPassive) || 0) + (parseFloat(income.selfOther) || 0) + (parseFloat(income.spouse) || 0) + (parseFloat(income.spouseBonus) || 0) + (parseFloat(income.spousePassive) || 0) + (parseFloat(income.spouseOther) || 0);
+
+    const totalHouseholdExpenses = Object.entries(expenseCategories.household || {})
+        .filter(([key]) => key !== 'education')
+        .reduce((sum, [_, val]) => sum + (parseFloat(val) || 0), 0);
+
+    // Auto-sync Baseline Scalars into the 12-Month Array
+    React.useEffect(() => {
+        const currentMonth = new Date().getMonth();
+        const activeIncomeSum = Math.round(totalHouseholdIncome);
+        const activeHouseholdSum = Math.round(totalHouseholdExpenses);
+
+        setCurrentYearLedger(prev => {
+            const newIncome = [...(prev.income || Array(12).fill(0))];
+            const newHH = [...(prev.household || Array(12).fill(0))];
+            let changed = false;
+
+            // Only overwrite active and future months. Historical locked months remain untouched.
+            for (let i = currentMonth; i < 12; i++) {
+                if (newIncome[i] !== activeIncomeSum) {
+                    newIncome[i] = activeIncomeSum;
+                    changed = true;
+                }
+                if (newHH[i] !== activeHouseholdSum) {
+                    newHH[i] = activeHouseholdSum;
+                    changed = true;
+                }
+            }
+
+            if (changed) return { income: newIncome, household: newHH };
+            return prev;
+        });
+    }, [totalHouseholdIncome, totalHouseholdExpenses, setCurrentYearLedger]);
 
     return (
         <div className="cash-flow-input">
+            {subStep === 1 && (
+            <>
             <div className="grid" style={{ marginBottom: '2.5rem' }}>
                 <div className="cash-flow-section card" style={{ background: 'var(--bg-main)', border: '1px solid var(--border)' }}>
-                    <h3 style={{ borderBottom: 'none', marginBottom: '1rem' }}>Monthly Income (₹)</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '0.5rem', borderBottom: '2px solid var(--border)' }}>
+                        <h3 style={{ borderBottom: 'none', margin: 0 }}>Current Year Tracking Ledger (Monthly)</h3>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: 600, background: 'var(--success-light)', padding: '4px 8px', borderRadius: '4px' }}>Year {new Date().getFullYear()}</span>
+                    </div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                        This table establishes your intra-year granular timeline. Past months are locked. Editing the current or future months will automatically establish a new run-rate projected to the end of the year.
+                    </p>
+                    
+                    <div style={{ overflowX: 'auto' }}>
+                        <table className="monthly-ledger-table" style={{ minWidth: '800px', width: '100%', borderCollapse: 'collapse', textAlign: 'center', background: 'var(--bg-card)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                            <thead>
+                                <tr style={{ background: 'var(--border)', color: 'var(--text-main)', fontSize: '0.85rem' }}>
+                                    <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: 600 }}>Category (₹)</th>
+                                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((mon, i) => (
+                                        <th key={mon} style={{ padding: '0.75rem', fontWeight: 600, color: i === new Date().getMonth() ? 'var(--primary)' : 'inherit' }}>
+                                            {mon} {i === new Date().getMonth() && '(Now)'}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {/* Income Array Row */}
+                                <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                                    <td style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: 'var(--primary)', fontSize: '0.9rem' }}>Net Income</td>
+                                    {currentYearLedger.income.map((val, idx) => {
+                                        const isLocked = idx < new Date().getMonth();
+                                        return (
+                                            <td key={`inc-${idx}`} style={{ padding: '0.5rem', background: isLocked ? 'var(--bg-main)' : 'transparent' }}>
+                                                <input 
+                                                    type="number" 
+                                                    value={val || ''}
+                                                    readOnly={isLocked}
+                                                    onChange={(e) => {
+                                                        const newVal = Number(e.target.value);
+                                                        setCurrentYearLedger(prev => {
+                                                            const arr = [...prev.income];
+                                                            for(let j = idx; j < 12; j++) arr[j] = newVal;
+                                                            return { ...prev, income: arr };
+                                                        });
+                                                    }}
+                                                    style={{ 
+                                                        minWidth: '80px',
+                                                        width: '100%', 
+                                                        padding: '0.5rem', 
+                                                        background: isLocked ? 'var(--bg-main)' : 'var(--bg-card)', 
+                                                        border: isLocked ? 'none' : '1px solid var(--border)', 
+                                                        borderRadius: '4px',
+                                                        color: isLocked ? 'var(--text-muted)' : 'var(--text-main)',
+                                                        textAlign: 'center',
+                                                        fontSize: '0.85rem',
+                                                        cursor: isLocked ? 'not-allowed' : 'text'
+                                                    }} 
+                                                />
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                                
+                                {/* Household Expenses Array Row */}
+                                <tr>
+                                    <td style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: 'var(--danger)', fontSize: '0.9rem' }}>Household & Lifestyle</td>
+                                    {currentYearLedger.household.map((val, idx) => {
+                                        const isLocked = idx < new Date().getMonth();
+                                        return (
+                                            <td key={`hh-${idx}`} style={{ padding: '0.5rem', background: isLocked ? 'var(--bg-main)' : 'transparent' }}>
+                                                <input 
+                                                    type="number" 
+                                                    value={val || ''}
+                                                    readOnly={isLocked}
+                                                    onChange={(e) => {
+                                                        const newVal = Number(e.target.value);
+                                                        setCurrentYearLedger(prev => {
+                                                            const arr = [...prev.household];
+                                                            for(let j = idx; j < 12; j++) arr[j] = newVal;
+                                                            return { ...prev, household: arr };
+                                                        });
+                                                    }}
+                                                    style={{ 
+                                                        minWidth: '80px',
+                                                        width: '100%', 
+                                                        padding: '0.5rem', 
+                                                        background: isLocked ? 'var(--bg-main)' : 'var(--bg-card)', 
+                                                        border: isLocked ? 'none' : '1px solid var(--border)', 
+                                                        borderRadius: '4px',
+                                                        color: isLocked ? 'var(--text-muted)' : 'var(--text-main)',
+                                                        textAlign: 'center',
+                                                        fontSize: '0.85rem',
+                                                        cursor: isLocked ? 'not-allowed' : 'text'
+                                                    }} 
+                                                />
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid" style={{ marginBottom: '2.5rem' }}>
+                <div className="cash-flow-section card" style={{ background: 'var(--bg-main)', border: '1px solid var(--border)' }}>
+                    <h3 style={{ borderBottom: 'none', marginBottom: '1rem' }}>Detailed Baseline Components</h3>
                     
                     <div className="income-sections-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         {/* Member 1: Self */}
@@ -207,7 +342,12 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                         </div>
                     </div>
                 </div>
+            </div>
+            </>
+            )}
 
+            {subStep === 2 && (
+            <div className="expense-categories">
                 {/* Category B1: EMIs */}
                 <div className="card" style={{ marginBottom: '1.5rem', background: 'var(--bg-main)' }}>
                     <h4 style={{ color: 'var(--primary)', marginBottom: '1.25rem', fontSize: '1.1rem' }}>B1. EMIs (Monthly)</h4>
@@ -368,14 +508,17 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                     </div>
                 </div>
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
-                <button className="btn btn-primary" onClick={onCalculate} style={{ padding: '0.8rem 2.5rem' }}>
-                    Generate Comprehensive Cash Flow Report
-                </button>
-            </div>
+            )}
 
             <style jsx>{`
+        .monthly-ledger-table input::-webkit-outer-spin-button,
+        .monthly-ledger-table input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .monthly-ledger-table input[type=number] {
+            -moz-appearance: textfield;
+        }
         .input-grid-mini {
           display: grid;
           gap: 1.25rem;

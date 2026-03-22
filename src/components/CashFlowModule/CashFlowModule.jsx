@@ -3,12 +3,23 @@ import CashFlowInput from './CashFlowInput';
 import CashFlowOutput from './CashFlowOutput';
 import { calculateCashFlow } from './CashFlowLogic';
 
-const CashFlowModule = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, onNext, onBack, setCurrentStep }) => {
+const CashFlowModule = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, currentYearLedger, setCurrentYearLedger, cashFlowSubStep, setCashFlowSubStep, onNext, onBack, setCurrentStep }) => {
     const [results, setResults] = useState(null);
 
     const handleCalculate = () => {
         const calculated = calculateCashFlow(income, expenseCategories);
         setResults(calculated);
+    };
+
+    const handleNextSubStep = () => {
+        window.scrollTo(0, 0);
+        setCashFlowSubStep(2);
+    };
+
+    const handleBackSubStep = () => {
+        setResults(null);
+        window.scrollTo(0, 0);
+        setCashFlowSubStep(1);
     };
 
     return (
@@ -25,22 +36,41 @@ const CashFlowModule = ({ familyMembers, income, setIncome, expenseCategories, s
                     setIncome={setIncome}
                     expenseCategories={expenseCategories}
                     setExpenseCategories={setExpenseCategories}
-                    onCalculate={handleCalculate}
-                    onNext={onNext}
-                    setCurrentStep={setCurrentStep}
+                    currentYearLedger={currentYearLedger}
+                    setCurrentYearLedger={setCurrentYearLedger}
+                    subStep={cashFlowSubStep}
                 />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
-                <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.8rem 2rem' }}>
-                    Back to Profile
-                </button>
-            </div>
+            {cashFlowSubStep === 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem', marginBottom: '4rem' }}>
+                    <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.8rem 2rem' }}>
+                        Back to Profile
+                    </button>
+                    <button className="btn btn-primary" onClick={handleNextSubStep} style={{ padding: '0.8rem 2rem' }}>
+                        Next: Review Commitments & Savings
+                    </button>
+                </div>
+            )}
 
-            {results && (
+            {cashFlowSubStep === 2 && !results && (
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem', marginBottom: '4rem' }}>
+                    <button className="btn btn-secondary" onClick={handleBackSubStep} style={{ padding: '0.8rem 2rem' }}>
+                        Back to Income & Lifestyle
+                    </button>
+                    <button className="btn btn-primary" onClick={handleCalculate} style={{ padding: '0.8rem 2rem' }}>
+                        Calculate Cash Flow & Proceed
+                    </button>
+                </div>
+            )}
+
+            {cashFlowSubStep === 2 && results && (
                 <div className="fade-in">
                     <CashFlowOutput results={results} />
-                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem', marginBottom: '4rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem', marginBottom: '4rem' }}>
+                        <button className="btn btn-secondary" onClick={handleBackSubStep} style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
+                            Back to Edits
+                        </button>
                         <button className="btn btn-primary" onClick={onNext} style={{ padding: '1rem 3rem', fontSize: '1.1rem' }}>
                             Proceed to Assets
                         </button>

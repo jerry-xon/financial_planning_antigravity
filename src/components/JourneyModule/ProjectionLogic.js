@@ -28,7 +28,8 @@ export const generateProjections = ({
     startYear = new Date().getFullYear(),
     policies = [], 
     journeyAdjustments = [], 
-    investmentAllocations = [] 
+    investmentAllocations = [],
+    currentYearLedger
 }) => {
     const {
         incomeIncrement = 0,
@@ -48,24 +49,34 @@ export const generateProjections = ({
     const yearsToProject = retirementYear - startYear + 1;
     if (yearsToProject <= 0) return [];
 
-    // 2. Initial Annual Figures (Per Person)
-    const selfAnnualBase = (
+    const hasLedger = currentYearLedger && currentYearLedger.income && currentYearLedger.income.length === 12;
+
+    const fallbackIncomeAnnual = (
         (parseFloat(income.self) || 0) + 
         (parseFloat(income.selfBonus) || 0) + 
         (parseFloat(income.selfPassive) || 0) + 
-        (parseFloat(income.selfOther) || 0)
-    ) * 12;
-
-    const spouseAnnualBase = (
+        (parseFloat(income.selfOther) || 0) +
         (parseFloat(income.spouse) || 0) + 
         (parseFloat(income.spouseBonus) || 0) + 
         (parseFloat(income.spousePassive) || 0) + 
         (parseFloat(income.spouseOther) || 0)
     ) * 12;
 
-    const householdMonthly = Object.entries(expenseCategories.household || {})
+    const baselineIncomeAnnual = hasLedger ? (currentYearLedger.income[11] * 12) : fallbackIncomeAnnual;
+
+    const selfRatio = fallbackIncomeAnnual > 0 
+        ? (((parseFloat(income.self) || 0) + (parseFloat(income.selfBonus) || 0) + (parseFloat(income.selfPassive) || 0) + (parseFloat(income.selfOther) || 0)) * 12) / fallbackIncomeAnnual
+        : 1;
+    const spouseRatio = 1 - selfRatio;
+
+    const selfAnnualBase = baselineIncomeAnnual * selfRatio;
+    const spouseAnnualBase = baselineIncomeAnnual * spouseRatio;
+
+    const fallbackHouseholdMonthly = Object.entries(expenseCategories.household || {})
         .filter(([key]) => key !== 'education')
         .reduce((sum, [_, val]) => sum + (parseFloat(val) || 0), 0);
+        
+    const householdMonthly = hasLedger ? currentYearLedger.household[11] : fallbackHouseholdMonthly;
     const emiMonthly = Object.values(expenseCategories.emi || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
     const savingsMonthly = Object.values(expenseCategories.savings || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
 
@@ -118,11 +129,22 @@ export const generateProjections = ({
 
     for (let i = 0; i < yearsToProject; i++) {
         const year = startYear + i;
-        
-        // Income with Increment (Calculated separately for per-person tax)
-        const selfInflated = selfAnnualBase * Math.pow(1 + (incomeIncrement / 100), i);
-        const spouseInflated = spouseAnnualBase * Math.pow(1 + (incomeIncrement / 100), i);
-        const annualInflow = selfInflated + spouseInflated;
+        // Income with Increment
+        let selfInflated = selfAnnualBase * Math.pow(1 + (incomeIncrement / 100), i);
+        let spouseInflated = spouseAnnualBase * Math.pow(1 + (incomeIncrement / 100), i);
+        let annualInflow = selfInflated + spouseInflated;
+
+        let householdOutflow = (householdMonthly * 12) * Math.pow(1 + (householdInflation / 100), i);
+
+        // Current Year Exact Overrides via Hybrid Ledger
+        if (i === 0 && hasLedger) {
+            annualInflow = currentYearLedger.income.reduce((sum, val) => sum + (Number(val) || 0), 0);
+            householdOutflow = currentYearLedger.household.reduce((sum, val) => sum + (Number(val) || 0), 0);
+            
+            // Reverse-engineer the ratio to apply precise taxation across exact sum
+            selfInflated = annualInflow * selfRatio;
+            spouseInflated = annualInflow * spouseRatio;
+        }
 
         // --- NEW: Income Tax Calculation ---
         // We mock the monthly structure for calculateIncomeTax
@@ -138,7 +160,6 @@ export const generateProjections = ({
         const netInflowAfterTax = annualInflow - approxTax;
 
         // Outflows logic
-        const householdOutflow = (householdMonthly * 12) * Math.pow(1 + (householdInflation / 100), i);
         const fixedOutflow = (emiMonthly * 12); 
         
         // Dynamic Insurance Calculation for this year

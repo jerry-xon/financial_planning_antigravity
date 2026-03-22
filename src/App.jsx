@@ -22,6 +22,7 @@ import PersonalLoanCalculator from './components/Calculators/PersonalLoanCalcula
 import HomeLoanCalculator from './components/Calculators/HomeLoanCalculator';
 import CarLoanCalculator from './components/Calculators/CarLoanCalculator';
 import LumpsumCalculator from './components/Calculators/LumpsumCalculator';
+import EquityCalculator from './components/Calculators/EquityCalculator';
 import SWPCalculator from './components/Calculators/SWPCalculator';
 import PPFCalculator from './components/Calculators/PPFCalculator';
 import NPSCalculator from './components/Calculators/NPSCalculator';
@@ -143,8 +144,15 @@ function App() {
     ppf: { rate: 7.10 },
     nps: { rate: 10.00, annuity: 40, annuityRate: 6.00 },
     fd: { rate: 7.00, frequency: 'Quarterly' },
-    rd: { rate: 7.00 }
+    rd: { rate: 7.00 },
+    equity: {}
   });
+
+  const [currentYearLedger, setCurrentYearLedger] = useState({
+    income: Array(12).fill(0),
+    household: Array(12).fill(0)
+  });
+  const [cashFlowSubStep, setCashFlowSubStep] = useState(1);
 
   // --- Reset All State ---
   const resetState = () => {
@@ -228,8 +236,14 @@ function App() {
       ppf: { rate: 7.10 },
       nps: { rate: 10.00, annuity: 40, annuityRate: 6.00 },
       fd: { rate: 7.00, frequency: 'Quarterly' },
-      rd: { rate: 7.00 }
+      rd: { rate: 7.00 },
+      equity: {}
     });
+    setCurrentYearLedger({
+      income: Array(12).fill(0),
+      household: Array(12).fill(0)
+    });
+    setCashFlowSubStep(1);
   };
 
   // --- Load Financial Plan from Supabase ---
@@ -432,10 +446,28 @@ function App() {
         setInflationRates(data.inflation_rates || { incomeIncrement: 10, householdInflation: 6, educationInflation: 8 });
         setJourneyAdjustments(data.journey_adjustments || []);
         setInvestmentAllocations(data.investment_allocations || []);
-        setGoalMappings(data.goal_mappings || {});
+        
+        let loadedMappings = data.goal_mappings || {};
+        // Migrate legacy array-based structural bindings to strictly numeric dictionaries
+        Object.keys(loadedMappings).forEach(goalId => {
+            if (Array.isArray(loadedMappings[goalId])) {
+                const legacyArray = loadedMappings[goalId];
+                const newDict = {};
+                legacyArray.forEach(sourceName => {
+                    newDict[sourceName] = 0; // Pre-map the source with 0 value
+                });
+                loadedMappings[goalId] = newDict;
+            }
+        });
+        setGoalMappings(loadedMappings);
+
         if (data.calculator_inputs) {
             setCalculatorInputs(data.calculator_inputs);
         }
+        setCurrentYearLedger(data.current_year_ledger || {
+            income: Array(12).fill(0),
+            household: Array(12).fill(0)
+        });
       }
       
       setLoading(false);
@@ -458,6 +490,22 @@ function App() {
     });
   }, [familyMembers, income, expenseCategories, goals, inflationRates, journeyAdjustments, investmentAllocations, policies]);
 
+  const proposedSIPs = useMemo(() => {
+    return investmentAllocations.filter(a => a.type === 'SIP');
+  }, [investmentAllocations]);
+
+  const proposedLumpsums = useMemo(() => {
+    return investmentAllocations.filter(a => a.type === 'Lumpsum' || a.type === 'Lump Sum');
+  }, [investmentAllocations]);
+
+  const proposedEquities = useMemo(() => {
+    return investmentAllocations.filter(a => a.type === 'Direct Equity & ETFs');
+  }, [investmentAllocations]);
+
+  const updateCalculatorData = (calculatorKey) => (val) => {
+    setCalculatorInputs(prev => ({ ...prev, [calculatorKey]: val }));
+  };
+
   const savePlanData = async () => {
     if (!planId) return;
     try {
@@ -477,7 +525,8 @@ function App() {
         investment_allocations: investmentAllocations,
         goal_mappings: goalMappings,
         insurance_mode: insuranceMode,
-        calculator_inputs: calculatorInputs
+        calculator_inputs: calculatorInputs,
+        current_year_ledger: currentYearLedger
       });
       
       if (error) {
@@ -501,7 +550,7 @@ function App() {
     }, 1000); // Debounce for 1 second
 
     return () => clearTimeout(timeoutId);
-  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, journeyAdjustments, investmentAllocations, goalMappings, insuranceMode, calculatorInputs]);
+  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, journeyAdjustments, investmentAllocations, goalMappings, insuranceMode, calculatorInputs, currentYearLedger]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -554,24 +603,76 @@ function App() {
                   'Profile', 'Cash Flow', 'Assets', 'Goals', 'Insurance', 
                   'Protection Gap', 'Contingency', 'Journey', 'Allocation', 'Growth', 'Roadmap', 'Overview'
                 ].map((name, idx) => (
-                  <button
-                    key={name}
-                    className={`btn ${activeSection === 'modules' && currentStep === idx + 1 ? 'btn-primary' : ''}`}
-                    disabled={name === 'Insurance' && insuranceMode === 'anyway'}
-                    onClick={() => {
-                      setCurrentStep(idx + 1);
-                      setActiveSection('modules');
-                    }}
-                    style={{ 
-                      padding: '0.4rem 0.8rem', 
-                      fontSize: '0.8rem', 
-                      whiteSpace: 'nowrap',
-                      opacity: name === 'Insurance' && insuranceMode === 'anyway' ? 0.5 : 1,
-                      cursor: name === 'Insurance' && insuranceMode === 'anyway' ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    {idx + 1}. {name}
-                  </button>
+                  <div key={name} style={{ position: 'relative' }} className={name === 'Cash Flow' ? 'nav-dropdown-wrapper' : ''}>
+                      <button
+                        className={`btn ${activeSection === 'modules' && currentStep === idx + 1 ? 'btn-primary' : ''}`}
+                        disabled={name === 'Insurance' && insuranceMode === 'anyway'}
+                        onClick={() => {
+                          setCurrentStep(idx + 1);
+                          setActiveSection('modules');
+                          if (name === 'Cash Flow') setCashFlowSubStep(1);
+                        }}
+                        style={{ 
+                          padding: '0.4rem 0.8rem', 
+                          fontSize: '0.8rem', 
+                          whiteSpace: 'nowrap',
+                          opacity: name === 'Insurance' && insuranceMode === 'anyway' ? 0.5 : 1,
+                          cursor: name === 'Insurance' && insuranceMode === 'anyway' ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {idx + 1}. {name}
+                      </button>
+
+                      {name === 'Cash Flow' && currentStep === 2 && activeSection === 'modules' && (
+                          <div className="sub-nav-dropdown" style={{
+                              position: 'absolute',
+                              top: '100%',
+                              left: '0',
+                              marginTop: '0.5rem',
+                              background: 'var(--bg-card)',
+                              border: '1px solid var(--border)',
+                              borderRadius: '6px',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                              zIndex: 100,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              minWidth: '200px',
+                              overflow: 'hidden'
+                          }}>
+                              <button 
+                                onClick={() => setCashFlowSubStep(1)}
+                                style={{
+                                    padding: '0.6rem 1rem',
+                                    textAlign: 'left',
+                                    background: cashFlowSubStep === 1 ? 'var(--bg-main)' : 'transparent',
+                                    border: 'none',
+                                    borderBottom: '1px solid var(--border)',
+                                    color: cashFlowSubStep === 1 ? 'var(--primary)' : 'var(--text-main)',
+                                    fontSize: '0.8rem',
+                                    cursor: 'pointer',
+                                    fontWeight: cashFlowSubStep === 1 ? '600' : '400'
+                                }}
+                              >
+                                  2.1 Income & Ledger
+                              </button>
+                              <button 
+                                onClick={() => setCashFlowSubStep(2)}
+                                style={{
+                                    padding: '0.6rem 1rem',
+                                    textAlign: 'left',
+                                    background: cashFlowSubStep === 2 ? 'var(--bg-main)' : 'transparent',
+                                    border: 'none',
+                                    color: cashFlowSubStep === 2 ? 'var(--primary)' : 'var(--text-main)',
+                                    fontSize: '0.8rem',
+                                    cursor: 'pointer',
+                                    fontWeight: cashFlowSubStep === 2 ? '600' : '400'
+                                }}
+                              >
+                                  2.2 Commitments
+                              </button>
+                          </div>
+                      )}
+                  </div>
                 ))}
               </nav>
             </div>
@@ -591,6 +692,7 @@ function App() {
                   { id: 'home_loan', label: 'Home Loan' },
                   { id: 'car_loan', label: 'Car Loan' },
                   { id: 'lumpsum', label: 'Lumpsum' },
+                  { id: 'equity', label: 'Equity & ETFs' },
                   { id: 'swp', label: 'SWP' }
                 ].map((calc) => (
                   <button
@@ -634,7 +736,11 @@ function App() {
                   setIncome={setIncome}
                   expenseCategories={expenseCategories}
                   setExpenseCategories={setExpenseCategories}
-                  onNext={() => { setCurrentStep(3); window.scrollTo(0, 0); }}
+                  currentYearLedger={currentYearLedger}
+                  setCurrentYearLedger={setCurrentYearLedger}
+                  cashFlowSubStep={cashFlowSubStep}
+                  setCashFlowSubStep={setCashFlowSubStep}
+                  onNext={() => { setCurrentStep(3); setCashFlowSubStep(1); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(1); window.scrollTo(0, 0); }}
                   setCurrentStep={setCurrentStep}
                 />
@@ -728,16 +834,22 @@ function App() {
                   calculatorInputs={calculatorInputs}
                   journeyProjections={journeyProjections}
                   policies={policies}
+                  goalMappings={goalMappings}
+                  currentYearLedger={currentYearLedger}
                   onNext={() => { setCurrentStep(11); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
                 />
               )}
               {currentStep === 11 && (
                 <FulfillmentModule
+                  familyMembers={familyMembers}
                   goals={goals}
                   allocations={investmentAllocations}
                   goalMappings={goalMappings}
                   setGoalMappings={setGoalMappings}
+                  expenseCategories={expenseCategories}
+                  calculatorInputs={calculatorInputs}
+                  assetCategories={assetCategories}
                   onNext={() => { setCurrentStep(12); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(10); window.scrollTo(0, 0); }}
                 />
@@ -771,36 +883,54 @@ function App() {
                   expenseCategories={expenseCategories} 
                   assetCategories={assetCategories} 
                   familyMembers={familyMembers}
-                  proposedSIPs={investmentAllocations.filter(a => ['SIP', 'PPF', 'NPS'].includes(a.type))}
+                  proposedSIPs={proposedSIPs}
+                  goalMappings={goalMappings}
+                  goals={goals}
                   data={calculatorInputs.sip}
-                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, sip: val }))}
+                  setData={updateCalculatorData('sip')}
                 />
               )}
               {activeCalculator === 'per_loan' && (
                 <PersonalLoanCalculator 
                   data={calculatorInputs.personal_loan}
-                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, personal_loan: val }))}
+                  setData={updateCalculatorData('personal_loan')}
                 />
               )}
               {activeCalculator === 'home_loan' && (
                 <HomeLoanCalculator 
                   data={calculatorInputs.home_loan}
-                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, home_loan: val }))}
+                  setData={updateCalculatorData('home_loan')}
                 />
               )}
               {activeCalculator === 'car_loan' && (
                 <CarLoanCalculator 
                   data={calculatorInputs.car_loan}
-                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, car_loan: val }))}
+                  setData={updateCalculatorData('car_loan')}
                 />
               )}
               {activeCalculator === 'lumpsum' && (
                 <LumpsumCalculator 
                   familyMembers={familyMembers} 
-                  proposedLumpsums={investmentAllocations.filter(a => !['SIP', 'PPF', 'NPS'].includes(a.type))}
+                  proposedLumpsums={proposedLumpsums}
+                  goalMappings={goalMappings}
+                  goals={goals}
                   data={calculatorInputs.lumpsum}
-                  setData={(val) => setCalculatorInputs(prev => ({ ...prev, lumpsum: val }))}
+                  setData={updateCalculatorData('lumpsum')}
                 />
+              )}
+              {activeCalculator === 'equity' && (
+                <div className="calculator-wrapper slide-up" style={{ padding: '0.5rem', background: '#f8fafc', borderRadius: '12px' }}>
+                  <EquityCalculator 
+                    data={calculatorInputs.equity || {}} 
+                    setData={updateCalculatorData('equity')} 
+                    expenseCategories={expenseCategories}
+                    assetCategories={assetCategories}
+                    familyMembers={familyMembers}
+                    proposedEquities={proposedEquities}
+                    goalMappings={goalMappings}
+                    goals={goals}
+                  />
+                </div>
               )}
               {activeCalculator === 'ppf' && (
                 <PPFCalculator 

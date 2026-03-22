@@ -1,9 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
 import { Calculator, Calendar, DollarSign, TrendingUp, Clock, Plus, Trash2, Info } from 'lucide-react';
 
-export const computeLumpsumData = (investmentAmount, expectedReturns, tenureYears, startMonth, startYear, events, proposedLumpsums, goalMappings = {}, goals = []) => {
+export const computeEquityData = (currentValue, expectedReturns, tenureYears, startMonth, startYear, events, proposedEquities, goalMappings = {}, goals = []) => {
     let results = [];
-    let runningBalance = investmentAmount;
+    let runningBalance = currentValue;
     const monthlyMultiplier = Math.pow(1 + expectedReturns / 100, 1/12);
     
     let currentMonthVal = startMonth;
@@ -21,7 +22,7 @@ export const computeLumpsumData = (investmentAmount, expectedReturns, tenureYear
     for (let m = 0; m < totalMonths; m++) {
         // Initial investment at start of first loop
         if (m === 0) {
-            yearlyRecord.investmentAndAddition += investmentAmount;
+            yearlyRecord.investmentAndAddition += currentValue;
         }
 
         // Auto Roadmap Goal Withdrawals (Triggered in January / Month 1 for safety)
@@ -32,7 +33,7 @@ export const computeLumpsumData = (investmentAmount, expectedReturns, tenureYear
                 const gTargetYear = startYear - startMonth + 1; // Not exact, better way:
                 const actualGoalYear = new Date().getFullYear() + Math.round(parseFloat(g.yearsToGoal) || 0);
                 if (actualGoalYear === currentYearVal) {
-                    const mappedAmount = (goalMappings[g.id] || {})['lumpsum'] || 0;
+                    const mappedAmount = (goalMappings[g.id] || {})['equity'] || 0;
                     if (mappedAmount > 0) {
                         totalRoadmapWithdrawalThisMonth += parseFloat(mappedAmount);
                     }
@@ -59,7 +60,7 @@ export const computeLumpsumData = (investmentAmount, expectedReturns, tenureYear
         runningBalance -= totalWithdrawal;
 
         // Check for Proposed Lumpsums from Allocation Module
-        const autoLumpsums = proposedLumpsums.filter(l => parseInt(l.startYear) === currentYearVal && parseInt(l.startMonth) === currentMonthVal);
+        const autoLumpsums = proposedEquities.filter(l => parseInt(l.startYear) === currentYearVal && parseInt(l.startMonth) === currentMonthVal);
         autoLumpsums.forEach(l => {
             const amount = parseFloat(l.amount) || 0;
             runningBalance += amount;
@@ -96,7 +97,7 @@ export const computeLumpsumData = (investmentAmount, expectedReturns, tenureYear
     return results;
 };
 
-const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [], goalMappings = {}, goals = [], data, setData }) => {
+const EquityCalculator = ({ assetCategories = {}, familyMembers = [], proposedEquities = [], goalMappings = {}, goals = [], data, setData }) => {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
 
@@ -121,7 +122,8 @@ const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [], goalMapp
     const defaultTenure = getYearsToRetire() || 10;
 
     // Use props if available, otherwise defaults
-    const investmentAmount = data?.amount ?? 0;
+    const defaultCorpus = parseFloat(assetCategories?.investments?.equity) || parseFloat(assetCategories?.equity?.stocks) || 0;
+    const currentValue = defaultCorpus;
     const expectedReturns = data?.rate ?? 12;
     const tenureYears = data?.tenure ?? defaultTenure; // Use defaultTenure here
     const events = data?.events ?? [];
@@ -158,11 +160,11 @@ const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [], goalMapp
 
     // Calculation Logic: CAGR (Monthly logic for accuracy over full tenure)
     const calculationData = useMemo(() => {
-        return computeLumpsumData(investmentAmount, expectedReturns, tenureYears, startMonth, startYear, events, proposedLumpsums, goalMappings, goals);
-    }, [investmentAmount, expectedReturns, tenureYears, startMonth, startYear, events, proposedLumpsums, goalMappings, goals]);
+        return computeEquityData(currentValue, expectedReturns, tenureYears, startMonth, startYear, events, proposedEquities, goalMappings, goals);
+    }, [currentValue, expectedReturns, tenureYears, startMonth, startYear, events, proposedEquities, goalMappings, goals]);
 
     const finalValue = calculationData[calculationData.length - 1]?.valueAfterWithdrawal || 0;
-    const totalInvested = investmentAmount + events.filter(e => e.type === 'addition').reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+    const totalInvested = currentValue + events.filter(e => e.type === 'addition').reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
     const totalWithdrawals = events.filter(e => e.type === 'withdrawal').reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
 
     return (
@@ -171,7 +173,7 @@ const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [], goalMapp
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
                     <Calculator size={32} color="var(--primary)" />
                     <div>
-                        <h1 style={{ margin: 0 }}>Lumpsum Calculator</h1>
+                        <h1 style={{ margin: 0 }}>Direct Equity & ETFs Calculator</h1>
                         <p className="text-muted" style={{ margin: 0 }}>Measure one-time investment growth using CAGR until retirement ({currentYear + defaultTenure}).</p>
                     </div>
                 </div>
@@ -180,12 +182,13 @@ const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [], goalMapp
                     {/* Left Column: Inputs & Events */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         <div className="form-group">
-                            <label><DollarSign size={16} /> Initial Investment Amount (₹)</label>
+                            <label><DollarSign size={16} /> Current Portfolio Value (₹)</label>
                             <input 
                                 type="number" 
-                                value={investmentAmount} 
-                                onChange={(e) => setInvestmentAmount(parseFloat(e.target.value) || 0)} 
-                                className="form-input" 
+                                value={currentValue} 
+                                readOnly
+                                className="form-input bg-muted" 
+                                style={{ opacity: 0.7, cursor: 'not-allowed' }}
                             />
                         </div>
 
@@ -238,7 +241,7 @@ const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [], goalMapp
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                 {/* Proposed Lumpsums from Allocation */}
-                                {proposedLumpsums.map((l) => (
+                                {proposedEquities.map((l) => (
                                     <div key={`proposed-${l.id}`} className="card" style={{ padding: '1rem', border: '1px solid #6366f1', background: '#f5f3ff', position: 'relative' }}>
                                         <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#6366f1', marginBottom: '0.5rem' }}>
                                             ALLOCATION MODULE: {l.type}
@@ -258,7 +261,7 @@ const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [], goalMapp
 
                                 {/* Roadmap Module Auto-Withdrawals */}
                                 {goals.flatMap(g => {
-                                    const mappedAmt = (goalMappings[g.id] || {})['lumpsum'] || 0;
+                                    const mappedAmt = (goalMappings[g.id] || {})['equity'] || 0;
                                     const gYear = new Date().getFullYear() + Math.round(parseFloat(g.yearsToGoal) || 0);
                                     if (mappedAmt > 0 && gYear >= startYear && gYear <= startYear + tenureYears) {
                                         return [(
@@ -303,7 +306,7 @@ const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [], goalMapp
                                         />
                                     </div>
                                 ))}
-                                {events.length === 0 && proposedLumpsums.length === 0 && <p className="text-muted" style={{ fontSize: '0.85rem', textAlign: 'center', border: '1px dashed var(--border)', padding: '1rem', borderRadius: '8px' }}>No adjustments added.</p>}
+                                {events.length === 0 && proposedEquities.length === 0 && <p className="text-muted" style={{ fontSize: '0.85rem', textAlign: 'center', border: '1px dashed var(--border)', padding: '1rem', borderRadius: '8px' }}>No adjustments added.</p>}
                             </div>
                         </div>
                     </div>
@@ -368,4 +371,4 @@ const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [], goalMapp
     );
 };
 
-export default LumpsumCalculator;
+export default EquityCalculator;

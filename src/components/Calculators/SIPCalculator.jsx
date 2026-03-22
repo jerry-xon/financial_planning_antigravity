@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Trash2, TrendingUp, Wallet, Calendar, Calculator, Clock } from 'lucide-react';
 
-export const computeSIPData = (currentYear, monthlySIP, expectedReturns, tenureYears, currentValue, events, proposedSIPs) => {
+export const computeSIPData = (currentYear, monthlySIP, expectedReturns, tenureYears, currentValue, events, proposedSIPs, goalMappings = {}, goals = []) => {
     let results = [];
     let runningBalance = currentValue;
     let runningSIP = monthlySIP;
@@ -10,6 +10,18 @@ export const computeSIPData = (currentYear, monthlySIP, expectedReturns, tenureY
         let yearlyInvestment = 0;
         let yearlyWithdrawal = 0;
         const actualYear = currentYear + relativeYear - 1;
+
+        // Auto Roadmap Goal Withdrawals (Triggered in Month 1 of that year)
+        let totalRoadmapWithdrawalThisYear = 0;
+        goals.forEach(g => {
+            const goalYear = currentYear + Math.round(parseFloat(g.yearsToGoal) || 0);
+            if (goalYear === actualYear) {
+                const mappedAmount = (goalMappings[g.id] || {})['sip'] || 0;
+                if (mappedAmount > 0) {
+                    totalRoadmapWithdrawalThisYear += parseFloat(mappedAmount);
+                }
+            }
+        });
 
         for (let month = 1; month <= 12; month++) {
             // 1. Manual Increments
@@ -21,12 +33,15 @@ export const computeSIPData = (currentYear, monthlySIP, expectedReturns, tenureY
             // 2. Proposed SIPs from Allocation Module
             const autoSIPs = proposedSIPs.filter(s => parseInt(s.startYear) === actualYear && parseInt(s.startMonth) === month);
             autoSIPs.forEach(s => {
-                // a.amount is the ANNUAL amount, so we divide by 12 for monthly increment
                 runningSIP += (parseFloat(s.amount) / 12) || 0;
             });
 
+            // 3. Withdrawals (Manual + Auto Roadmap mapped in January)
             const withdrawals = events.filter(e => e.type === 'withdrawal' && parseInt(e.month) === month && parseInt(e.year) === actualYear);
             let currentMonthWithdrawal = withdrawals.reduce((sum, w) => sum + w.amount, 0);
+            if (month === 1) {
+                currentMonthWithdrawal += totalRoadmapWithdrawalThisYear;
+            }
 
             const monthlyInvestment = runningSIP;
             yearlyInvestment += monthlyInvestment;
@@ -52,7 +67,7 @@ export const computeSIPData = (currentYear, monthlySIP, expectedReturns, tenureY
     return results;
 };
 
-const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [], proposedSIPs = [], data, setData }) => {
+const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [], proposedSIPs = [], goalMappings = {}, goals = [], data, setData }) => {
     const currentYear = new Date().getFullYear();
     
     // ... logic to get years to retire ...
@@ -75,14 +90,14 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
 
     // Initial values from props
     const defaultSIP = parseFloat(expenseCategories?.savings?.mfSip) || 0;
-    const defaultCorpus = parseFloat(assetCategories?.equity?.mfEquity) || parseFloat(assetCategories?.equity?.stocks) || 0;
+    const defaultCorpus = parseFloat(assetCategories?.investments?.mutualFunds) || parseFloat(assetCategories?.equity?.mfEquity) || parseFloat(assetCategories?.equity?.stocks) || 0;
     const defaultTenure = getYearsToRetire() || 10;
 
     // Use props if available, otherwise defaults
     const monthlySIP = defaultSIP;
     const expectedReturns = data?.rate ?? 12;
     const tenureYears = data?.tenure ?? defaultTenure;
-    const currentValue = data?.currentValue ?? 0;
+    const currentValue = defaultCorpus;
     const events = data?.increments ?? [];
 
     useEffect(() => {
@@ -136,8 +151,8 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
 
     // Calculation Logic
     const calculationData = useMemo(() => {
-        return computeSIPData(currentYear, monthlySIP, expectedReturns, tenureYears, currentValue, events, proposedSIPs);
-    }, [monthlySIP, expectedReturns, tenureYears, currentValue, events, currentYear, proposedSIPs]);
+        return computeSIPData(currentYear, monthlySIP, expectedReturns, tenureYears, currentValue, events, proposedSIPs, goalMappings, goals);
+    }, [monthlySIP, expectedReturns, tenureYears, currentValue, events, currentYear, proposedSIPs, goalMappings, goals]);
 
     return (
         <div className="fade-in" style={{ padding: '1rem' }}>
@@ -191,8 +206,9 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
                             <input 
                                 type="number" 
                                 value={currentValue} 
-                                onChange={(e) => setCurrentValue(parseFloat(e.target.value) || 0)} 
-                                className="form-input" 
+                                readOnly
+                                className="form-input bg-muted" 
+                                style={{ opacity: 0.7, cursor: 'not-allowed' }}
                             />
                         </div>
 
@@ -211,7 +227,6 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                {/* Proposed SIPs from Allocation */}
                                 {proposedSIPs.map((s) => (
                                     <div key={`proposed-${s.id}`} className="card" style={{ padding: '1rem', border: '1px solid var(--primary)', background: '#f0f9ff', position: 'relative' }}>
                                         <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)', marginBottom: '0.5rem' }}>
@@ -229,6 +244,32 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
                                         </div>
                                     </div>
                                 ))}
+
+                                {/* Roadmap Module Auto-Withdrawals */}
+                                {goals.flatMap(g => {
+                                    const mappedAmt = (goalMappings[g.id] || {})['sip'] || 0;
+                                    const gYear = currentYear + Math.round(parseFloat(g.yearsToGoal) || 0);
+                                    if (mappedAmt > 0 && gYear >= currentYear && gYear <= currentYear + tenureYears) {
+                                        return [(
+                                            <div key={`roadmap-sip-${g.id}`} className="card" style={{ padding: '1rem', border: '1px solid #f59e0b', background: '#fffbeb', position: 'relative' }}>
+                                                <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#d97706', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <Calculator size={12} /> FULFILLMENT ROADMAP
+                                                </div>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Auto Withdrawal (₹)</label>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{parseFloat(mappedAmt).toLocaleString('en-IN')}</div>
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Goal Year</label>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{gYear} ({g.name || 'Goal'})</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )];
+                                    }
+                                    return [];
+                                })}
 
                                 {events.map((event) => (
                                     <div key={event.id} className="card" style={{ padding: '1rem', border: `1px solid ${event.type === 'increment' ? '#10b981' : '#f43f5e'}`, background: 'var(--bg-main)', position: 'relative' }}>

@@ -349,8 +349,13 @@ const ReportView = ({
                         <h3>7. Goal Funding Roadmap</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             {goals.map((g, i) => {
-                                const selectedSources = goalMappings[g.id] || [];
+                                const mappingDict = goalMappings[g.id] || {};
+                                const selectedSources = Object.keys(mappingDict);
                                 const isMapped = selectedSources.length > 0;
+                                
+                                const hasLoan = selectedSources.includes('loan');
+                                const hasRealEstate = selectedSources.includes('realEstate');
+
                                 return (
                                     <div key={i} style={{ 
                                         padding: '1rem', 
@@ -369,15 +374,36 @@ const ReportView = ({
                                                 <span className="text-muted">Funding Sources:</span> 
                                                 <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
                                                     {selectedSources.map(sid => {
-                                                        const source = allocations.find(a => a.id === sid) || 
-                                                                     [{id:'stocks', name:'Existing Stocks'}, {id:'mfEquity', name:'Existing Equity MF'}, {id:'assetPPF', name:'Existing PPF'}, {id:'assetFD', name:'Existing FD'}, {id:'assetGold', name:'Existing Gold'}].find(s => s.id === sid);
+                                                        const hardcodedSources = [
+                                                            { id: 'sip', name: 'SIP' },
+                                                            { id: 'lumpsum', name: 'Lumpsum' },
+                                                            { id: 'equity', name: 'Direct Equity & ETFs' },
+                                                            { id: 'fd', name: 'Fixed Deposit (FD)' },
+                                                            { id: 'rd', name: 'Recurring Deposit (RD)' },
+                                                            { id: 'realEstate', name: 'Real Estate Investment' },
+                                                            { id: 'loan', name: 'Loan' }
+                                                        ];
+                                                        const source = allocations.find(a => a.id === sid) || hardcodedSources.find(s => s.id === sid);
+                                                        const amount = parseFloat(mappingDict[sid]) || 0;
+                                                        
                                                         return (
-                                                            <span key={sid} style={{ background: 'var(--border)', padding: '2px 8px', borderRadius: '4px' }}>
-                                                                {source?.name || sid}
+                                                            <span key={sid} style={{ background: 'var(--border)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                {source?.name || sid}: <strong>{formatCurrency(amount)}</strong>
                                                             </span>
                                                         );
                                                     })}
                                                 </div>
+                                                
+                                                {/* Explicit Roadmap Action Notes */}
+                                                {(hasLoan || hasRealEstate) && (
+                                                    <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '6px' }}>
+                                                        <strong style={{ color: '#d97706', fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}><AlertTriangle size={14} inline="true" /> ACTIONABLE NOTES:</strong>
+                                                        <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#b45309', fontSize: '0.8rem' }}>
+                                                            {hasLoan && <li>This goal relies on a Loan. Please navigate to the <strong>Standalone Loan Calculators</strong> to verify EMIs fits within your projected Unallocated Surplus for the year {g.targetYear || (new Date().getFullYear() + Math.round(parseFloat(g.yearsToGoal) || 0))}.</li>}
+                                                            {hasRealEstate && <li>This goal assumes liquidating Real Estate assets. Ensure the physical property is sold prior to {g.targetYear || (new Date().getFullYear() + Math.round(parseFloat(g.yearsToGoal) || 0))} to meet the funding schedule.</li>}
+                                                        </ul>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
