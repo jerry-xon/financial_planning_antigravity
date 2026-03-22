@@ -136,7 +136,7 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                                     <td style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: 'var(--primary)', fontSize: '0.9rem' }}>Net Income</td>
                                     {currentYearLedger.income.map((val, idx) => {
-                                        const isLocked = idx < new Date().getMonth();
+                                        const isLocked = idx !== new Date().getMonth();
                                         return (
                                             <td key={`inc-${idx}`} style={{ padding: '0.5rem', background: isLocked ? 'var(--bg-main)' : 'transparent' }}>
                                                 <input 
@@ -173,7 +173,7 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                 <tr>
                                     <td style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: 'var(--danger)', fontSize: '0.9rem' }}>Household & Lifestyle</td>
                                     {currentYearLedger.household.map((val, idx) => {
-                                        const isLocked = idx < new Date().getMonth();
+                                        const isLocked = idx !== new Date().getMonth();
                                         return (
                                             <td key={`hh-${idx}`} style={{ padding: '0.5rem', background: isLocked ? 'var(--bg-main)' : 'transparent' }}>
                                                 <input 
@@ -363,6 +363,14 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                         <div className="input-group">
                             <label>Education Loan</label>
                             <input type="number" value={expenseCategories.emi.educationLoan} onChange={(e) => handleExpenseChange('emi', 'educationLoan', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                        </div>
+                        <div className="input-group">
+                            <label>Car Loan</label>
+                            <input type="number" value={expenseCategories.emi.carLoan} onChange={(e) => handleExpenseChange('emi', 'carLoan', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                        </div>
+                        <div className="input-group">
+                            <label>Two Wheeler Loan</label>
+                            <input type="number" value={expenseCategories.emi.twoWheelerLoan} onChange={(e) => handleExpenseChange('emi', 'twoWheelerLoan', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
                         </div>
                         <div className="input-group">
                             <label>Any other EMIs</label>

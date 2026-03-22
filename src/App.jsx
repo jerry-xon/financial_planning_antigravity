@@ -190,7 +190,7 @@ function App() {
     });
     setExpenseCategories({
       household: { grocery: '', rent: '', education: '', lifestyle: '', medical: '', travel: '' },
-      emi: { personalLoan: '', homeLoan: '', educationLoan: '', otherEmi: '' },
+      emi: { personalLoan: '', homeLoan: '', educationLoan: '', carLoan: '', twoWheelerLoan: '', otherEmi: '' },
       insurance: {
         health: { value: '', frequency: 'Annual' },
         car: { value: '', frequency: 'Annual' },
@@ -295,7 +295,7 @@ function App() {
         // Merge loaded expense_categories with default structure
         const defaultExpenseCategories = {
           household: { grocery: '', rent: '', education: '', lifestyle: '', medical: '', travel: '' },
-          emi: { personalLoan: '', homeLoan: '', educationLoan: '', otherEmi: '' },
+          emi: { personalLoan: '', homeLoan: '', educationLoan: '', carLoan: '', twoWheelerLoan: '', otherEmi: '' },
           insurance: {
             health: { value: '', frequency: 'Annual' },
             car: { value: '', frequency: 'Annual' },
@@ -572,6 +572,19 @@ function App() {
     <RoleBasedRouting>
       <ProtectedRoute>
         <div className="app-container">
+        <style>{`
+          .nav-dropdown-wrapper .sub-nav-dropdown {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            transform: translateY(-10px);
+          }
+          .nav-dropdown-wrapper:hover .sub-nav-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+          }
+        `}</style>
         <header style={{
           height: 'auto',
           padding: '1rem 0',
@@ -623,12 +636,12 @@ function App() {
                         {idx + 1}. {name}
                       </button>
 
-                      {name === 'Cash Flow' && currentStep === 2 && activeSection === 'modules' && (
+                      {name === 'Cash Flow' && (
                           <div className="sub-nav-dropdown" style={{
                               position: 'absolute',
                               top: '100%',
                               left: '0',
-                              marginTop: '0.5rem',
+                              marginTop: '0.25rem',
                               background: 'var(--bg-card)',
                               border: '1px solid var(--border)',
                               borderRadius: '6px',
@@ -640,32 +653,40 @@ function App() {
                               overflow: 'hidden'
                           }}>
                               <button 
-                                onClick={() => setCashFlowSubStep(1)}
+                                onClick={() => {
+                                  setCurrentStep(idx + 1);
+                                  setActiveSection('modules');
+                                  setCashFlowSubStep(1);
+                                }}
                                 style={{
                                     padding: '0.6rem 1rem',
                                     textAlign: 'left',
-                                    background: cashFlowSubStep === 1 ? 'var(--bg-main)' : 'transparent',
+                                    background: cashFlowSubStep === 1 && currentStep === 2 ? 'var(--bg-main)' : 'transparent',
                                     border: 'none',
                                     borderBottom: '1px solid var(--border)',
-                                    color: cashFlowSubStep === 1 ? 'var(--primary)' : 'var(--text-main)',
+                                    color: cashFlowSubStep === 1 && currentStep === 2 ? 'var(--primary)' : 'var(--text-main)',
                                     fontSize: '0.8rem',
                                     cursor: 'pointer',
-                                    fontWeight: cashFlowSubStep === 1 ? '600' : '400'
+                                    fontWeight: cashFlowSubStep === 1 && currentStep === 2 ? '600' : '400'
                                 }}
                               >
                                   2.1 Income & Ledger
                               </button>
                               <button 
-                                onClick={() => setCashFlowSubStep(2)}
+                                onClick={() => {
+                                  setCurrentStep(idx + 1);
+                                  setActiveSection('modules');
+                                  setCashFlowSubStep(2);
+                                }}
                                 style={{
                                     padding: '0.6rem 1rem',
                                     textAlign: 'left',
-                                    background: cashFlowSubStep === 2 ? 'var(--bg-main)' : 'transparent',
+                                    background: cashFlowSubStep === 2 && currentStep === 2 ? 'var(--bg-main)' : 'transparent',
                                     border: 'none',
-                                    color: cashFlowSubStep === 2 ? 'var(--primary)' : 'var(--text-main)',
+                                    color: cashFlowSubStep === 2 && currentStep === 2 ? 'var(--primary)' : 'var(--text-main)',
                                     fontSize: '0.8rem',
                                     cursor: 'pointer',
-                                    fontWeight: cashFlowSubStep === 2 ? '600' : '400'
+                                    fontWeight: cashFlowSubStep === 2 && currentStep === 2 ? '600' : '400'
                                 }}
                               >
                                   2.2 Commitments

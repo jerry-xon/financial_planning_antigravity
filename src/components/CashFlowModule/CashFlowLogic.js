@@ -153,6 +153,8 @@ const getItemLabel = (key) => {
         personalLoan: 'Personal Loan EMI',
         homeLoan: 'Home Loan EMI',
         educationLoan: 'Education Loan EMI',
+        carLoan: 'Car Loan EMI',
+        twoWheelerLoan: 'Two Wheeler Loan EMI',
         otherEmi: 'Other EMIs',
 
         // Insurance
