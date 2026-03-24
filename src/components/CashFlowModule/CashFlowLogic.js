@@ -36,7 +36,10 @@ export const calculateCashFlow = (income, expenseCategories) => {
                        (parseFloat(income.family) || 0);
 
     const householdSum = Object.values(expenseCategories.household || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-    const emiSum = Object.values(expenseCategories.emi || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+    const emiSum = Object.values(expenseCategories.emi || {}).reduce((sum, val) => {
+        const amount = (val !== null && typeof val === 'object') ? parseFloat(val.emi) : parseFloat(val);
+        return sum + (amount || 0);
+    }, 0);
     
     // Insurance specialized handling for nested life insurance
     const insuranceSum = Object.entries(expenseCategories.insurance || {}).reduce((sum, [key, item]) => {
@@ -71,7 +74,12 @@ export const calculateCashFlow = (income, expenseCategories) => {
     // Regular categories
     ['household', 'emi', 'savings'].forEach(cat => {
         Object.entries(expenseCategories[cat] || {}).forEach(([itemKey, value]) => {
-            const amount = parseFloat(value) || 0;
+            let amount = 0;
+            if (cat === 'emi' && value !== null && typeof value === 'object') {
+                amount = parseFloat(value.emi) || 0;
+            } else {
+                amount = parseFloat(value) || 0;
+            }
             if (amount > 0) {
                 expenseBreakdown.push({
                     name: getItemLabel(itemKey),

@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { convertToMonthly } from './CashFlowLogic';
+import LoanDetailsModal from './LoanDetailsModal';
 
 const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, currentYearLedger, setCurrentYearLedger, subStep }) => {
+    const [activeModal, setActiveModal] = useState(null);
+
     const handleIncomeChange = (e) => {
         const { name, value } = e.target;
         setIncome(prev => ({ ...prev, [name]: value }));
@@ -352,32 +355,69 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                 <div className="card" style={{ marginBottom: '1.5rem', background: 'var(--bg-main)' }}>
                     <h4 style={{ color: 'var(--primary)', marginBottom: '1.25rem', fontSize: '1.1rem' }}>B1. EMIs (Monthly)</h4>
                     <div className="input-grid-mini">
-                        <div className="input-group">
-                            <label>Personal Loan</label>
-                            <input type="number" value={expenseCategories.emi.personalLoan} onChange={(e) => handleExpenseChange('emi', 'personalLoan', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
-                        <div className="input-group">
-                            <label>Home Loan</label>
-                            <input type="number" value={expenseCategories.emi.homeLoan} onChange={(e) => handleExpenseChange('emi', 'homeLoan', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
-                        <div className="input-group">
-                            <label>Education Loan</label>
-                            <input type="number" value={expenseCategories.emi.educationLoan} onChange={(e) => handleExpenseChange('emi', 'educationLoan', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
-                        <div className="input-group">
-                            <label>Car Loan</label>
-                            <input type="number" value={expenseCategories.emi.carLoan} onChange={(e) => handleExpenseChange('emi', 'carLoan', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
-                        <div className="input-group">
-                            <label>Two Wheeler Loan</label>
-                            <input type="number" value={expenseCategories.emi.twoWheelerLoan} onChange={(e) => handleExpenseChange('emi', 'twoWheelerLoan', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
+                        {['personalLoan', 'homeLoan', 'educationLoan', 'carLoan', 'twoWheelerLoan'].map((loanKey) => {
+                            const rawValue = expenseCategories.emi[loanKey];
+                            const isConfigured = rawValue !== null && typeof rawValue === 'object' && rawValue.principal > 0;
+                            const displayValue = isConfigured ? rawValue.emi : rawValue;
+                            const labelNames = {
+                                personalLoan: 'Personal Loan',
+                                homeLoan: 'Home Loan',
+                                educationLoan: 'Education Loan',
+                                carLoan: 'Car Loan',
+                                twoWheelerLoan: 'Two Wheeler Loan'
+                            };
+
+                            return (
+                                <div className="input-group" key={loanKey}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '0.25rem' }}>
+                                        <label style={{ marginBottom: 0 }}>{labelNames[loanKey]}</label>
+                                        <button 
+                                            onClick={() => setActiveModal(loanKey)}
+                                            style={{ 
+                                                background: 'transparent', border: 'none', 
+                                                color: isConfigured ? 'var(--success)' : 'var(--primary)', 
+                                                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                                                textDecoration: 'none', padding: 0
+                                            }}
+                                        >
+                                            {isConfigured ? '✓ Configured' : '⚙️ Configure Details'}
+                                        </button>
+                                    </div>
+                                    <input 
+                                        type="number" 
+                                        value={displayValue} 
+                                        readOnly={true}
+                                        onChange={(e) => handleExpenseChange('emi', loanKey, e.target.value)} 
+                                        onWheel={(e) => e.target.blur()} 
+                                        placeholder="0" 
+                                        style={{ background: 'var(--bg-card)', color: isConfigured ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'not-allowed' }}
+                                    />
+                                </div>
+                            );
+                        })}
                         <div className="input-group">
                             <label>Any other EMIs</label>
                             <input type="number" value={expenseCategories.emi.otherEmi} onChange={(e) => handleExpenseChange('emi', 'otherEmi', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
                         </div>
                     </div>
                 </div>
+
+                {/* Loan Details Configuration Modal */}
+                <LoanDetailsModal 
+                    isOpen={!!activeModal}
+                    onClose={() => setActiveModal(null)}
+                    initialData={activeModal ? expenseCategories.emi[activeModal] : null}
+                    loanTypeTitle={activeModal ? activeModal.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()) : ''}
+                    onSave={(configuredData) => {
+                        setExpenseCategories(prev => ({
+                            ...prev,
+                            emi: {
+                                ...prev.emi,
+                                [activeModal]: configuredData
+                            }
+                        }));
+                    }}
+                />
 
                 {/* Category B2: Insurance Premiums */}
                 <div className="card" style={{ marginBottom: '1.5rem', background: 'var(--bg-main)' }}>
