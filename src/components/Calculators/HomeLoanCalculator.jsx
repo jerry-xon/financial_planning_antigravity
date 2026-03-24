@@ -1,25 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { Calculator, Calendar, DollarSign, TrendingDown, Clock, Plus, Trash2, Info } from 'lucide-react';
 
-const HomeLoanCalculator = ({ data, setData }) => {
+const HomeLoanEngine = ({ 
+    loanKey, title, loanAmount, interestRate, tenureYears, startMonth, startYear, 
+    events = [], setEvents, isReadOnly, 
+    setLoanAmount, setInterestRate, setTenureYears, setStartMonth, setStartYear 
+}) => {
     const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
-
-    // Use props if available, otherwise defaults
-    const loanAmount = data?.amount ?? 0;
-    const interestRate = data?.rate ?? 8.5;
-    const tenureYears = data?.tenure ?? 20;
-    const startMonth = data?.startMonth ?? currentMonth;
-    const startYear = data?.startYear ?? currentYear;
-    const events = data?.events ?? [];
-
-    const setLoanAmount = (val) => setData({ ...data, amount: val });
-    const setInterestRate = (val) => setData({ ...data, rate: val });
-    const setTenureYears = (val) => setData({ ...data, tenure: val });
-    const setStartMonth = (val) => setData({ ...data, startMonth: val });
-    const setStartYear = (val) => setData({ ...data, startYear: val });
-    const setEvents = (val) => setData({ ...data, events: typeof val === 'function' ? val(events) : val });
-
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const yearOptions = Array.from({ length: 51 }, (_, i) => currentYear - 5 + i);
 
@@ -27,7 +14,7 @@ const HomeLoanCalculator = ({ data, setData }) => {
         setEvents([...events, {
             id: Date.now(),
             type,
-            value: 0, // Amount for prepayment, New Rate for rate change
+            value: 0,
             month: 1,
             year: currentYear
         }]);
@@ -40,10 +27,6 @@ const HomeLoanCalculator = ({ data, setData }) => {
     const updateEvent = (id, field, value) => {
         setEvents(events.map(e => e.id === id ? { ...e, [field]: value } : e));
     };
-
-    // Helper to get days in month
-    const getDaysInMonth = (month, year) => new Date(year, month, 0).getDate();
-    const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
 
     // Main Calculation Logic: Daily Rest
     const calculationData = useMemo(() => {
@@ -157,13 +140,15 @@ const HomeLoanCalculator = ({ data, setData }) => {
     const totalPaid = calculationData.totalPrincipal + totalInterest;
 
     return (
-        <div className="fade-in" style={{ padding: '1rem' }}>
+        <div className="fade-in" style={{ padding: '1rem', marginBottom: '3rem' }}>
             <div className="card" style={{ maxWidth: '1400px', margin: '0 auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
-                    <Calculator size={32} color="var(--primary)" />
+                    <Calculator size={32} color={isReadOnly ? "var(--success)" : "var(--primary)"} />
                     <div>
-                        <h1 style={{ margin: 0 }}>Home Loan Calculator</h1>
-                        <p className="text-muted" style={{ margin: 0 }}>Advanced Daily Rest calculation with prepayment & rate change support.</p>
+                        <h1 style={{ margin: 0 }}>{title}</h1>
+                        <p className="text-muted" style={{ margin: 0 }}>
+                            {isReadOnly ? "Timeline & Prepayments for your configured synchronized loan." : "Advanced Daily Rest calculation with prepayment & rate change support."}
+                        </p>
                     </div>
                 </div>
 
@@ -175,8 +160,10 @@ const HomeLoanCalculator = ({ data, setData }) => {
                             <input 
                                 type="number" 
                                 value={loanAmount} 
-                                onChange={(e) => setLoanAmount(parseFloat(e.target.value) || 0)} 
+                                readOnly={isReadOnly}
+                                onChange={(e) => !isReadOnly && setLoanAmount(parseFloat(e.target.value) || 0)} 
                                 className="form-input" 
+                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
                             />
                         </div>
 
@@ -186,8 +173,10 @@ const HomeLoanCalculator = ({ data, setData }) => {
                                 type="number" 
                                 step="0.01"
                                 value={interestRate} 
-                                onChange={(e) => setInterestRate(parseFloat(e.target.value) || 0)} 
+                                readOnly={isReadOnly}
+                                onChange={(e) => !isReadOnly && setInterestRate(parseFloat(e.target.value) || 0)} 
                                 className="form-input" 
+                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
                             />
                         </div>
 
@@ -196,21 +185,23 @@ const HomeLoanCalculator = ({ data, setData }) => {
                             <input 
                                 type="number" 
                                 value={tenureYears} 
-                                onChange={(e) => setTenureYears(parseInt(e.target.value) || 0)} 
+                                readOnly={isReadOnly}
+                                onChange={(e) => !isReadOnly && setTenureYears(parseInt(e.target.value) || 0)} 
                                 className="form-input" 
+                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
                             />
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                             <div className="form-group">
                                 <label>Start Month</label>
-                                <select value={startMonth} onChange={(e) => setStartMonth(parseInt(e.target.value))} className="form-input">
+                                <select value={startMonth} onChange={(e) => !isReadOnly && setStartMonth(parseInt(e.target.value))} className="form-input" disabled={isReadOnly} style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}>
                                     {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">
                                 <label>Start Year</label>
-                                <select value={startYear} onChange={(e) => setStartYear(parseInt(e.target.value))} className="form-input">
+                                <select value={startYear} onChange={(e) => !isReadOnly && setStartYear(parseInt(e.target.value))} className="form-input" disabled={isReadOnly} style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}>
                                     {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                                 </select>
                             </div>
@@ -316,6 +307,85 @@ const HomeLoanCalculator = ({ data, setData }) => {
                     </div>
                 </div>
             </div>
+        </div>
+    );
+};
+
+const HomeLoanCalculator = ({ data, setData, expenseCategories, journeyAdjustments }) => {
+    const loansToRender = [];
+    const eventMaps = data?.eventMaps || {};
+    
+    // Helper to safely update events for specific dynamic keys
+    const setEventsForKey = (key) => (newEvents) => {
+        setData({
+            ...data,
+            eventMaps: {
+                ...eventMaps,
+                [key]: typeof newEvents === 'function' ? newEvents(eventMaps[key] || []) : newEvents
+            }
+        });
+    };
+
+    // 1. Check for Active Cash Flow Loan
+    const activeRaw = expenseCategories?.emi?.homeLoan;
+    if (activeRaw && typeof activeRaw === 'object' && parseFloat(activeRaw.principal) > 0) {
+        loansToRender.push({
+            loanKey: 'active',
+            title: 'Active Home Loan (Cash Flow synchronized)',
+            loanAmount: parseFloat(activeRaw.principal) || 0,
+            interestRate: parseFloat(activeRaw.rate) || 0,
+            tenureYears: (parseFloat(activeRaw.tenure) || 0) / 12, // convert months to years
+            startMonth: parseInt(activeRaw.startMonth) || 1,
+            startYear: parseInt(activeRaw.startYear) || new Date().getFullYear(),
+            events: eventMaps['active'] || [],
+            setEvents: setEventsForKey('active'),
+            isReadOnly: true
+        });
+    }
+
+    // 2. Check for Future Journey Loans
+    const futureLoans = (journeyAdjustments || []).filter(a => a.type === 'loan' && a.loanCategory === 'homeLoan');
+    futureLoans.forEach((fl, i) => {
+        loansToRender.push({
+            loanKey: `future_${fl.id}`,
+            title: `Future Adjustment: ${fl.name}`,
+            loanAmount: parseFloat(fl.principal) || 0,
+            interestRate: parseFloat(fl.rate) || 0,
+            tenureYears: (parseFloat(fl.tenure) || 0) / 12,
+            startMonth: parseInt(fl.startMonth) || 1,
+            startYear: parseInt(fl.startYear) || new Date().getFullYear(),
+            events: eventMaps[`future_${fl.id}`] || [],
+            setEvents: setEventsForKey(`future_${fl.id}`),
+            isReadOnly: true
+        });
+    });
+
+    // 3. Standalone Manual Calculator (Always appended if no loans exist, or added explicitly if needed)
+    if (loansToRender.length === 0) {
+        loansToRender.push({
+            loanKey: 'manual',
+            title: 'Standalone Home Loan Calculator',
+            loanAmount: data?.amount ?? 0,
+            interestRate: data?.rate ?? 8.5,
+            tenureYears: data?.tenure ?? 20,
+            startMonth: data?.startMonth ?? (new Date().getMonth() + 1),
+            startYear: data?.startYear ?? new Date().getFullYear(),
+            events: data?.events ?? [],
+            setEvents: (newEvents) => setData({ ...data, events: typeof newEvents === 'function' ? newEvents(data.events || []) : newEvents }),
+            setLoanAmount: (val) => setData({ ...data, amount: val }),
+            setInterestRate: (val) => setData({ ...data, rate: val }),
+            setTenureYears: (val) => setData({ ...data, tenure: val }),
+            setStartMonth: (val) => setData({ ...data, startMonth: val }),
+            setStartYear: (val) => setData({ ...data, startYear: val }),
+            isReadOnly: false
+        });
+    }
+
+    return (
+        <div>
+            {loansToRender.map(loanConfig => (
+                <HomeLoanEngine key={loanConfig.loanKey} {...loanConfig} />
+            ))}
         </div>
     );
 };

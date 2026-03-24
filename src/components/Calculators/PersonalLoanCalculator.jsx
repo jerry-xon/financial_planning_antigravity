@@ -1,22 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Calculator, Calendar, DollarSign, TrendingDown, Clock, Info } from 'lucide-react';
 
-const PersonalLoanCalculator = ({ data, setData }) => {
+const PersonalLoanEngine = ({
+    loanKey, title, loanAmount, interestRate, tenureYears, startMonth, startYear, 
+    isReadOnly,
+    setLoanAmount, setInterestRate, setTenureYears, setStartMonth, setStartYear
+}) => {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
-
-    // Use props if available, otherwise defaults
-    const loanAmount = data?.amount ?? 0;
-    const interestRate = data?.rate ?? 10.5;
-    const tenureYears = data?.tenure ?? 5;
-    const startMonth = data?.startMonth ?? currentMonth;
-    const startYear = data?.startYear ?? currentYear;
-
-    const setLoanAmount = (val) => setData({ ...data, amount: val });
-    const setInterestRate = (val) => setData({ ...data, rate: val });
-    const setTenureYears = (val) => setData({ ...data, tenure: val });
-    const setStartMonth = (val) => setData({ ...data, startMonth: val });
-    const setStartYear = (val) => setData({ ...data, startYear: val });
 
     // Derived values
     const tenureMonths = tenureYears * 12;
@@ -100,10 +91,12 @@ const PersonalLoanCalculator = ({ data, setData }) => {
         <div className="fade-in" style={{ padding: '1rem' }}>
             <div className="card" style={{ maxWidth: '1400px', margin: '0 auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
-                    <Calculator size={32} color="var(--primary)" />
+                    <Calculator size={32} color={isReadOnly ? "var(--success)" : "var(--primary)"} />
                     <div>
-                        <h1 style={{ margin: 0 }}>Personal Loan Calculator</h1>
-                        <p className="text-muted" style={{ margin: 0 }}>Reducing balance method for accurate financial planning.</p>
+                        <h1 style={{ margin: 0 }}>{title}</h1>
+                        <p className="text-muted" style={{ margin: 0 }}>
+                            {isReadOnly ? "Timeline mapping for your synchronized personal loan." : "Reducing balance method for accurate financial planning."}
+                        </p>
                     </div>
                 </div>
 
@@ -115,8 +108,10 @@ const PersonalLoanCalculator = ({ data, setData }) => {
                             <input 
                                 type="number" 
                                 value={loanAmount} 
-                                onChange={(e) => setLoanAmount(parseFloat(e.target.value) || 0)} 
+                                readOnly={isReadOnly}
+                                onChange={(e) => !isReadOnly && setLoanAmount(parseFloat(e.target.value) || 0)} 
                                 className="form-input" 
+                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
                             />
                         </div>
 
@@ -126,8 +121,10 @@ const PersonalLoanCalculator = ({ data, setData }) => {
                                 type="number" 
                                 step="0.1"
                                 value={interestRate} 
-                                onChange={(e) => setInterestRate(parseFloat(e.target.value) || 0)} 
+                                readOnly={isReadOnly}
+                                onChange={(e) => !isReadOnly && setInterestRate(parseFloat(e.target.value) || 0)} 
                                 className="form-input" 
+                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
                             />
                         </div>
 
@@ -136,8 +133,10 @@ const PersonalLoanCalculator = ({ data, setData }) => {
                             <input 
                                 type="number" 
                                 value={tenureYears} 
-                                onChange={(e) => setTenureYears(parseInt(e.target.value) || 0)} 
+                                readOnly={isReadOnly}
+                                onChange={(e) => !isReadOnly && setTenureYears(parseInt(e.target.value) || 0)} 
                                 className="form-input" 
+                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
                             />
                             <small className="text-muted">Tenure in Months: {tenureMonths}</small>
                         </div>
@@ -147,8 +146,10 @@ const PersonalLoanCalculator = ({ data, setData }) => {
                                 <label>Start Month</label>
                                 <select 
                                     value={startMonth} 
-                                    onChange={(e) => setStartMonth(parseInt(e.target.value))}
+                                    onChange={(e) => !isReadOnly && setStartMonth(parseInt(e.target.value))}
                                     className="form-input"
+                                    disabled={isReadOnly}
+                                    style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
                                 >
                                     {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
                                 </select>
@@ -157,8 +158,10 @@ const PersonalLoanCalculator = ({ data, setData }) => {
                                 <label>Start Year</label>
                                 <select 
                                     value={startYear} 
-                                    onChange={(e) => setStartYear(parseInt(e.target.value))}
+                                    onChange={(e) => !isReadOnly && setStartYear(parseInt(e.target.value))}
                                     className="form-input"
+                                    disabled={isReadOnly}
+                                    style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
                                 >
                                     {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                                 </select>
@@ -249,6 +252,67 @@ const PersonalLoanCalculator = ({ data, setData }) => {
                     </div>
                 </div>
             </div>
+        </div>
+    );
+};
+
+const PersonalLoanCalculator = ({ data, setData, expenseCategories, journeyAdjustments }) => {
+    const loansToRender = [];
+
+    // 1. Check for Active Cash Flow Loan
+    const activeRaw = expenseCategories?.emi?.personalLoan;
+    if (activeRaw && typeof activeRaw === 'object' && parseFloat(activeRaw.principal) > 0) {
+        loansToRender.push({
+            loanKey: 'active',
+            title: 'Active Personal Loan (Cash Flow synchronized)',
+            loanAmount: parseFloat(activeRaw.principal) || 0,
+            interestRate: parseFloat(activeRaw.rate) || 0,
+            tenureYears: (parseFloat(activeRaw.tenure) || 0) / 12,
+            startMonth: parseInt(activeRaw.startMonth) || 1,
+            startYear: parseInt(activeRaw.startYear) || new Date().getFullYear(),
+            isReadOnly: true
+        });
+    }
+
+    // 2. Check for Future Journey Loans
+    const futureLoans = (journeyAdjustments || []).filter(a => a.type === 'loan' && a.loanCategory === 'personalLoan');
+    futureLoans.forEach((fl, i) => {
+        loansToRender.push({
+            loanKey: `future_${fl.id}`,
+            title: `Future Adjustment: ${fl.name}`,
+            loanAmount: parseFloat(fl.principal) || 0,
+            interestRate: parseFloat(fl.rate) || 0,
+            tenureYears: (parseFloat(fl.tenure) || 0) / 12,
+            startMonth: parseInt(fl.startMonth) || 1,
+            startYear: parseInt(fl.startYear) || new Date().getFullYear(),
+            isReadOnly: true
+        });
+    });
+
+    // 3. Standalone Manual Calculator
+    if (loansToRender.length === 0) {
+        loansToRender.push({
+            loanKey: 'manual',
+            title: 'Standalone Personal Loan Calculator',
+            loanAmount: data?.amount ?? 0,
+            interestRate: data?.rate ?? 10.5,
+            tenureYears: data?.tenure ?? 5,
+            startMonth: data?.startMonth ?? (new Date().getMonth() + 1),
+            startYear: data?.startYear ?? new Date().getFullYear(),
+            setLoanAmount: (val) => setData({ ...data, amount: val }),
+            setInterestRate: (val) => setData({ ...data, rate: val }),
+            setTenureYears: (val) => setData({ ...data, tenure: val }),
+            setStartMonth: (val) => setData({ ...data, startMonth: val }),
+            setStartYear: (val) => setData({ ...data, startYear: val }),
+            isReadOnly: false
+        });
+    }
+
+    return (
+        <div>
+            {loansToRender.map(loanConfig => (
+                <PersonalLoanEngine key={loanConfig.loanKey} {...loanConfig} />
+            ))}
         </div>
     );
 };

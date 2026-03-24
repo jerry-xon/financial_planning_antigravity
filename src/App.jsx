@@ -915,18 +915,24 @@ function App() {
                 <PersonalLoanCalculator 
                   data={calculatorInputs.personal_loan}
                   setData={updateCalculatorData('personal_loan')}
+                  expenseCategories={expenseCategories}
+                  journeyAdjustments={journeyAdjustments}
                 />
               )}
               {activeCalculator === 'home_loan' && (
                 <HomeLoanCalculator 
                   data={calculatorInputs.home_loan}
                   setData={updateCalculatorData('home_loan')}
+                  expenseCategories={expenseCategories}
+                  journeyAdjustments={journeyAdjustments}
                 />
               )}
               {activeCalculator === 'car_loan' && (
                 <CarLoanCalculator 
                   data={calculatorInputs.car_loan}
                   setData={updateCalculatorData('car_loan')}
+                  expenseCategories={expenseCategories}
+                  journeyAdjustments={journeyAdjustments}
                 />
               )}
               {activeCalculator === 'lumpsum' && (

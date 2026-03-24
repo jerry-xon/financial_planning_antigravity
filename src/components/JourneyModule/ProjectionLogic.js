@@ -77,7 +77,6 @@ export const generateProjections = ({
         .reduce((sum, [_, val]) => sum + (parseFloat(val) || 0), 0);
         
     const householdMonthly = hasLedger ? currentYearLedger.household[11] : fallbackHouseholdMonthly;
-    const emiMonthly = Object.values(expenseCategories.emi || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
     const savingsMonthly = Object.values(expenseCategories.savings || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
 
     // --- Insurance Logic ---
@@ -160,8 +159,34 @@ export const generateProjections = ({
         const netInflowAfterTax = annualInflow - approxTax;
 
         // Outflows logic
-        const fixedOutflow = (emiMonthly * 12); 
+        // Extract Cash Flow EMIs accurately resolving Active object parameters vs primitive infinite legacy
+        let activeCashFlowEMIThisYear = 0;
+        Object.entries(expenseCategories.emi || {}).forEach(([key, val]) => {
+            if (typeof val === 'object' && parseFloat(val.principal) > 0) {
+                const adjStartYear = parseInt(val.startYear);
+                const adjStartMonth = parseInt(val.startMonth) || 1;
+                const tenureMonths = parseInt(val.tenure) || 12;
+                const emi = parseFloat(val.emi) || 0;
+
+                const loanStartAbsoluteMonth = (adjStartYear * 12) + adjStartMonth;
+                const loanEndAbsoluteMonth = loanStartAbsoluteMonth + tenureMonths - 1;
+                const yearStartAbsoluteMonth = (year * 12) + 1;
+                const yearEndAbsoluteMonth = (year * 12) + 12;
+
+                const overlapStart = Math.max(loanStartAbsoluteMonth, yearStartAbsoluteMonth);
+                const overlapEnd = Math.min(loanEndAbsoluteMonth, yearEndAbsoluteMonth);
+                const activeMonths = Math.max(0, overlapEnd - overlapStart + 1);
+
+                if (activeMonths > 0) {
+                    activeCashFlowEMIThisYear += activeMonths * emi;
+                }
+            } else if (typeof val !== 'object') {
+                const primEMI = parseFloat(val) || 0;
+                activeCashFlowEMIThisYear += primEMI * 12; // Legacy assumption defaults to infinite
+            }
+        });
         
+        const fixedOutflow = activeCashFlowEMIThisYear; 
         // Dynamic Insurance Calculation for this year
         let detailedLifeThisYear = 0;
         policies.forEach(p => {
@@ -270,13 +295,36 @@ export const generateProjections = ({
         const activeAdjustments = [];
         
         journeyAdjustments.forEach(adj => {
-            const adjStartYear = parseInt(adj.startYear);
-            const adjDuration = parseInt(adj.duration) || 1;
-            const adjAmount = parseFloat(adj.amount) || 0;
-            
-            if (year >= adjStartYear && year < (adjStartYear + adjDuration)) {
-                yearAdjustmentsTotal += adjAmount;
-                activeAdjustments.push({ name: adj.name, amount: adjAmount });
+            if (adj.type === 'loan') {
+                const adjStartYear = parseInt(adj.startYear);
+                const adjStartMonth = parseInt(adj.startMonth) || 1;
+                const tenureMonths = parseInt(adj.tenure) || 12;
+                const emi = parseFloat(adj.emi) || 0;
+
+                const loanStartAbsoluteMonth = (adjStartYear * 12) + adjStartMonth;
+                const loanEndAbsoluteMonth = loanStartAbsoluteMonth + tenureMonths - 1;
+                const yearStartAbsoluteMonth = (year * 12) + 1;
+                const yearEndAbsoluteMonth = (year * 12) + 12;
+
+                const overlapStart = Math.max(loanStartAbsoluteMonth, yearStartAbsoluteMonth);
+                const overlapEnd = Math.min(loanEndAbsoluteMonth, yearEndAbsoluteMonth);
+                const activeMonths = Math.max(0, overlapEnd - overlapStart + 1);
+
+                if (activeMonths > 0) {
+                    const yearEMI = activeMonths * emi;
+                    yearAdjustmentsTotal += yearEMI;
+                    activeAdjustments.push({ name: `EMI: ${adj.name}`, amount: yearEMI });
+                }
+            } else {
+                // Type == Expense (Legacy/Standard)
+                const adjStartYear = parseInt(adj.startYear);
+                const adjDuration = parseInt(adj.duration) || 1;
+                const adjAmount = parseFloat(adj.amount) || 0;
+                
+                if (year >= adjStartYear && year < (adjStartYear + adjDuration)) {
+                    yearAdjustmentsTotal += adjAmount;
+                    activeAdjustments.push({ name: adj.name, amount: adjAmount });
+                }
             }
         });
 

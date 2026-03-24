@@ -28,8 +28,32 @@ const JourneyModule = ({
     const addAdjustment = () => {
         setJourneyAdjustments([
             ...journeyAdjustments,
-            { id: Date.now(), name: '', startYear: new Date().getFullYear(), duration: 1, amount: '' }
+            { 
+                id: Date.now(), 
+                type: 'expense', 
+                name: '', 
+                startMonth: new Date().getMonth() + 1, 
+                startYear: new Date().getFullYear(), 
+                duration: 1, 
+                amount: '',
+                principal: '',
+                rate: '',
+                tenure: '',
+                loanCategory: 'personalLoan',
+                emi: 0 
+            }
         ]);
+    };
+
+    const calculateEmi = (p, r, n) => {
+        p = parseFloat(p) || 0;
+        r = parseFloat(r) || 0;
+        n = parseFloat(n) || 0;
+        if (p > 0 && r > 0 && n > 0) {
+            const monthlyRate = r / 12 / 100;
+            return Math.round((p * monthlyRate * Math.pow(1 + monthlyRate, n)) / (Math.pow(1 + monthlyRate, n) - 1));
+        }
+        return 0;
     };
 
     const updateAdjustment = (id, field, value) => {
@@ -135,54 +159,151 @@ const JourneyModule = ({
                                     borderRadius: '12px',
                                     border: '1px solid var(--border)'
                                 }}>
-                                    <div className="input-group" style={{ marginBottom: 0 }}>
-                                        <label>Label / Name</label>
-                                        <input 
-                                            type="text" 
-                                            value={adj.name} 
-                                            onChange={(e) => updateAdjustment(adj.id, 'name', e.target.value)}
-                                            placeholder="e.g. Home Loan EMI"
-                                        />
+                                    <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
+                                        <div className="input-group" style={{ marginBottom: 0, width: '200px' }}>
+                                            <label>Adjustment Type</label>
+                                            <select 
+                                                value={adj.type || 'expense'} 
+                                                onChange={(e) => updateAdjustment(adj.id, 'type', e.target.value)}
+                                            >
+                                                <option value="expense">Standard Expense</option>
+                                                <option value="loan">Future Loan</option>
+                                            </select>
+                                        </div>
+                                        <button 
+                                            onClick={() => removeAdjustment(adj.id)}
+                                            style={{ 
+                                                background: 'none', border: 'none', color: '#ef4444', 
+                                                cursor: 'pointer', padding: '0.75rem', marginLeft: 'auto',
+                                                display: 'flex', alignItems: 'center'
+                                            }}
+                                        >
+                                            <Trash2 size={20} /> Remove
+                                        </button>
                                     </div>
-                                    <div className="input-group" style={{ marginBottom: 0 }}>
-                                        <label>Starts Year</label>
-                                        <input 
-                                            type="number" 
-                                            value={adj.startYear} 
-                                            onChange={(e) => updateAdjustment(adj.id, 'startYear', e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="input-group" style={{ marginBottom: 0 }}>
-                                        <label>Duration (Yrs)</label>
-                                        <input 
-                                            type="number" 
-                                            value={adj.duration} 
-                                            onChange={(e) => updateAdjustment(adj.id, 'duration', e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="input-group" style={{ marginBottom: 0 }}>
-                                        <label>Annual Amount (₹)</label>
-                                        <input 
-                                            type="number" 
-                                            value={adj.amount} 
-                                            onChange={(e) => updateAdjustment(adj.id, 'amount', e.target.value)}
-                                            placeholder="e.g. 180000"
-                                        />
-                                    </div>
-                                    <button 
-                                        onClick={() => removeAdjustment(adj.id)}
-                                        style={{ 
-                                            background: 'none', 
-                                            border: 'none', 
-                                            color: '#ef4444', 
-                                            cursor: 'pointer',
-                                            padding: '0.75rem',
-                                            display: 'flex',
-                                            alignItems: 'center'
-                                        }}
-                                    >
-                                        <Trash2 size={20} />
-                                    </button>
+
+                                    {(adj.type || 'expense') === 'expense' ? (
+                                        <>
+                                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                                <label>Expense Name</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={adj.name} 
+                                                    onChange={(e) => updateAdjustment(adj.id, 'name', e.target.value)}
+                                                    placeholder="e.g. World Tour"
+                                                />
+                                            </div>
+                                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                                <label>Start Year</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={adj.startYear} 
+                                                    onChange={(e) => updateAdjustment(adj.id, 'startYear', e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                                <label>Duration (Yrs)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={adj.duration} 
+                                                    onChange={(e) => updateAdjustment(adj.id, 'duration', e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="input-group" style={{ marginBottom: 0, gridColumn: 'span 2' }}>
+                                                <label>Annual Amount (₹)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={adj.amount} 
+                                                    onChange={(e) => updateAdjustment(adj.id, 'amount', e.target.value)}
+                                                    placeholder="e.g. 500000"
+                                                />
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                                <label>Loan Category</label>
+                                                <select 
+                                                    value={adj.loanCategory || 'personalLoan'} 
+                                                    onChange={(e) => {
+                                                        const catName = e.target.options[e.target.selectedIndex].text;
+                                                        setJourneyAdjustments(journeyAdjustments.map(a => 
+                                                            a.id === adj.id ? { ...a, loanCategory: e.target.value, name: catName } : a
+                                                        ));
+                                                    }}
+                                                >
+                                                    <option value="personalLoan">Personal Loan</option>
+                                                    <option value="homeLoan">Home Loan</option>
+                                                    <option value="educationLoan">Education Loan</option>
+                                                    <option value="carLoan">Car Loan</option>
+                                                    <option value="twoWheelerLoan">Two-Wheeler Loan</option>
+                                                    <option value="otherEmi">Other Loan</option>
+                                                </select>
+                                            </div>
+                                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                                <label>Principal (₹)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={adj.principal || ''} 
+                                                    onChange={(e) => {
+                                                        const p = e.target.value;
+                                                        const emi = calculateEmi(p, adj.rate, adj.tenure);
+                                                        setJourneyAdjustments(journeyAdjustments.map(a => 
+                                                            a.id === adj.id ? { ...a, principal: p, emi: emi, amount: emi * 12 } : a
+                                                        ));
+                                                    }}
+                                                    placeholder="e.g. 1000000"
+                                                />
+                                            </div>
+                                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                                <label>Rate (%)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={adj.rate || ''} 
+                                                    onChange={(e) => {
+                                                        const r = e.target.value;
+                                                        const emi = calculateEmi(adj.principal, r, adj.tenure);
+                                                        setJourneyAdjustments(journeyAdjustments.map(a => 
+                                                            a.id === adj.id ? { ...a, rate: r, emi: emi, amount: emi * 12 } : a
+                                                        ));
+                                                    }}
+                                                    placeholder="e.g. 8.5"
+                                                />
+                                            </div>
+                                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                                <label>Tenure (Months)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={adj.tenure || ''} 
+                                                    onChange={(e) => {
+                                                        const t = e.target.value;
+                                                        const emi = calculateEmi(adj.principal, adj.rate, t);
+                                                        setJourneyAdjustments(journeyAdjustments.map(a => 
+                                                            a.id === adj.id ? { ...a, tenure: t, duration: Math.ceil(t / 12), emi: emi, amount: emi * 12 } : a
+                                                        ));
+                                                    }}
+                                                    placeholder="e.g. 60"
+                                                />
+                                            </div>
+                                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                                <label>Start Month/Year</label>
+                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                    <select value={adj.startMonth || 1} onChange={(e) => updateAdjustment(adj.id, 'startMonth', e.target.value)}>
+                                                        {[...Array(12)].map((_, i) => (
+                                                            <option key={i+1} value={i+1}>{new Date(2000, i, 1).toLocaleString('default', { month: 'short' })}</option>
+                                                        ))}
+                                                    </select>
+                                                    <input type="number" value={adj.startYear} onChange={(e) => updateAdjustment(adj.id, 'startYear', e.target.value)} style={{ width: '80px' }} />
+                                                </div>
+                                            </div>
+                                            <div className="input-group" style={{ marginBottom: 0, gridColumn: 'span 5', background: 'var(--bg-card)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '0.9rem' }}>Auto-calculated Monthly EMI:</span>
+                                                    <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '1.2rem' }}>₹{Number(adj.emi || 0).toLocaleString('en-IN')}</span>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             ))}
                         </div>
