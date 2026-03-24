@@ -24,12 +24,10 @@ export const computeLumpsumData = (investmentAmount, expectedReturns, tenureYear
             yearlyRecord.investmentAndAddition += investmentAmount;
         }
 
-        // Auto Roadmap Goal Withdrawals (Triggered in January / Month 1 for safety)
+        // Auto Roadmap Goal Withdrawals (Triggered in December to preserve annual compounding)
         let totalRoadmapWithdrawalThisMonth = 0;
-        if (currentMonthVal === 1) {
+        if (currentMonthVal === 12 || m === totalMonths - 1) {
             goals.forEach(g => {
-                const goalYear = currentYearVal;
-                const gTargetYear = startYear - startMonth + 1; // Not exact, better way:
                 const actualGoalYear = new Date().getFullYear() + Math.round(parseFloat(g.yearsToGoal) || 0);
                 if (actualGoalYear === currentYearVal) {
                     const mappedAmount = (goalMappings[g.id] || {})['lumpsum'] || 0;
@@ -72,8 +70,8 @@ export const computeLumpsumData = (investmentAmount, expectedReturns, tenureYear
         // Rollup to Yearly Results (Calendar Year)
         // Push if it's December or the absolute last month of the tenure
         if (currentMonthVal === 12 || m === totalMonths - 1) {
+            yearlyRecord.endValueBeforeWithdrawal = runningBalance + totalRoadmapWithdrawalThisMonth;
             yearlyRecord.valueAfterWithdrawal = runningBalance;
-            yearlyRecord.endValueBeforeWithdrawal = runningBalance + yearlyRecord.withdrawal;
             results.push({ ...yearlyRecord });
 
             // Prepare for next year if tenure continues

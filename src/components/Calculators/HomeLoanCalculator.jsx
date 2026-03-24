@@ -1,6 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { Calculator, Calendar, DollarSign, TrendingDown, Clock, Plus, Trash2, Info } from 'lucide-react';
 
+const isLeapYear = (year) => {
+    return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+};
+
+const getDaysInMonth = (month, year) => {
+    return new Date(year, month, 0).getDate();
+};
+
 const HomeLoanEngine = ({ 
     loanKey, title, loanAmount, interestRate, tenureYears, startMonth, startYear, 
     events = [], setEvents, isReadOnly, 

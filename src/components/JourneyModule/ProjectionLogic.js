@@ -29,6 +29,7 @@ export const generateProjections = ({
     policies = [], 
     journeyAdjustments = [], 
     investmentAllocations = [],
+    loanProposals = [],
     currentYearLedger
 }) => {
     const {
@@ -290,11 +291,16 @@ export const generateProjections = ({
             }
         });
 
-        // 3. Journey Adjustments (Future Expenses/Loans)
+        // 3. Journey Adjustments & Fulfillment Loan Proposals
         let yearAdjustmentsTotal = 0;
         const activeAdjustments = [];
         
-        journeyAdjustments.forEach(adj => {
+        const combinedAdjustments = [
+            ...journeyAdjustments,
+            ...loanProposals.map(lp => ({ ...lp, type: 'loan' }))
+        ];
+
+        combinedAdjustments.forEach(adj => {
             if (adj.type === 'loan') {
                 const adjStartYear = parseInt(adj.startYear);
                 const adjStartMonth = parseInt(adj.startMonth) || 1;

@@ -105,10 +105,15 @@ const LoanDetailsModal = ({ isOpen, onClose, onSave, initialData, loanTypeTitle 
 
                     <div className="input-group">
                         <label>Start Year</label>
-                        <input type="number" 
+                        <select 
                             value={formData.startYear} 
-                            onChange={(e) => setFormData({...formData, startYear: e.target.value})} 
-                            placeholder="YYYY" />
+                            onChange={(e) => setFormData({...formData, startYear: parseInt(e.target.value, 10)})}
+                        >
+                            {[...Array(31)].map((_, i) => {
+                                const y = new Date().getFullYear() - 30 + i;
+                                return <option key={y} value={y}>{y}</option>;
+                            })}
+                        </select>
                     </div>
                 </div>
 

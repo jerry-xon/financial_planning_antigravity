@@ -21,6 +21,8 @@ import SIPCalculator from './components/Calculators/SIPCalculator';
 import PersonalLoanCalculator from './components/Calculators/PersonalLoanCalculator';
 import HomeLoanCalculator from './components/Calculators/HomeLoanCalculator';
 import CarLoanCalculator from './components/Calculators/CarLoanCalculator';
+import TwoWheelerCalculator from './components/Calculators/TwoWheelerCalculator';
+import EducationLoanCalculator from './components/Calculators/EducationLoanCalculator';
 import LumpsumCalculator from './components/Calculators/LumpsumCalculator';
 import EquityCalculator from './components/Calculators/EquityCalculator';
 import SWPCalculator from './components/Calculators/SWPCalculator';
@@ -131,6 +133,11 @@ function App() {
   });
   const [journeyAdjustments, setJourneyAdjustments] = useState([]);
   const [investmentAllocations, setInvestmentAllocations] = useState([]);
+  
+  // Fulfillment Module State (Supabase Synced)
+  const [loanProposals, setLoanProposals] = useState([]);
+  const [allocationPlans, setAllocationPlans] = useState({});
+
   const [goalMappings, setGoalMappings] = useState({});
 
   // Calculator Persistence State
@@ -225,11 +232,15 @@ function App() {
     });
     setJourneyAdjustments([]);
     setInvestmentAllocations([]);
+    setLoanProposals([]);
+    setAllocationPlans({});
     setGoalMappings({});
     setCalculatorInputs({
       personal_loan: { amount: 0, rate: 10.5, tenure: 5, events: [] },
-      home_loan: { amount: 0, rate: 8.5, tenure: 20, events: [] },
+      home_loan: { amount: 0, rate: 8.5, tenure: 15, events: [] },
       car_loan: { amount: 0, rate: 9.5, tenure: 5, events: [] },
+      two_wheeler_loan: { amount: 0, rate: 11.5, tenure: 3, events: [] },
+      edu_loan: { amount: 0, rate: 9.0, tenure: 7, events: [] },
       lumpsum: { amount: 0, rate: 12, tenure: 10, events: [] },
       swp: { amount: 0, withdrawal: 0, rate: 10, tenure: 15, events: [] },
       sip: { amount: 0, rate: 12, tenure: 10, increments: [] },
@@ -446,6 +457,8 @@ function App() {
         setInflationRates(data.inflation_rates || { incomeIncrement: 10, householdInflation: 6, educationInflation: 8 });
         setJourneyAdjustments(data.journey_adjustments || []);
         setInvestmentAllocations(data.investment_allocations || []);
+        setLoanProposals(data.loan_proposals || []);
+        setAllocationPlans(data.allocation_plans || {});
         
         let loadedMappings = data.goal_mappings || {};
         // Migrate legacy array-based structural bindings to strictly numeric dictionaries
@@ -486,9 +499,10 @@ function App() {
       inflationRates,
       journeyAdjustments,
       investmentAllocations,
+      loanProposals,
       policies
     });
-  }, [familyMembers, income, expenseCategories, goals, inflationRates, journeyAdjustments, investmentAllocations, policies]);
+  }, [familyMembers, income, expenseCategories, goals, inflationRates, journeyAdjustments, investmentAllocations, loanProposals, policies]);
 
   const proposedSIPs = useMemo(() => {
     return investmentAllocations.filter(a => a.type === 'SIP');
@@ -523,6 +537,8 @@ function App() {
         inflation_rates: inflationRates,
         journey_adjustments: journeyAdjustments,
         investment_allocations: investmentAllocations,
+        loan_proposals: loanProposals,
+        allocation_plans: allocationPlans,
         goal_mappings: goalMappings,
         insurance_mode: insuranceMode,
         calculator_inputs: calculatorInputs,
@@ -550,7 +566,7 @@ function App() {
     }, 1000); // Debounce for 1 second
 
     return () => clearTimeout(timeoutId);
-  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, journeyAdjustments, investmentAllocations, goalMappings, insuranceMode, calculatorInputs, currentYearLedger]);
+  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, journeyAdjustments, investmentAllocations, loanProposals, allocationPlans, goalMappings, insuranceMode, calculatorInputs, currentYearLedger]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -712,6 +728,8 @@ function App() {
                   { id: 'per_loan', label: 'Personal Loan' },
                   { id: 'home_loan', label: 'Home Loan' },
                   { id: 'car_loan', label: 'Car Loan' },
+                  { id: 'two_wheeler_loan', label: 'Two-Wheeler Loan' },
+                  { id: 'edu_loan', label: 'Education Loan' },
                   { id: 'lumpsum', label: 'Lumpsum' },
                   { id: 'equity', label: 'Equity & ETFs' },
                   { id: 'swp', label: 'SWP' }
@@ -871,6 +889,10 @@ function App() {
                   expenseCategories={expenseCategories}
                   calculatorInputs={calculatorInputs}
                   assetCategories={assetCategories}
+                  loanProposals={loanProposals}
+                  setLoanProposals={setLoanProposals}
+                  allocationPlans={allocationPlans}
+                  setAllocationPlans={setAllocationPlans}
                   onNext={() => { setCurrentStep(12); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(10); window.scrollTo(0, 0); }}
                 />
@@ -933,6 +955,23 @@ function App() {
                   setData={updateCalculatorData('car_loan')}
                   expenseCategories={expenseCategories}
                   journeyAdjustments={journeyAdjustments}
+                />
+              )}
+              {activeCalculator === 'two_wheeler_loan' && (
+                <TwoWheelerCalculator 
+                  data={calculatorInputs.two_wheeler_loan}
+                  setData={updateCalculatorData('two_wheeler_loan')}
+                  expenseCategories={expenseCategories}
+                  journeyAdjustments={journeyAdjustments}
+                />
+              )}
+              {activeCalculator === 'edu_loan' && (
+                <EducationLoanCalculator 
+                  data={calculatorInputs.edu_loan}
+                  setData={updateCalculatorData('edu_loan')}
+                  expenseCategories={expenseCategories}
+                  journeyAdjustments={journeyAdjustments}
+                  loanProposals={loanProposals}
                 />
               )}
               {activeCalculator === 'lumpsum' && (

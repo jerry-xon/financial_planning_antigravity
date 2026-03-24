@@ -111,9 +111,13 @@ const FulfillmentModule = ({
     }, []);
 
     // 4. Handle amount updates for mappings (Structure: { goalId: { sourceId: amount } })
-    const handleAmountChange = (goalId, sourceId, amount) => {
+    const handleAmountChange = (goalId, sourceId, amount, maxAllowed) => {
         const currentGoalMap = goalMappings[goalId] || {};
-        const val = parseFloat(amount);
+        let val = parseFloat(amount);
+        
+        if (!isNaN(val) && maxAllowed !== null && val > maxAllowed) {
+            val = maxAllowed;
+        }
         
         let newGoalMap = { ...currentGoalMap };
         
@@ -159,7 +163,7 @@ const FulfillmentModule = ({
                             const totalAssigned = Object.values(currentGoalMap).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
                             const shortfall = futureValue - totalAssigned;
                             
-                            const isFullyFunded = shortfall <= 0;
+                            const isFullyFunded = Math.round(shortfall) <= 0;
                             const hasAssignments = totalAssigned > 0;
 
                             const eRow = baselineEquityData.find(r => r.year === goalYear);
@@ -233,7 +237,8 @@ const FulfillmentModule = ({
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
                                             {availableSources.map((source) => {
                                                 const assignedAmt = currentGoalMap[source.id] || '';
-                                                const isAssigned = parseFloat(assignedAmt) > 0;
+                                                const assignedVal = parseFloat(assignedAmt) || 0;
+                                                const isAssigned = assignedVal > 0;
                                                 
                                                 // Rules: FD and RD only visible if year matches maturity year natively (i.e. availableData > 0)
                                                 if ((source.id === 'fd' || source.id === 'rd') && (availableData[source.id] <= 0 && !isAssigned)) {
@@ -242,6 +247,11 @@ const FulfillmentModule = ({
 
                                                 // Calculate remaining natively available balance after roadmap execution
                                                 const ceiling = availableData[source.id] !== null ? availableData[source.id] : null;
+                                                
+                                                // Calculate the mathematical Upper Bound the user can assign right now
+                                                const maxNeeded = shortfall > 0 ? shortfall + assignedVal : assignedVal;
+                                                const absoluteMax = ceiling !== null ? Math.min(maxNeeded, ceiling) : maxNeeded;
+                                                const roundedMax = Math.round(absoluteMax);
 
                                                 return (
                                                     <div
@@ -270,7 +280,7 @@ const FulfillmentModule = ({
                                                                 <input 
                                                                     type="number" 
                                                                     value={assignedAmt} 
-                                                                    onChange={(e) => handleAmountChange(goal.id, source.id, e.target.value)}
+                                                                    onChange={(e) => handleAmountChange(goal.id, source.id, e.target.value, Math.max(0, roundedMax))}
                                                                     placeholder="0"
                                                                     style={{ 
                                                                         paddingLeft: '28px', 

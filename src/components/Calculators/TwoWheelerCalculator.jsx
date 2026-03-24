@@ -1,0 +1,320 @@
+import React, { useState, useMemo } from 'react';
+import { Calculator, Calendar, DollarSign, TrendingDown, Clock, Info, Car } from 'lucide-react';
+
+const TwoWheelerLoanEngine = ({
+    loanKey, title, loanAmount, interestRate, tenureYears, startMonth, startYear, 
+    isReadOnly,
+    setLoanAmount, setInterestRate, setTenureYears, setStartMonth, setStartYear
+}) => {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+
+    // Derived values
+    const tenureMonths = tenureYears * 12;
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const yearOptions = Array.from({ length: 31 }, (_, i) => currentYear - 5 + i);
+
+    // Calculate Loan End Date
+    const endDateData = useMemo(() => {
+        let endM = startMonth + tenureMonths - 1;
+        let endY = startYear + Math.floor((endM - 1) / 12);
+        endM = ((endM - 1) % 12) + 1;
+        return { month: endM, year: endY };
+    }, [startMonth, startYear, tenureMonths]);
+
+    // EMI Calculation (Reducing Balance)
+    const emiData = useMemo(() => {
+        const P = loanAmount;
+        const r = interestRate / 12 / 100;
+        const n = tenureMonths;
+
+        if (r === 0) return { emi: P / n, totalPayment: P, totalInterest: 0 };
+
+        const emi = (P * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+        const totalPayment = emi * n;
+        const totalInterest = totalPayment - P;
+
+        return { emi, totalPayment, totalInterest };
+    }, [loanAmount, interestRate, tenureMonths]);
+
+    // Table Schedule Generation
+    const schedule = useMemo(() => {
+        let results = [];
+        let runningBalance = loanAmount;
+        const r = interestRate / 12 / 100;
+        const monthlyEMI = emiData.emi;
+
+        let currentM = startMonth;
+        let currentY = startYear;
+
+        let yearlyData = {
+            year: currentY,
+            openingBalance: loanAmount,
+            principalPaid: 0,
+            interestPaid: 0,
+            closingBalance: 0
+        };
+
+        for (let m = 1; m <= tenureMonths; m++) {
+            const interestForMonth = runningBalance * r;
+            const principalForMonth = monthlyEMI - interestForMonth;
+            
+            yearlyData.principalPaid += principalForMonth;
+            yearlyData.interestPaid += interestForMonth;
+            runningBalance -= principalForMonth;
+
+            // If it's December or the last month of the loan, push the year
+            if (currentM === 12 || m === tenureMonths) {
+                yearlyData.closingBalance = Math.max(0, runningBalance);
+                results.push({ ...yearlyData });
+                
+                if (m < tenureMonths) {
+                    currentY++;
+                    yearlyData = {
+                        year: currentY,
+                        openingBalance: runningBalance,
+                        principalPaid: 0,
+                        interestPaid: 0,
+                        closingBalance: 0
+                    };
+                }
+            }
+
+            currentM = (currentM % 12) + 1;
+        }
+
+        return results;
+    }, [loanAmount, interestRate, tenureMonths, startMonth, startYear, emiData.emi]);
+
+    return (
+        <div className="fade-in" style={{ padding: '1rem' }}>
+            <div className="card" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+                    <Car size={32} color={isReadOnly ? "var(--success)" : "var(--primary)"} />
+                    <div>
+                        <h1 style={{ margin: 0 }}>{title}</h1>
+                        <p className="text-muted" style={{ margin: 0 }}>
+                            {isReadOnly ? "Timeline mapping for your synchronized loan vehicle financing." : "Plan your two-wheeler financing with easy reducing balance logic."}
+                        </p>
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 350px) 1fr', gap: '2.5rem' }}>
+                    {/* Inputs */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div className="form-group">
+                            <label><DollarSign size={16} /> Loan Amount (₹)</label>
+                            <input 
+                                type="number" 
+                                value={loanAmount} 
+                                readOnly={isReadOnly}
+                                onChange={(e) => !isReadOnly && setLoanAmount(parseFloat(e.target.value) || 0)} 
+                                className="form-input" 
+                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label><TrendingDown size={16} /> Interest Rate (% p.a.)</label>
+                            <input 
+                                type="number" 
+                                step="0.1"
+                                value={interestRate} 
+                                readOnly={isReadOnly}
+                                onChange={(e) => !isReadOnly && setInterestRate(parseFloat(e.target.value) || 0)} 
+                                className="form-input" 
+                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label><Clock size={16} /> Tenure (Years)</label>
+                            <input 
+                                type="number" 
+                                value={tenureYears} 
+                                readOnly={isReadOnly}
+                                onChange={(e) => !isReadOnly && setTenureYears(parseInt(e.target.value) || 0)} 
+                                className="form-input" 
+                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
+                            />
+                            <small className="text-muted">Tenure in Months: {tenureMonths}</small>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div className="form-group">
+                                <label>Start Month</label>
+                                <select 
+                                    value={startMonth} 
+                                    onChange={(e) => !isReadOnly && setStartMonth(parseInt(e.target.value))}
+                                    className="form-input"
+                                    disabled={isReadOnly}
+                                    style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
+                                >
+                                    {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Start Year</label>
+                                <select 
+                                    value={startYear} 
+                                    onChange={(e) => !isReadOnly && setStartYear(parseInt(e.target.value))}
+                                    className="form-input"
+                                    disabled={isReadOnly}
+                                    style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
+                                >
+                                    {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--bg-main)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>
+                                <Calendar size={16} />
+                                <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Loan Timeline</span>
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.85rem' }}>
+                                Ends in: <span style={{ fontWeight: 700 }}>{monthNames[endDateData.month-1]} {endDateData.year}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Results */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        {/* Summary Cards */}
+                        <div style={{ 
+                            padding: '2rem', 
+                            background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)', 
+                            borderRadius: '16px', 
+                            color: 'white',
+                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                        }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+                                <div>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem' }}>Monthly EMI</p>
+                                    <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 800 }}>
+                                        ₹{Math.round(emiData.emi).toLocaleString('en-IN')}
+                                    </h2>
+                                </div>
+                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem' }}>Principal Amount</p>
+                                    <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 800 }}>
+                                        ₹{loanAmount.toLocaleString('en-IN')}
+                                    </h2>
+                                </div>
+                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem' }}>Total Interest</p>
+                                    <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 800 }}>
+                                        ₹{Math.round(emiData.totalInterest).toLocaleString('en-IN')}
+                                    </h2>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Table */}
+                        <div style={{ 
+                            background: 'var(--bg-card)', 
+                            borderRadius: '12px', 
+                            border: '1px solid var(--border)', 
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+                        }}>
+                            <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto' }}>
+                                <table className="summary-table" style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
+                                    <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', borderBottom: '2px solid var(--border)', zIndex: 10 }}>
+                                        <tr>
+                                            <th style={{ padding: '1.25rem', textAlign: 'left', fontWeight: 700 }}>Year</th>
+                                            <th style={{ padding: '1.25rem', textAlign: 'right', fontWeight: 700 }}>Opening Balance</th>
+                                            <th style={{ padding: '1.25rem', textAlign: 'right', fontWeight: 700 }}>Principal Paid</th>
+                                            <th style={{ padding: '1.25rem', textAlign: 'right', fontWeight: 700 }}>Interest Paid</th>
+                                            <th style={{ padding: '1.25rem', textAlign: 'right', fontWeight: 700 }}>Closing Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {schedule.map((row, idx) => (
+                                            <tr key={row.year} style={{ 
+                                                borderBottom: '1px solid var(--border)',
+                                                background: idx % 2 === 0 ? 'transparent' : '#fcfcfc'
+                                            }}>
+                                                <td style={{ padding: '1rem 1.25rem', fontWeight: 700, color: 'var(--primary)' }}>{row.year}</td>
+                                                <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>₹{Math.round(row.openingBalance).toLocaleString('en-IN')}</td>
+                                                <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>₹{Math.round(row.principalPaid).toLocaleString('en-IN')}</td>
+                                                <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>₹{Math.round(row.interestPaid).toLocaleString('en-IN')}</td>
+                                                <td style={{ padding: '1rem 1.25rem', textAlign: 'right', fontWeight: 700, color: '#059669' }}>
+                                                    ₹{Math.round(row.closingBalance).toLocaleString('en-IN')}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const TwoWheelerCalculator = ({ data, setData, expenseCategories, journeyAdjustments }) => {
+    const loansToRender = [];
+
+    // 1. Check for Active Cash Flow Loan
+    const activeRaw = expenseCategories?.emi?.twoWheelerLoan;
+    if (activeRaw && typeof activeRaw === 'object' && parseFloat(activeRaw.principal) > 0) {
+        loansToRender.push({
+            loanKey: 'active',
+            title: 'Active Two-Wheeler Loan (Cash Flow synchronized)',
+            loanAmount: parseFloat(activeRaw.principal) || 0,
+            interestRate: parseFloat(activeRaw.rate) || 0,
+            tenureYears: (parseFloat(activeRaw.tenure) || 0) / 12, // convert months to years
+            startMonth: parseInt(activeRaw.startMonth) || 1,
+            startYear: parseInt(activeRaw.startYear) || new Date().getFullYear(),
+            isReadOnly: true
+        });
+    }
+
+    // 2. Check for Future Journey Loans
+    const futureLoans = (journeyAdjustments || []).filter(a => a.type === 'loan' && a.loanCategory === 'Two-Wheeler Loan');
+    futureLoans.forEach((fl, i) => {
+        loansToRender.push({
+            loanKey: `future_${fl.id}`,
+            title: `Future Adjustment: ${fl.name}`,
+            loanAmount: parseFloat(fl.principal) || 0,
+            interestRate: parseFloat(fl.rate) || 0,
+            tenureYears: (parseFloat(fl.tenure) || 0) / 12,
+            startMonth: parseInt(fl.startMonth) || 1,
+            startYear: parseInt(fl.startYear) || new Date().getFullYear(),
+            isReadOnly: true
+        });
+    });
+
+    // 3. Standalone Manual Calculator
+    if (loansToRender.length === 0) {
+        loansToRender.push({
+            loanKey: 'manual',
+            title: 'Standalone Two-Wheeler Loan Calculator',
+            loanAmount: data?.amount ?? 0,
+            interestRate: data?.rate ?? 11.5,
+            tenureYears: data?.tenure ?? 3,
+            startMonth: data?.startMonth ?? (new Date().getMonth() + 1),
+            startYear: data?.startYear ?? new Date().getFullYear(),
+            setLoanAmount: (val) => setData({ ...data, amount: val }),
+            setInterestRate: (val) => setData({ ...data, rate: val }),
+            setTenureYears: (val) => setData({ ...data, tenure: val }),
+            setStartMonth: (val) => setData({ ...data, startMonth: val }),
+            setStartYear: (val) => setData({ ...data, startYear: val }),
+            isReadOnly: false
+        });
+    }
+
+    return (
+        <div>
+            {loansToRender.map(loanConfig => (
+                <TwoWheelerLoanEngine key={loanConfig.loanKey} {...loanConfig} />
+            ))}
+        </div>
+    );
+};
+
+export default TwoWheelerCalculator;

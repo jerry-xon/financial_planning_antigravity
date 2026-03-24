@@ -74,7 +74,7 @@ export const createFinancialPlan = async (planName = 'My Financial Plan') => {
           },
           expense_categories: {
             household: { grocery: '', rent: '', education: '', lifestyle: '', medical: '', travel: '' },
-            emi: { personalLoan: '', homeLoan: '', educationLoan: '', otherEmi: '', healthInsurance: '', carInsurance: '', bikeInsurance: '', otherInsurance: '' },
+            emi: { personalLoan: '', homeLoan: '', educationLoan: '', carLoan: '', twoWheelerLoan: '', otherEmi: '', healthInsurance: '', carInsurance: '', bikeInsurance: '', otherInsurance: '' },
             savings: { rd: '', fd: '', lifeInsurance: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
           },
           asset_categories: {
@@ -96,6 +96,8 @@ export const createFinancialPlan = async (planName = 'My Financial Plan') => {
           },
           journey_adjustments: [],
           investment_allocations: [],
+          loan_proposals: [],
+          allocation_plans: {},
           goal_mappings: {},
           insurance_mode: null
         }
