@@ -46,7 +46,7 @@ const FulfillmentModule = ({
     // Natively compute without the goalMappings loop-back (to get "Baseline Available")
     // Note: To avoid circular dependency during assignment, we pass empty mappings or exclude them here 
     // to strictly fetch what the balance WOULD BE before these specific assignments.
-    const defaultSIP = parseFloat(expenseCategories?.savings?.mfSip) || 0;
+    const defaultSIP = parseFloat(expenseCategories?.savings?.sip?.amount !== undefined ? expenseCategories.savings.sip.amount : expenseCategories?.savings?.sip) || 0;
     const defaultCorpus = parseFloat(assetCategories?.investments?.mutualFunds) || parseFloat(assetCategories?.equity?.mfEquity) || parseFloat(assetCategories?.equity?.stocks) || 0;
 
     const baseSIPAmount = defaultSIP; // Strictly lock to live CashFlow baseline

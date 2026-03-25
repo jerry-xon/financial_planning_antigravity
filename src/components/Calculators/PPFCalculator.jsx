@@ -1,15 +1,21 @@
 import React, { useMemo } from 'react';
 import { Calculator, TrendingUp } from 'lucide-react';
 
-export const computePPFData = (proposedPPFs, expectedReturns) => {
-    if (proposedPPFs.length === 0) return [];
-    
+export const computePPFData = (proposedPPFs, expectedReturns, defaultPPF = 0, defaultCorpus = 0) => {
     let results = [];
     
-    // Find earliest start year and month
-    let baseStartYear = Math.min(...proposedPPFs.map(p => p.startYear));
-    let earliestPPF = proposedPPFs.find(p => p.startYear === baseStartYear);
-    let baseStartMonth = earliestPPF ? earliestPPF.startMonth : 1;
+    const today = new Date();
+    let baseStartYear = today.getFullYear();
+    let baseStartMonth = today.getMonth() + 1;
+
+    if (proposedPPFs.length > 0) {
+        let earliestProposedYear = Math.min(...proposedPPFs.map(p => p.startYear));
+        if (earliestProposedYear < baseStartYear) {
+            baseStartYear = earliestProposedYear;
+            let earliestPPF = proposedPPFs.find(p => p.startYear === baseStartYear);
+            baseStartMonth = earliestPPF ? earliestPPF.startMonth : 1;
+        }
+    }
     
     // Find max duration in months to cover all PPFs
     let maxMonths = 0;
@@ -25,18 +31,22 @@ export const computePPFData = (proposedPPFs, expectedReturns) => {
     let currentYearVal = baseStartYear;
     let currentMonthVal = baseStartMonth;
     
-    let openingBalance = 0;
+    let openingBalance = parseFloat(defaultCorpus) || 0;
     let yearlyInvestment = 0;
 
     for (let m = 0; m < totalMonths; m++) {
         // Add monthly investments
+        let currentMonthInvestment = parseFloat(defaultPPF) || 0;
+        
         proposedPPFs.forEach(p => {
             const monthsSinceStart = ((currentYearVal - p.startYear) * 12) + (currentMonthVal - p.startMonth);
             // PPF duration is strictly 15 years (180 months)
             if (monthsSinceStart >= 0 && monthsSinceStart < 180) {
-                yearlyInvestment += (parseFloat(p.amount) / 12) || 0;
+                currentMonthInvestment += (parseFloat(p.amount) / 12) || 0;
             }
         });
+        
+        yearlyInvestment += currentMonthInvestment;
 
         // Rollover logic at the end of the calendar year or absolute end of tenure
         if (currentMonthVal === 12 || m === totalMonths - 1) {
@@ -66,17 +76,20 @@ export const computePPFData = (proposedPPFs, expectedReturns) => {
     return results;
 };
 
-const PPFCalculator = ({ allocations = [], data, setData }) => {
+const PPFCalculator = ({ allocations = [], expenseCategories = {}, assetCategories = {}, data, setData }) => {
     const expectedReturns = data?.rate ?? 7.10;
     const setExpectedReturns = (val) => setData({ ...data, rate: val });
+
+    const defaultPPF = parseFloat(expenseCategories?.savings?.ppf?.amount !== undefined ? expenseCategories.savings.ppf.amount : expenseCategories?.savings?.ppf) || 0;
+    const defaultCorpus = parseFloat(assetCategories?.retirement?.ppf) || 0;
 
     const proposedPPFs = useMemo(() => {
         return allocations.filter(a => a.type === 'PPF');
     }, [allocations]);
 
     const calculationData = useMemo(() => {
-        return computePPFData(proposedPPFs, expectedReturns);
-    }, [proposedPPFs, expectedReturns]);
+        return computePPFData(proposedPPFs, expectedReturns, defaultPPF, defaultCorpus);
+    }, [proposedPPFs, expectedReturns, defaultPPF, defaultCorpus]);
 
     const finalValue = calculationData.length > 0 ? calculationData[calculationData.length - 1].endValue : 0;
     const totalInvested = calculationData.reduce((sum, row) => sum + row.investment, 0);
@@ -92,10 +105,10 @@ const PPFCalculator = ({ allocations = [], data, setData }) => {
                     </div>
                 </div>
 
-                {proposedPPFs.length === 0 ? (
+                {proposedPPFs.length === 0 && defaultPPF === 0 && defaultCorpus === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3rem', border: '2px dashed var(--border)', borderRadius: '12px', color: 'var(--text-muted)' }}>
-                        <p>No PPF investments proposed in the Allocation Module.</p>
-                        <p style={{ fontSize: '0.9rem' }}>Go back to Step 9 and add a PPF allocation to see projections here.</p>
+                        <p>No active PPF found in the local Cash Flow Baseline nor proposed in the Allocation Module.</p>
+                        <p style={{ fontSize: '0.9rem' }}>Go back to Step 4 or Step 9 to map your baseline or to add a future PPF allocation.</p>
                     </div>
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '2.5rem' }}>

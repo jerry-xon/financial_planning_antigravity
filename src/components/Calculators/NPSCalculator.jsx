@@ -1,9 +1,7 @@
 import React, { useMemo } from 'react';
 import { Calculator, TrendingUp, HeartHandshake, Briefcase } from 'lucide-react';
 
-export const computeNPSData = (proposedNPS, expectedReturns, annuityPercent, annuityRate, selfMember) => {
-    if (proposedNPS.length === 0) return { schedule: [], totals: null };
-
+export const computeNPSData = (proposedNPS, expectedReturns, annuityPercent, annuityRate, selfMember, defaultNPS = 0, defaultCorpus = 0) => {
     // Determine user demographics relative to absolute dates
     const today = new Date();
     let birthYear = today.getFullYear() - 30; // default age 30
@@ -20,9 +18,18 @@ export const computeNPSData = (proposedNPS, expectedReturns, annuityPercent, ann
     const retirementAge = parseInt(selfMember?.retirementAge) || 60;
     const maturityAbsolute = (birthYear + retirementAge) * 12 + birthMonth;
     
-    let baseStartYear = Math.min(...proposedNPS.map(p => p.startYear));
-    let earliestNPS = proposedNPS.find(p => p.startYear === baseStartYear);
-    let baseStartMonth = earliestNPS ? earliestNPS.startMonth : 1;
+    let baseStartYear = today.getFullYear();
+    let baseStartMonth = today.getMonth() + 1;
+    
+    if (proposedNPS.length > 0) {
+        const earliestProposedYear = Math.min(...proposedNPS.map(p => p.startYear));
+        if (earliestProposedYear < baseStartYear) {
+            baseStartYear = earliestProposedYear;
+            const earliestNPS = proposedNPS.find(p => p.startYear === baseStartYear);
+            baseStartMonth = earliestNPS ? earliestNPS.startMonth : 1;
+        }
+    }
+    
     const startAbsolute = baseStartYear * 12 + baseStartMonth;
 
     let schedule = [];
@@ -31,7 +38,7 @@ export const computeNPSData = (proposedNPS, expectedReturns, annuityPercent, ann
     let currentYearVal = baseStartYear;
     let currentMonthVal = baseStartMonth;
 
-    let openingBalance = 0;
+    let openingBalance = parseFloat(defaultCorpus) || 0;
     let yearlyInvestment = 0;
     let yearlyInterest = 0;
     let globalInvestment = 0;
@@ -39,7 +46,7 @@ export const computeNPSData = (proposedNPS, expectedReturns, annuityPercent, ann
     const monthlyRate = ((parseFloat(expectedReturns) || 0) / 100) / 12;
 
     while (currentAbsolute <= maturityAbsolute) {
-        let monthlyInvestment = 0;
+        let monthlyInvestment = parseFloat(defaultNPS) || 0;
         proposedNPS.forEach(p => {
             const pStartAbsolute = p.startYear * 12 + p.startMonth;
             const pEndAbsolute = pStartAbsolute + (parseInt(p.duration) * 12) - 1;
@@ -103,10 +110,13 @@ export const computeNPSData = (proposedNPS, expectedReturns, annuityPercent, ann
     };
 };
 
-const NPSCalculator = ({ allocations = [], familyMembers = [], data, setData }) => {
+const NPSCalculator = ({ allocations = [], familyMembers = [], expenseCategories = {}, assetCategories = {}, data, setData }) => {
     const expectedReturns = data?.rate ?? 10.00;
     const annuityPercent = data?.annuity ?? 40;
     const annuityRate = data?.annuityRate ?? 6.00;
+
+    const defaultNPS = parseFloat(expenseCategories?.savings?.nps?.amount !== undefined ? expenseCategories.savings.nps.amount : expenseCategories?.savings?.nps) || 0;
+    const defaultCorpus = parseFloat(assetCategories?.retirement?.nps) || 0;
 
     const setExpectedReturns = (val) => setData({ ...data, rate: val });
     const setAnnuityPercent = (val) => setData({ ...data, annuity: val });
@@ -116,8 +126,8 @@ const NPSCalculator = ({ allocations = [], familyMembers = [], data, setData }) 
     const selfMember = useMemo(() => familyMembers.find(m => m.relation === 'Self') || familyMembers[0], [familyMembers]);
 
     const calculationData = useMemo(() => {
-        return computeNPSData(proposedNPS, expectedReturns, annuityPercent, annuityRate, selfMember);
-    }, [proposedNPS, expectedReturns, annuityPercent, annuityRate, selfMember]);
+        return computeNPSData(proposedNPS, expectedReturns, annuityPercent, annuityRate, selfMember, defaultNPS, defaultCorpus);
+    }, [proposedNPS, expectedReturns, annuityPercent, annuityRate, selfMember, defaultNPS, defaultCorpus]);
 
     const { schedule, totals } = calculationData;
 
@@ -132,10 +142,10 @@ const NPSCalculator = ({ allocations = [], familyMembers = [], data, setData }) 
                     </div>
                 </div>
 
-                {proposedNPS.length === 0 ? (
+                {proposedNPS.length === 0 && defaultNPS === 0 && defaultCorpus === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3rem', border: '2px dashed var(--border)', borderRadius: '12px', color: 'var(--text-muted)' }}>
-                        <p>No NPS investments proposed in the Allocation Module.</p>
-                        <p style={{ fontSize: '0.9rem' }}>Go back to Step 9 and add an NPS allocation to map your retirement benefits.</p>
+                        <p>No active NPS found in the Cash Flow Baseline nor proposed in the Allocation Module.</p>
+                        <p style={{ fontSize: '0.9rem' }}>Go back to Step 4 or Step 9 to map your retirement benefits.</p>
                     </div>
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '2.5rem' }}>

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { convertToMonthly } from './CashFlowLogic';
 import LoanDetailsModal from './LoanDetailsModal';
+import InvestmentDetailsModal from './InvestmentDetailsModal';
 
 const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, currentYearLedger, setCurrentYearLedger, subStep }) => {
     const [activeModal, setActiveModal] = useState(null);
+    const [activeInvModal, setActiveInvModal] = useState(null);
 
     const handleIncomeChange = (e) => {
         const { name, value } = e.target;
@@ -529,32 +531,66 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                 <div className="card" style={{ marginBottom: '1.5rem', background: 'var(--bg-main)' }}>
                     <h4 style={{ color: 'var(--primary)', marginBottom: '1.25rem', fontSize: '1.1rem' }}>C. Savings & Investments</h4>
                     <div className="input-grid-mini">
+                        {['ppf', 'nps', 'rd'].map((invKey) => {
+                            const rawValue = expenseCategories.savings[invKey] || '';
+                            const isConfigured = rawValue !== null && typeof rawValue === 'object' && rawValue.amount > 0;
+                            const displayValue = isConfigured ? rawValue.amount : rawValue;
+                            const labelNames = { ppf: 'PPF', nps: 'NPS', rd: 'RD' };
+
+                            return (
+                                <div className="input-group" key={invKey}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '0.25rem' }}>
+                                        <label style={{ marginBottom: 0 }}>{labelNames[invKey]}</label>
+                                        <button 
+                                            onClick={() => setActiveInvModal(invKey)}
+                                            style={{ 
+                                                background: 'transparent', border: 'none', 
+                                                color: isConfigured ? 'var(--success)' : 'var(--primary)', 
+                                                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                                                textDecoration: 'none', padding: 0
+                                            }}
+                                        >
+                                            {isConfigured ? '✓ Configured' : '⚙️ Configure Details'}
+                                        </button>
+                                    </div>
+                                    <input 
+                                        type="number" 
+                                        value={displayValue} 
+                                        readOnly={true}
+                                        onChange={(e) => handleExpenseChange('savings', invKey, e.target.value)} 
+                                        onWheel={(e) => e.target.blur()} 
+                                        placeholder="0" 
+                                        style={{ background: 'var(--bg-card)', color: isConfigured ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'not-allowed' }}
+                                    />
+                                </div>
+                            );
+                        })}
                         <div className="input-group">
-                            <label>RD</label>
-                            <input type="number" value={expenseCategories.savings.rd} onChange={(e) => handleExpenseChange('savings', 'rd', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                            <label>SIPs</label>
+                            <input type="number" value={expenseCategories.savings.sip || ''} onChange={(e) => handleExpenseChange('savings', 'sip', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
                         </div>
                         <div className="input-group">
-                            <label>FD</label>
-                            <input type="number" value={expenseCategories.savings.fd} onChange={(e) => handleExpenseChange('savings', 'fd', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
-                        <div className="input-group">
-                            <label>PPF</label>
-                            <input type="number" value={expenseCategories.savings.ppf} onChange={(e) => handleExpenseChange('savings', 'ppf', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
-                        <div className="input-group">
-                            <label>Saving Schemes</label>
-                            <input type="number" value={expenseCategories.savings.savingSchemes} onChange={(e) => handleExpenseChange('savings', 'savingSchemes', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
-                        <div className="input-group">
-                            <label>MFs – SIP</label>
-                            <input type="number" value={expenseCategories.savings.mfSip} onChange={(e) => handleExpenseChange('savings', 'mfSip', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
-                        </div>
-                        <div className="input-group">
-                            <label>Other Saving</label>
-                            <input type="number" value={expenseCategories.savings.otherSaving} onChange={(e) => handleExpenseChange('savings', 'otherSaving', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                            <label>Any other Saving</label>
+                            <input type="number" value={expenseCategories.savings.otherSaving || ''} onChange={(e) => handleExpenseChange('savings', 'otherSaving', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
                         </div>
                     </div>
                 </div>
+
+                <InvestmentDetailsModal 
+                    isOpen={!!activeInvModal}
+                    onClose={() => setActiveInvModal(null)}
+                    initialData={activeInvModal ? expenseCategories.savings[activeInvModal] : null}
+                    investmentTypeTitle={activeInvModal ? activeInvModal.toUpperCase() : ''}
+                    onSave={(configuredData) => {
+                        setExpenseCategories(prev => ({
+                            ...prev,
+                            savings: {
+                                ...prev.savings,
+                                [activeInvModal]: configuredData
+                            }
+                        }));
+                    }}
+                />
             </div>
             )}
 

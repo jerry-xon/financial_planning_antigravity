@@ -43,7 +43,7 @@ const GrowthModule = ({
     // 2. Fetch Raw Schedules
     const sipData = useMemo(() => {
         const c = calculatorInputs.sip || {};
-        const defaultSIP = parseFloat(expenseCategories?.savings?.mfSip) || 0;
+        const defaultSIP = parseFloat(expenseCategories?.savings?.sip?.amount !== undefined ? expenseCategories.savings.sip.amount : expenseCategories?.savings?.sip) || 0;
         const defaultCorpus = parseFloat(assetCategories?.investments?.mutualFunds) || parseFloat(assetCategories?.equity?.mfEquity) || parseFloat(assetCategories?.equity?.stocks) || 0;
 
         return computeSIPData(

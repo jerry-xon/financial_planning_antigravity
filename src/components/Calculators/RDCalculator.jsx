@@ -1,18 +1,26 @@
 import React, { useMemo } from 'react';
 import { Calculator, TrendingUp, RefreshCcw, ShieldCheck } from 'lucide-react';
 
-export const computeRDData = (proposedRDs, expectedReturns) => {
-    if (proposedRDs.length === 0) return { schedule: [], totals: null };
-
+export const computeRDData = (proposedRDs, expectedReturns, defaultRD = 0, defaultCorpus = 0) => {
     // Standard Indian RDs compound quarterly mathematically
     const freqMonths = 3;
 
-    let baseStartYear = Math.min(...proposedRDs.map(p => p.startYear));
-    let earliestRDs = proposedRDs.filter(p => p.startYear === baseStartYear);
-    let baseStartMonth = Math.min(...earliestRDs.map(p => p.startMonth));
-    const startAbsolute = baseStartYear * 12 + baseStartMonth;
+    const today = new Date();
+    let baseStartYear = today.getFullYear();
+    let baseStartMonth = today.getMonth() + 1;
+    let startAbsolute = baseStartYear * 12 + baseStartMonth;
+    let latestEndAbsolute = startAbsolute + 12; // default 1 year projection if nothing else is planned
 
-    let latestEndAbsolute = Math.max(...proposedRDs.map(p => (p.startYear * 12 + p.startMonth) + (parseInt(p.duration) * 12) - 1));
+    if (proposedRDs.length > 0) {
+        let earliestProposedYear = Math.min(...proposedRDs.map(p => p.startYear));
+        if (earliestProposedYear < baseStartYear) {
+            baseStartYear = earliestProposedYear;
+            let earliestRDs = proposedRDs.filter(p => p.startYear === baseStartYear);
+            baseStartMonth = Math.min(...earliestRDs.map(p => p.startMonth));
+            startAbsolute = baseStartYear * 12 + baseStartMonth;
+        }
+        latestEndAbsolute = Math.max(...proposedRDs.map(p => (p.startYear * 12 + p.startMonth) + (parseInt(p.duration) * 12) - 1));
+    }
 
     let rds = proposedRDs.map(p => ({
         id: p.id,
@@ -32,7 +40,13 @@ export const computeRDData = (proposedRDs, expectedReturns) => {
     let currentYearVal = baseStartYear;
     let currentMonthVal = baseStartMonth;
 
-    let yearlyOpening = 0;
+    let yearlyOpening = parseFloat(defaultCorpus) || 0;
+    
+    // Baseline RD simulation if cashflow exists
+    const monthlyBaselineP = parseFloat(defaultRD) || 0;
+    let baselineCompoundingBase = parseFloat(defaultCorpus) || 0;
+    let baselineUncompoundedInterest = 0;
+
     let yearlyDeposit = 0;
     let yearlyInterest = 0;
     let yearlyMaturity = 0;
@@ -81,13 +95,32 @@ export const computeRDData = (proposedRDs, expectedReturns) => {
                 yearlyMaturity += rd.compoundingBase;
             }
         });
+        
+        // Handle baseline RD if it exists
+        if (monthlyBaselineP > 0 || baselineCompoundingBase > 0) {
+            baselineCompoundingBase += monthlyBaselineP;
+            yearlyDeposit += monthlyBaselineP;
+            globalDeposit += monthlyBaselineP;
+            
+            const interest = baselineCompoundingBase * periodicRate;
+            baselineUncompoundedInterest += interest;
+            monthInterest += interest;
+            globalInterest += interest;
+            
+            const monthsActive = currentAbsolute - startAbsolute + 1;
+            if (monthsActive > 0 && monthsActive % freqMonths === 0) {
+                baselineCompoundingBase += baselineUncompoundedInterest;
+                baselineUncompoundedInterest = 0;
+            }
+        }
 
         yearlyInterest += monthInterest;
 
         if (currentMonthVal === 12 || currentAbsolute === latestEndAbsolute) {
-            // Calculate closing balance as sum of all active RDs
+            // Calculate closing balance as sum of all active RDs + baseline
             let closingBalance = rds.filter(rd => rd.active && !rd.matured)
                                     .reduce((sum, rd) => sum + rd.compoundingBase + rd.uncompoundedInterest, 0);
+            closingBalance += baselineCompoundingBase + baselineUncompoundedInterest;
 
             schedule.push({
                 year: currentYearVal,
@@ -115,22 +148,25 @@ export const computeRDData = (proposedRDs, expectedReturns) => {
     const totals = {
         globalDeposit,
         globalInterest,
-        finalMaturity: rds.filter(rd => rd.matured).reduce((sum, rd) => sum + rd.compoundingBase, 0)
+        finalMaturity: rds.filter(rd => rd.matured).reduce((sum, rd) => sum + rd.compoundingBase, 0) + baselineCompoundingBase + baselineUncompoundedInterest
     };
 
     return { schedule, totals };
 };
 
-const RDCalculator = ({ allocations = [], data, setData }) => {
+const RDCalculator = ({ allocations = [], expenseCategories = {}, assetCategories = {}, data, setData }) => {
     const expectedReturns = data?.rate ?? 7.00;
+
+    const defaultRD = parseFloat(expenseCategories?.savings?.rd?.amount !== undefined ? expenseCategories.savings.rd.amount : expenseCategories?.savings?.rd) || 0;
+    const defaultCorpus = parseFloat(assetCategories?.investments?.recurringDeposit) || 0;
 
     const setExpectedReturns = (val) => setData({ ...data, rate: val });
 
     const proposedRDs = useMemo(() => allocations.filter(a => a.type === 'Recurring Deposit'), [allocations]);
 
     const calculationData = useMemo(() => {
-        return computeRDData(proposedRDs, expectedReturns);
-    }, [proposedRDs, expectedReturns]);
+        return computeRDData(proposedRDs, expectedReturns, defaultRD, defaultCorpus);
+    }, [proposedRDs, expectedReturns, defaultRD, defaultCorpus]);
 
     const { schedule, totals } = calculationData;
 
@@ -145,10 +181,10 @@ const RDCalculator = ({ allocations = [], data, setData }) => {
                     </div>
                 </div>
 
-                {proposedRDs.length === 0 ? (
+                {proposedRDs.length === 0 && defaultRD === 0 && defaultCorpus === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3rem', border: '2px dashed var(--border)', borderRadius: '12px', color: 'var(--text-muted)' }}>
-                        <p>No Recurring Deposits proposed in the Allocation Module.</p>
-                        <p style={{ fontSize: '0.9rem' }}>Go back to Step 9 and add an RD allocation to project your regular guaranteed savings.</p>
+                        <p>No active RD found in the global Cash Flow Baseline nor proposed natively.</p>
+                        <p style={{ fontSize: '0.9rem' }}>Go back to Step 4 or Step 9 to inject your baseline or allocate future installments.</p>
                     </div>
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '2.5rem' }}>

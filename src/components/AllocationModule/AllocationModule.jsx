@@ -11,6 +11,7 @@ const AllocationModule = ({
     onBack 
 }) => {
     const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
     const [collapsedIds, setCollapsedIds] = useState(new Set());
 
     const toggleCollapse = (id) => {
@@ -294,7 +295,13 @@ const AllocationModule = ({
                                                 <label>Start Month</label>
                                                 <select 
                                                     value={item.startMonth} 
-                                                    onChange={(e) => updateAllocation(item.id, 'startMonth', parseInt(e.target.value))}
+                                                    onChange={(e) => {
+                                                        let val = parseInt(e.target.value);
+                                                        if (item.startYear === currentYear && val < currentMonth) {
+                                                            val = currentMonth;
+                                                        }
+                                                        updateAllocation(item.id, 'startMonth', val);
+                                                    }}
                                                     style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-main)', color: 'var(--text-main)' }}
                                                 >
                                                     {Array.from({ length: 12 }, (_, i) => (
@@ -309,7 +316,16 @@ const AllocationModule = ({
                                                 <input 
                                                     type="number" 
                                                     value={item.startYear} 
-                                                    onChange={(e) => updateAllocation(item.id, 'startYear', parseInt(e.target.value))}
+                                                    onChange={(e) => {
+                                                        let val = parseInt(e.target.value) || currentYear;
+                                                        if (val < currentYear) val = currentYear;
+                                                        
+                                                        // If snapping year back to current, also validate month safely
+                                                        if (val === currentYear && item.startMonth < currentMonth) {
+                                                            updateAllocation(item.id, 'startMonth', currentMonth);
+                                                        }
+                                                        updateAllocation(item.id, 'startYear', val);
+                                                    }}
                                                 />
                                             </div>
                                             {hasDuration(item.type) ? (

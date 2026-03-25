@@ -122,7 +122,7 @@ const JourneyTable = ({ projections }) => {
                                         </div>
                                         <div className="breakdown-item">
                                             <span>MFs – SIP</span>
-                                            <strong>{formatCurrency(row.savingsBreakdown.mfSip)}</strong>
+                                            <strong>{formatCurrency(row.savingsBreakdown.sip)}</strong>
                                         </div>
                                         <div className="breakdown-item">
                                             <span>Other Saving</span>

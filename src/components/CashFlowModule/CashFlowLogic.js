@@ -50,7 +50,7 @@ export const calculateCashFlow = (income, expenseCategories) => {
         return sum + convertToMonthly(item.value, item.frequency);
     }, 0);
 
-    const savingsSum = Object.values(expenseCategories.savings || {}).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+    const savingsSum = Object.values(expenseCategories.savings || {}).reduce((sum, val) => sum + (parseFloat(val?.amount !== undefined ? val.amount : val) || 0), 0);
 
     const categorySums = {
         household: householdSum,

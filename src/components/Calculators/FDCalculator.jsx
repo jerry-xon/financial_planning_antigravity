@@ -1,20 +1,28 @@
 import React, { useMemo } from 'react';
 import { Calculator, TrendingUp, Wallet, ArrowRight, ShieldCheck } from 'lucide-react';
 
-export const computeFDData = (proposedFDs, expectedReturns, frequency) => {
-    if (proposedFDs.length === 0) return { schedule: [], totals: null };
-
+export const computeFDData = (proposedFDs, expectedReturns, frequency, defaultCorpus = 0) => {
     let freqMonths = 3;
     if (frequency === 'Monthly') freqMonths = 1;
     if (frequency === 'Half-Yearly') freqMonths = 6;
     if (frequency === 'Annually') freqMonths = 12;
 
-    let baseStartYear = Math.min(...proposedFDs.map(p => p.startYear));
-    let earliestFDs = proposedFDs.filter(p => p.startYear === baseStartYear);
-    let baseStartMonth = Math.min(...earliestFDs.map(p => p.startMonth));
-    const startAbsolute = baseStartYear * 12 + baseStartMonth;
+    const today = new Date();
+    let baseStartYear = today.getFullYear();
+    let baseStartMonth = today.getMonth() + 1;
+    let startAbsolute = baseStartYear * 12 + baseStartMonth;
+    let latestEndAbsolute = startAbsolute + 12; // default 1 year projection if no active proposal
 
-    let latestEndAbsolute = Math.max(...proposedFDs.map(p => (p.startYear * 12 + p.startMonth) + (parseInt(p.duration) * 12) - 1));
+    if (proposedFDs.length > 0) {
+        let earliestProposedYear = Math.min(...proposedFDs.map(p => p.startYear));
+        if (earliestProposedYear < baseStartYear) {
+            baseStartYear = earliestProposedYear;
+            let earliestFDs = proposedFDs.filter(p => p.startYear === baseStartYear);
+            baseStartMonth = Math.min(...earliestFDs.map(p => p.startMonth));
+            startAbsolute = baseStartYear * 12 + baseStartMonth;
+        }
+        latestEndAbsolute = Math.max(...proposedFDs.map(p => (p.startYear * 12 + p.startMonth) + (parseInt(p.duration) * 12) - 1));
+    }
 
     let fds = proposedFDs.map(p => ({
         id: p.id,
@@ -35,7 +43,12 @@ export const computeFDData = (proposedFDs, expectedReturns, frequency) => {
     let currentYearVal = baseStartYear;
     let currentMonthVal = baseStartMonth;
 
-    let yearlyOpening = 0;
+    let yearlyOpening = parseFloat(defaultCorpus) || 0;
+    
+    // Baseline FD simulation (compounds infinitely alongside timeline unless matured)
+    let baselineCompoundingBase = parseFloat(defaultCorpus) || 0;
+    let baselineUncompoundedInterest = 0;
+
     let yearlyDeposit = 0;
     let yearlyInterest = 0;
     let yearlyMaturity = 0;
@@ -44,7 +57,7 @@ export const computeFDData = (proposedFDs, expectedReturns, frequency) => {
     let globalDeposit = 0;
 
     // Calculate initial opening sum for the very first year
-    yearlyOpening = fds.filter(f => f.startAbsolute === currentAbsolute).reduce((sum, f) => sum + f.principal, 0);
+    yearlyOpening += fds.filter(f => f.startAbsolute === currentAbsolute).reduce((sum, f) => sum + f.principal, 0);
 
     while (currentAbsolute <= latestEndAbsolute) {
         let monthInterest = 0;
@@ -85,6 +98,22 @@ export const computeFDData = (proposedFDs, expectedReturns, frequency) => {
                 yearlyMaturity += fd.compoundingBase;
             }
         });
+        
+        // Handle baseline FD compounding
+        if (baselineCompoundingBase > 0) {
+            const interest = baselineCompoundingBase * periodicRate;
+            baselineUncompoundedInterest += interest;
+            monthInterest += interest;
+            globalInterest += interest;
+
+            const monthsActive = currentAbsolute - startAbsolute + 1;
+            if (monthsActive % freqMonths === 0) {
+                baselineCompoundingBase += baselineUncompoundedInterest;
+                baselineUncompoundedInterest = 0;
+            }
+            
+            // Treat the default corpus as continuously auto-renewing or indefinitely compounding inside the projection
+        }
 
         yearlyInterest += monthInterest;
 
@@ -92,6 +121,7 @@ export const computeFDData = (proposedFDs, expectedReturns, frequency) => {
             // Calculate closing balance as sum of all active FDs (compoundingBase + uncompounded)
             let closingBalance = fds.filter(f => f.active && !f.matured)
                                     .reduce((sum, f) => sum + f.compoundingBase + f.uncompoundedInterest, 0);
+            closingBalance += baselineCompoundingBase + baselineUncompoundedInterest;
 
             schedule.push({
                 year: currentYearVal,
@@ -125,9 +155,11 @@ export const computeFDData = (proposedFDs, expectedReturns, frequency) => {
     return { schedule, totals };
 };
 
-const FDCalculator = ({ allocations = [], data, setData }) => {
+const FDCalculator = ({ allocations = [], assetCategories = {}, data, setData }) => {
     const expectedReturns = data?.rate ?? 7.00;
     const frequency = data?.frequency ?? 'Quarterly';
+
+    const defaultCorpus = parseFloat(assetCategories?.investments?.fixedDeposit) || 0;
 
     const setExpectedReturns = (val) => setData({ ...data, rate: val });
     const setFrequency = (val) => setData({ ...data, frequency: val });
@@ -135,8 +167,8 @@ const FDCalculator = ({ allocations = [], data, setData }) => {
     const proposedFDs = useMemo(() => allocations.filter(a => a.type === 'Fixed Deposit'), [allocations]);
 
     const calculationData = useMemo(() => {
-        return computeFDData(proposedFDs, expectedReturns, frequency);
-    }, [proposedFDs, expectedReturns, frequency]);
+        return computeFDData(proposedFDs, expectedReturns, frequency, defaultCorpus);
+    }, [proposedFDs, expectedReturns, frequency, defaultCorpus]);
 
     const { schedule, totals } = calculationData;
 
@@ -151,10 +183,10 @@ const FDCalculator = ({ allocations = [], data, setData }) => {
                     </div>
                 </div>
 
-                {proposedFDs.length === 0 ? (
+                {proposedFDs.length === 0 && defaultCorpus === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3rem', border: '2px dashed var(--border)', borderRadius: '12px', color: 'var(--text-muted)' }}>
-                        <p>No Fixed Deposits proposed in the Allocation Module.</p>
-                        <p style={{ fontSize: '0.9rem' }}>Go back to Step 9 and add an FD allocation to project guaranteed returns.</p>
+                        <p>No active FD found in the global Asset Baseline nor proposed natively.</p>
+                        <p style={{ fontSize: '0.9rem' }}>Go back to Step 8 or Step 9 to inject your baseline or allocate future installments.</p>
                     </div>
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '2.5rem' }}>

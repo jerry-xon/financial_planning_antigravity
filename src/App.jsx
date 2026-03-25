@@ -205,7 +205,7 @@ function App() {
         life: {},
         others: { value: '', frequency: 'Annual' }
       },
-      savings: { rd: '', fd: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
+      savings: { sip: '', ppf: '', nps: '', rd: '', otherSaving: '' }
     });
     setAssetCategories({
       realEstate: { residential: '', secondProperty: '', landPlot: '' },
@@ -314,7 +314,7 @@ function App() {
             life: {},
             others: { value: '', frequency: 'Annual' }
           },
-          savings: { rd: '', fd: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
+          savings: { sip: '', ppf: '', nps: '', rd: '', otherSaving: '' }
         };
         const loadedExpenseCategories = data.expense_categories || {};
         
@@ -368,11 +368,15 @@ function App() {
           insurance: migratedInsurance,
           savings: { 
             ...defaultExpenseCategories.savings, 
-            ...(loadedExpenseCategories.savings || {})
+            ...(loadedExpenseCategories.savings || {}),
+            sip: loadedExpenseCategories.savings?.sip || loadedExpenseCategories.savings?.mfSip || ''
           }
         };
-        // Explicitly remove lifeInsurance if it exists in loaded savings
+        // Explicitly remove ghost keys that might have been accidentally merged via spread
         delete mergedExpenseCategories.savings.lifeInsurance;
+        delete mergedExpenseCategories.savings.fd;
+        delete mergedExpenseCategories.savings.savingSchemes;
+        delete mergedExpenseCategories.savings.mfSip;
         
         setExpenseCategories(mergedExpenseCategories);
         
@@ -1001,6 +1005,8 @@ function App() {
               {activeCalculator === 'ppf' && (
                 <PPFCalculator 
                   allocations={investmentAllocations}
+                  expenseCategories={expenseCategories}
+                  assetCategories={assetCategories}
                   data={calculatorInputs.ppf || { rate: 7.10 }}
                   setData={(val) => setCalculatorInputs(prev => ({ ...prev, ppf: val }))}
                 />
@@ -1009,6 +1015,8 @@ function App() {
                 <NPSCalculator 
                   allocations={investmentAllocations}
                   familyMembers={familyMembers}
+                  expenseCategories={expenseCategories}
+                  assetCategories={assetCategories}
                   data={calculatorInputs.nps || { rate: 10.00, annuity: 40, annuityRate: 6.00 }}
                   setData={(val) => setCalculatorInputs(prev => ({ ...prev, nps: val }))}
                 />
@@ -1016,6 +1024,8 @@ function App() {
               {activeCalculator === 'fd' && (
                 <FDCalculator 
                   allocations={investmentAllocations}
+                  expenseCategories={expenseCategories}
+                  assetCategories={assetCategories}
                   data={calculatorInputs.fd || { rate: 7.00, frequency: 'Quarterly' }}
                   setData={(val) => setCalculatorInputs(prev => ({ ...prev, fd: val }))}
                 />
@@ -1023,6 +1033,8 @@ function App() {
               {activeCalculator === 'rd' && (
                 <RDCalculator 
                   allocations={investmentAllocations}
+                  expenseCategories={expenseCategories}
+                  assetCategories={assetCategories}
                   data={calculatorInputs.rd || { rate: 7.00 }}
                   setData={(val) => setCalculatorInputs(prev => ({ ...prev, rd: val }))}
                 />

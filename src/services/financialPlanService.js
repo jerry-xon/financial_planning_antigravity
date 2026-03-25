@@ -75,7 +75,7 @@ export const createFinancialPlan = async (planName = 'My Financial Plan') => {
           expense_categories: {
             household: { grocery: '', rent: '', education: '', lifestyle: '', medical: '', travel: '' },
             emi: { personalLoan: '', homeLoan: '', educationLoan: '', carLoan: '', twoWheelerLoan: '', otherEmi: '', healthInsurance: '', carInsurance: '', bikeInsurance: '', otherInsurance: '' },
-            savings: { rd: '', fd: '', lifeInsurance: '', ppf: '', savingSchemes: '', mfSip: '', otherSaving: '' }
+            savings: { sip: '', ppf: '', nps: '', rd: '', otherSaving: '' }
           },
           asset_categories: {
             equity: { stocks: '', mfEquity: '' },
