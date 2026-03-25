@@ -70,7 +70,7 @@ export const computeLumpsumData = (investmentAmount, expectedReturns, tenureYear
         // Rollup to Yearly Results (Calendar Year)
         // Push if it's December or the absolute last month of the tenure
         if (currentMonthVal === 12 || m === totalMonths - 1) {
-            yearlyRecord.endValueBeforeWithdrawal = runningBalance + totalRoadmapWithdrawalThisMonth;
+            yearlyRecord.endValueBeforeWithdrawal = runningBalance + yearlyRecord.withdrawal;
             yearlyRecord.valueAfterWithdrawal = runningBalance;
             results.push({ ...yearlyRecord });
 

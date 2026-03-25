@@ -138,7 +138,7 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                 {/* Income Array Row */}
                                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                                     <td style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: 'var(--primary)', fontSize: '0.9rem' }}>Net Income</td>
-                                    {currentYearLedger.income.map((val, idx) => {
+                                    {(currentYearLedger.income || Array(12).fill('')).map((val, idx) => {
                                         const isLocked = idx !== new Date().getMonth();
                                         return (
                                             <td key={`inc-${idx}`} style={{ padding: '0.5rem', background: isLocked ? 'var(--bg-main)' : 'transparent' }}>
@@ -149,7 +149,7 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                                     onChange={(e) => {
                                                         const newVal = Number(e.target.value);
                                                         setCurrentYearLedger(prev => {
-                                                            const arr = [...prev.income];
+                                                            const arr = [...(prev.income || Array(12).fill(''))];
                                                             for(let j = idx; j < 12; j++) arr[j] = newVal;
                                                             return { ...prev, income: arr };
                                                         });
@@ -175,7 +175,7 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                 {/* Household Expenses Array Row */}
                                 <tr>
                                     <td style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: 'var(--danger)', fontSize: '0.9rem' }}>Household & Lifestyle</td>
-                                    {currentYearLedger.household.map((val, idx) => {
+                                    {(currentYearLedger.household || Array(12).fill('')).map((val, idx) => {
                                         const isLocked = idx !== new Date().getMonth();
                                         return (
                                             <td key={`hh-${idx}`} style={{ padding: '0.5rem', background: isLocked ? 'var(--bg-main)' : 'transparent' }}>
@@ -186,7 +186,7 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                                     onChange={(e) => {
                                                         const newVal = Number(e.target.value);
                                                         setCurrentYearLedger(prev => {
-                                                            const arr = [...prev.household];
+                                                            const arr = [...(prev.household || Array(12).fill(''))];
                                                             for(let j = idx; j < 12; j++) arr[j] = newVal;
                                                             return { ...prev, household: arr };
                                                         });
