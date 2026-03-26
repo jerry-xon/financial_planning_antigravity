@@ -1,13 +1,22 @@
 import React, { useMemo } from 'react';
 import { Calculator, TrendingUp, RefreshCcw, ShieldCheck } from 'lucide-react';
 
-export const computeRDData = (proposedRDs, expectedReturns, defaultRD = 0, defaultCorpus = 0) => {
+export const computeRDData = (proposedRDs, expectedReturns, defaultRDObj = {}, defaultCorpus = 0) => {
     // Standard Indian RDs compound quarterly mathematically
     const freqMonths = 3;
+
+    const monthlyBaselineP = parseFloat(defaultRDObj?.amount !== undefined ? defaultRDObj.amount : defaultRDObj) || 0;
 
     const today = new Date();
     let baseStartYear = today.getFullYear();
     let baseStartMonth = today.getMonth() + 1;
+    
+    // Evaluate if we should start the timeline from the CashFlow Baseline instead
+    if (monthlyBaselineP > 0) {
+        baseStartYear = parseInt(defaultRDObj?.startYear) || baseStartYear;
+        baseStartMonth = parseInt(defaultRDObj?.startMonth) || baseStartMonth;
+    }
+    
     let startAbsolute = baseStartYear * 12 + baseStartMonth;
     let latestEndAbsolute = startAbsolute + 12; // default 1 year projection if nothing else is planned
 
@@ -16,7 +25,7 @@ export const computeRDData = (proposedRDs, expectedReturns, defaultRD = 0, defau
         if (earliestProposedYear < baseStartYear) {
             baseStartYear = earliestProposedYear;
             let earliestRDs = proposedRDs.filter(p => p.startYear === baseStartYear);
-            baseStartMonth = Math.min(...earliestRDs.map(p => p.startMonth));
+            baseStartMonth = Math.min(baseStartMonth, ...earliestRDs.map(p => p.startMonth)); // safely handle overlap with baseline
             startAbsolute = baseStartYear * 12 + baseStartMonth;
         }
         latestEndAbsolute = Math.max(...proposedRDs.map(p => (p.startYear * 12 + p.startMonth) + (parseInt(p.duration) * 12) - 1));
@@ -43,9 +52,10 @@ export const computeRDData = (proposedRDs, expectedReturns, defaultRD = 0, defau
     let yearlyOpening = parseFloat(defaultCorpus) || 0;
     
     // Baseline RD simulation if cashflow exists
-    const monthlyBaselineP = parseFloat(defaultRD) || 0;
     let baselineCompoundingBase = parseFloat(defaultCorpus) || 0;
     let baselineUncompoundedInterest = 0;
+    // We bind the baseline absolute start effectively here
+    const baselineStartAbsolute = monthlyBaselineP > 0 ? (parseInt(defaultRDObj?.startYear || baseStartYear) * 12 + parseInt(defaultRDObj?.startMonth || baseStartMonth)) : startAbsolute;
 
     let yearlyDeposit = 0;
     let yearlyInterest = 0;
@@ -98,9 +108,18 @@ export const computeRDData = (proposedRDs, expectedReturns, defaultRD = 0, defau
         
         // Handle baseline RD if it exists
         if (monthlyBaselineP > 0 || baselineCompoundingBase > 0) {
-            baselineCompoundingBase += monthlyBaselineP;
-            yearlyDeposit += monthlyBaselineP;
-            globalDeposit += monthlyBaselineP;
+            // Apply new contributions ONLY if we've reached or passed the Cash Flow baseline start date
+            if (currentAbsolute >= baselineStartAbsolute) {
+                // If there's an explicit duration in the Baseline Object, stop contributing after it expires
+                const baselineDurationMonths = parseInt(defaultRDObj?.duration) ? parseInt(defaultRDObj.duration) * 12 : Infinity;
+                const monthsSinceBaseline = currentAbsolute - baselineStartAbsolute;
+                
+                if (monthsSinceBaseline < baselineDurationMonths) {
+                    baselineCompoundingBase += monthlyBaselineP;
+                    yearlyDeposit += monthlyBaselineP;
+                    globalDeposit += monthlyBaselineP;
+                }
+            }
             
             const interest = baselineCompoundingBase * periodicRate;
             baselineUncompoundedInterest += interest;
@@ -157,16 +176,19 @@ export const computeRDData = (proposedRDs, expectedReturns, defaultRD = 0, defau
 const RDCalculator = ({ allocations = [], expenseCategories = {}, assetCategories = {}, data, setData }) => {
     const expectedReturns = data?.rate ?? 7.00;
 
-    const defaultRD = parseFloat(expenseCategories?.savings?.rd?.amount !== undefined ? expenseCategories.savings.rd.amount : expenseCategories?.savings?.rd) || 0;
+    const defaultRDObj = expenseCategories?.savings?.rd || {};
     const defaultCorpus = parseFloat(assetCategories?.investments?.recurringDeposit) || 0;
 
     const setExpectedReturns = (val) => setData({ ...data, rate: val });
 
     const proposedRDs = useMemo(() => allocations.filter(a => a.type === 'Recurring Deposit'), [allocations]);
 
+    const [localCorpus, setLocalCorpus] = React.useState(defaultCorpus);
+    React.useEffect(() => { setLocalCorpus(defaultCorpus); }, [defaultCorpus]);
+
     const calculationData = useMemo(() => {
-        return computeRDData(proposedRDs, expectedReturns, defaultRD, defaultCorpus);
-    }, [proposedRDs, expectedReturns, defaultRD, defaultCorpus]);
+        return computeRDData(proposedRDs, expectedReturns, defaultRDObj, localCorpus);
+    }, [proposedRDs, expectedReturns, defaultRDObj, localCorpus]);
 
     const { schedule, totals } = calculationData;
 
@@ -215,6 +237,21 @@ const RDCalculator = ({ allocations = [], expenseCategories = {}, assetCategorie
                             </div>
 
                             <div className="form-group">
+                                <label><ShieldCheck size={16} /> Initial Investment / Current Corpus (₹)</label>
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>₹</span>
+                                    <input 
+                                        type="number" 
+                                        value={localCorpus} 
+                                        onChange={(e) => setLocalCorpus(parseFloat(e.target.value) || 0)} 
+                                        className="form-input" 
+                                        style={{ paddingLeft: '24px' }}
+                                    />
+                                </div>
+                                <small className="text-muted">Synced from your Asset configurations automatically.</small>
+                            </div>
+
+                            <div className="form-group">
                                 <label><Calculator size={16} /> Compounding Frequency</label>
                                 <div style={{ 
                                     padding: '0.75rem', 
@@ -226,6 +263,39 @@ const RDCalculator = ({ allocations = [], expenseCategories = {}, assetCategorie
                                     Quarterly (Fixed)
                                 </div>
                                 <small className="text-muted">Indian RD banking regulations strictly default to quarterly interest accrual.</small>
+                            </div>
+
+                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+                                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem' }}>Fetched RD Allocations</h3>
+                                {proposedRDs.length === 0 ? (
+                                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No future Allocations proposed natively.</div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        {proposedRDs.map((p) => (
+                                            <div key={p.id} className="card" style={{ padding: '1rem', border: '1px solid #3b82f6', background: '#eff6ff' }}>
+                                                <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#3b82f6', marginBottom: '0.5rem' }}>
+                                                    {p.name || 'RD Allocation'}
+                                                </div>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Yearly Amount</label>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{Math.round(p.amount).toLocaleString('en-IN')}</div>
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Start Date</label>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                                            {new Date(2000, p.startMonth - 1, 1).toLocaleString('default', { month: 'short' })} {p.startYear}
+                                                        </div>
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', gridColumn: '1 / -1' }}>
+                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Duration</label>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{p.duration} Years</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
 

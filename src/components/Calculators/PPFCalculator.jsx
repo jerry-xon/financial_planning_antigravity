@@ -1,47 +1,50 @@
 import React, { useMemo } from 'react';
 import { Calculator, TrendingUp } from 'lucide-react';
 
-export const computePPFData = (proposedPPFs, expectedReturns, defaultPPF = 0, defaultCorpus = 0) => {
+export const computePPFData = (proposedPPFs, expectedReturns, defaultPPFObj = {}, defaultCorpus = 0) => {
     let results = [];
     
     const today = new Date();
     let baseStartYear = today.getFullYear();
     let baseStartMonth = today.getMonth() + 1;
 
-    if (proposedPPFs.length > 0) {
+    const monthlyBaselineP = parseFloat(defaultPPFObj?.amount !== undefined ? defaultPPFObj.amount : defaultPPFObj) || 0;
+    
+    // Core PPF Logic: 15 years fixed tenure starting from either Cash flow OR earliest Allocation.
+    if (monthlyBaselineP > 0) {
+        baseStartYear = parseInt(defaultPPFObj?.startYear) || baseStartYear;
+        baseStartMonth = parseInt(defaultPPFObj?.startMonth) || baseStartMonth;
+    } else if (proposedPPFs.length > 0) {
         let earliestProposedYear = Math.min(...proposedPPFs.map(p => p.startYear));
-        if (earliestProposedYear < baseStartYear) {
+        if (earliestProposedYear <= baseStartYear) {
             baseStartYear = earliestProposedYear;
             let earliestPPF = proposedPPFs.find(p => p.startYear === baseStartYear);
-            baseStartMonth = earliestPPF ? earliestPPF.startMonth : 1;
+            baseStartMonth = earliestPPF ? earliestPPF.startMonth : baseStartMonth;
         }
     }
     
-    // Find max duration in months to cover all PPFs
-    let maxMonths = 0;
-    proposedPPFs.forEach(p => {
-        const monthsOffset = ((p.startYear - baseStartYear) * 12) + (p.startMonth - baseStartMonth);
-        // PPF duration is strictly 15 years
-        const endMonth = monthsOffset + (15 * 12);
-        if (endMonth > maxMonths) maxMonths = endMonth;
-    });
-
-    const totalMonths = maxMonths > 0 ? maxMonths : 180;
+    const startAbsolute = baseStartYear * 12 + baseStartMonth;
+    const maturityAbsolute = startAbsolute + 180 - 1; // PPF duration is strictly 15 years (180 months)
     
     let currentYearVal = baseStartYear;
     let currentMonthVal = baseStartMonth;
+    let currentAbsolute = startAbsolute;
     
     let openingBalance = parseFloat(defaultCorpus) || 0;
     let yearlyInvestment = 0;
 
-    for (let m = 0; m < totalMonths; m++) {
-        // Add monthly investments
-        let currentMonthInvestment = parseFloat(defaultPPF) || 0;
+    while (currentAbsolute <= maturityAbsolute) {
+        let currentMonthInvestment = 0;
+        
+        // Add Cash Flow Baseline mapping naturally since the loop is clamped
+        if (monthlyBaselineP > 0) {
+            currentMonthInvestment += monthlyBaselineP;
+        }
         
         proposedPPFs.forEach(p => {
-            const monthsSinceStart = ((currentYearVal - p.startYear) * 12) + (currentMonthVal - p.startMonth);
-            // PPF duration is strictly 15 years (180 months)
-            if (monthsSinceStart >= 0 && monthsSinceStart < 180) {
+            const pStartAbsolute = p.startYear * 12 + p.startMonth;
+            const pEndAbsolute = pStartAbsolute + (parseInt(p.duration) * 12) - 1;
+            if (currentAbsolute >= pStartAbsolute && currentAbsolute <= pEndAbsolute) {
                 currentMonthInvestment += (parseFloat(p.amount) / 12) || 0;
             }
         });
@@ -49,7 +52,7 @@ export const computePPFData = (proposedPPFs, expectedReturns, defaultPPF = 0, de
         yearlyInvestment += currentMonthInvestment;
 
         // Rollover logic at the end of the calendar year or absolute end of tenure
-        if (currentMonthVal === 12 || m === totalMonths - 1) {
+        if (currentMonthVal === 12 || currentAbsolute === maturityAbsolute) {
             // Annual compounding: Interest based on Opening Balance + any investments made during the year
             const interest = (openingBalance + yearlyInvestment) * ((parseFloat(expectedReturns) || 0) / 100);
             const endValue = openingBalance + yearlyInvestment + interest;
@@ -64,12 +67,13 @@ export const computePPFData = (proposedPPFs, expectedReturns, defaultPPF = 0, de
             // Prep next year
             openingBalance = endValue;
             yearlyInvestment = 0;
-            if (m < totalMonths - 1) {
+            if (currentAbsolute < maturityAbsolute) {
                 currentYearVal++;
             }
         }
 
         // Increment month
+        currentAbsolute++;
         currentMonthVal = (currentMonthVal % 12) + 1;
     }
 
@@ -80,16 +84,19 @@ const PPFCalculator = ({ allocations = [], expenseCategories = {}, assetCategori
     const expectedReturns = data?.rate ?? 7.10;
     const setExpectedReturns = (val) => setData({ ...data, rate: val });
 
-    const defaultPPF = parseFloat(expenseCategories?.savings?.ppf?.amount !== undefined ? expenseCategories.savings.ppf.amount : expenseCategories?.savings?.ppf) || 0;
+    const defaultPPFObj = expenseCategories?.savings?.ppf || {};
     const defaultCorpus = parseFloat(assetCategories?.retirement?.ppf) || 0;
 
     const proposedPPFs = useMemo(() => {
         return allocations.filter(a => a.type === 'PPF');
     }, [allocations]);
 
+    const [localCorpus, setLocalCorpus] = React.useState(defaultCorpus);
+    React.useEffect(() => { setLocalCorpus(defaultCorpus); }, [defaultCorpus]);
+
     const calculationData = useMemo(() => {
-        return computePPFData(proposedPPFs, expectedReturns, defaultPPF, defaultCorpus);
-    }, [proposedPPFs, expectedReturns, defaultPPF, defaultCorpus]);
+        return computePPFData(proposedPPFs, expectedReturns, defaultPPFObj, localCorpus);
+    }, [proposedPPFs, expectedReturns, defaultPPFObj, localCorpus]);
 
     const finalValue = calculationData.length > 0 ? calculationData[calculationData.length - 1].endValue : 0;
     const totalInvested = calculationData.reduce((sum, row) => sum + row.investment, 0);
@@ -136,6 +143,21 @@ const PPFCalculator = ({ allocations = [], expenseCategories = {}, assetCategori
                                     className="form-input" 
                                 />
                                 <small className="text-muted">Range: 5.00% to 9.00%. Default: 7.10%.</small>
+                            </div>
+
+                            <div className="form-group">
+                                <label><Calculator size={16} /> Initial Investment / Current Corpus (₹)</label>
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>₹</span>
+                                    <input 
+                                        type="number" 
+                                        value={localCorpus} 
+                                        onChange={(e) => setLocalCorpus(parseFloat(e.target.value) || 0)} 
+                                        className="form-input" 
+                                        style={{ paddingLeft: '24px' }}
+                                    />
+                                </div>
+                                <small className="text-muted">Synced from your Asset configurations automatically.</small>
                             </div>
 
                             <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>

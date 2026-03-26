@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Calculator, TrendingUp, Wallet, ArrowRight, ShieldCheck } from 'lucide-react';
 
-export const computeFDData = (proposedFDs, expectedReturns, frequency, defaultCorpus = 0) => {
+export const computeFDData = (proposedFDs, expectedReturns, frequency, defaultFDObj = {}) => {
     let freqMonths = 3;
     if (frequency === 'Monthly') freqMonths = 1;
     if (frequency === 'Half-Yearly') freqMonths = 6;
@@ -10,18 +10,30 @@ export const computeFDData = (proposedFDs, expectedReturns, frequency, defaultCo
     const today = new Date();
     let baseStartYear = today.getFullYear();
     let baseStartMonth = today.getMonth() + 1;
+    
     let startAbsolute = baseStartYear * 12 + baseStartMonth;
     let latestEndAbsolute = startAbsolute + 12; // default 1 year projection if no active proposal
 
+    const monthlyBaselineP = parseFloat(defaultFDObj?.amount !== undefined ? defaultFDObj.amount : defaultFDObj) || 0;
+
+    if (monthlyBaselineP > 0) {
+        baseStartYear = parseInt(defaultFDObj?.startYear) || baseStartYear;
+        baseStartMonth = parseInt(defaultFDObj?.startMonth) || baseStartMonth;
+        startAbsolute = baseStartYear * 12 + baseStartMonth;
+        const baselineEndAbsolute = startAbsolute + (parseInt(defaultFDObj?.duration || 10) * 12) - 1;
+        if (baselineEndAbsolute > latestEndAbsolute) latestEndAbsolute = baselineEndAbsolute;
+    }
+
     if (proposedFDs.length > 0) {
         let earliestProposedYear = Math.min(...proposedFDs.map(p => p.startYear));
-        if (earliestProposedYear < baseStartYear) {
+        if (earliestProposedYear <= baseStartYear) {
             baseStartYear = earliestProposedYear;
             let earliestFDs = proposedFDs.filter(p => p.startYear === baseStartYear);
-            baseStartMonth = Math.min(...earliestFDs.map(p => p.startMonth));
+            baseStartMonth = Math.min(baseStartMonth, ...earliestFDs.map(p => p.startMonth));
             startAbsolute = baseStartYear * 12 + baseStartMonth;
         }
-        latestEndAbsolute = Math.max(...proposedFDs.map(p => (p.startYear * 12 + p.startMonth) + (parseInt(p.duration) * 12) - 1));
+        const proposedMaxMap = Math.max(...proposedFDs.map(p => (p.startYear * 12 + p.startMonth) + (parseInt(p.duration) * 12) - 1));
+        if (proposedMaxMap > latestEndAbsolute) latestEndAbsolute = proposedMaxMap;
     }
 
     let fds = proposedFDs.map(p => ({
@@ -36,18 +48,27 @@ export const computeFDData = (proposedFDs, expectedReturns, frequency, defaultCo
         matured: false
     }));
 
+    if (monthlyBaselineP > 0) {
+        const blStart = (parseInt(defaultFDObj?.startYear || baseStartYear) * 12) + parseInt(defaultFDObj?.startMonth || baseStartMonth);
+        fds.push({
+            id: 'baseline-fd',
+            startAbsolute: blStart,
+            endAbsolute: blStart + (parseInt(defaultFDObj?.duration || 10) * 12) - 1,
+            principal: monthlyBaselineP,
+            compoundingBase: monthlyBaselineP,
+            uncompoundedInterest: 0,
+            totalInterest: 0,
+            active: false,
+            matured: false
+        });
+    }
+
     const periodicRate = ((parseFloat(expectedReturns) || 0) / 100) / 12;
 
     let schedule = [];
     let currentAbsolute = startAbsolute;
     let currentYearVal = baseStartYear;
     let currentMonthVal = baseStartMonth;
-
-    let yearlyOpening = parseFloat(defaultCorpus) || 0;
-    
-    // Baseline FD simulation (compounds infinitely alongside timeline unless matured)
-    let baselineCompoundingBase = parseFloat(defaultCorpus) || 0;
-    let baselineUncompoundedInterest = 0;
 
     let yearlyDeposit = 0;
     let yearlyInterest = 0;
@@ -57,7 +78,7 @@ export const computeFDData = (proposedFDs, expectedReturns, frequency, defaultCo
     let globalDeposit = 0;
 
     // Calculate initial opening sum for the very first year
-    yearlyOpening += fds.filter(f => f.startAbsolute === currentAbsolute).reduce((sum, f) => sum + f.principal, 0);
+    let yearlyOpening = fds.filter(f => f.startAbsolute === currentAbsolute).reduce((sum, f) => sum + f.principal, 0);
 
     while (currentAbsolute <= latestEndAbsolute) {
         let monthInterest = 0;
@@ -99,29 +120,12 @@ export const computeFDData = (proposedFDs, expectedReturns, frequency, defaultCo
             }
         });
         
-        // Handle baseline FD compounding
-        if (baselineCompoundingBase > 0) {
-            const interest = baselineCompoundingBase * periodicRate;
-            baselineUncompoundedInterest += interest;
-            monthInterest += interest;
-            globalInterest += interest;
-
-            const monthsActive = currentAbsolute - startAbsolute + 1;
-            if (monthsActive % freqMonths === 0) {
-                baselineCompoundingBase += baselineUncompoundedInterest;
-                baselineUncompoundedInterest = 0;
-            }
-            
-            // Treat the default corpus as continuously auto-renewing or indefinitely compounding inside the projection
-        }
-
         yearlyInterest += monthInterest;
 
         if (currentMonthVal === 12 || currentAbsolute === latestEndAbsolute) {
             // Calculate closing balance as sum of all active FDs (compoundingBase + uncompounded)
             let closingBalance = fds.filter(f => f.active && !f.matured)
                                     .reduce((sum, f) => sum + f.compoundingBase + f.uncompoundedInterest, 0);
-            closingBalance += baselineCompoundingBase + baselineUncompoundedInterest;
 
             schedule.push({
                 year: currentYearVal,
@@ -149,7 +153,7 @@ export const computeFDData = (proposedFDs, expectedReturns, frequency, defaultCo
     const totals = {
         globalDeposit,
         globalInterest,
-        finalMaturity: fds.filter(f => f.matured).reduce((sum, f) => sum + f.compoundingBase, 0)
+        finalMaturity: fds.filter(f => f.matured).reduce((sum, f) => sum + f.compoundingBase, 0) || fds.reduce((sum, f) => sum + f.compoundingBase + f.uncompoundedInterest, 0)
     };
 
     return { schedule, totals };
@@ -166,9 +170,12 @@ const FDCalculator = ({ allocations = [], assetCategories = {}, data, setData })
 
     const proposedFDs = useMemo(() => allocations.filter(a => a.type === 'Fixed Deposit'), [allocations]);
 
+    const [localCorpus, setLocalCorpus] = React.useState(defaultCorpus);
+    React.useEffect(() => { setLocalCorpus(defaultCorpus); }, [defaultCorpus]);
+
     const calculationData = useMemo(() => {
-        return computeFDData(proposedFDs, expectedReturns, frequency, defaultCorpus);
-    }, [proposedFDs, expectedReturns, frequency, defaultCorpus]);
+        return computeFDData(proposedFDs, expectedReturns, frequency, localCorpus);
+    }, [proposedFDs, expectedReturns, frequency, localCorpus]);
 
     const { schedule, totals } = calculationData;
 
@@ -217,6 +224,21 @@ const FDCalculator = ({ allocations = [], assetCategories = {}, data, setData })
                             </div>
 
                             <div className="form-group">
+                                <label><ShieldCheck size={16} /> Initial Investment / Current Corpus (₹)</label>
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>₹</span>
+                                    <input 
+                                        type="number" 
+                                        value={localCorpus} 
+                                        onChange={(e) => setLocalCorpus(parseFloat(e.target.value) || 0)} 
+                                        className="form-input" 
+                                        style={{ paddingLeft: '24px' }}
+                                    />
+                                </div>
+                                <small className="text-muted">Synced from your Asset configurations automatically.</small>
+                            </div>
+
+                            <div className="form-group">
                                 <label><Calculator size={16} /> Compounding Frequency</label>
                                 <select 
                                     value={frequency} 
@@ -229,6 +251,39 @@ const FDCalculator = ({ allocations = [], assetCategories = {}, data, setData })
                                     <option value="Annually">Annually</option>
                                 </select>
                                 <small className="text-muted">Indian banks strictly default to Quarterly compounding.</small>
+                            </div>
+
+                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+                                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem' }}>Fetched FD Allocations</h3>
+                                {proposedFDs.length === 0 ? (
+                                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No future Allocations proposed natively.</div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        {proposedFDs.map((p) => (
+                                            <div key={p.id} className="card" style={{ padding: '1rem', border: '1px solid #059669', background: '#ecfdf5' }}>
+                                                <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#059669', marginBottom: '0.5rem' }}>
+                                                    {p.name || 'FD Allocation'}
+                                                </div>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Deposit Amount</label>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{Math.round(p.amount).toLocaleString('en-IN')}</div>
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Start Date</label>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                                            {new Date(2000, p.startMonth - 1, 1).toLocaleString('default', { month: 'short' })} {p.startYear}
+                                                        </div>
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', gridColumn: '1 / -1' }}>
+                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Duration</label>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{p.duration} Years</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Target, X, Calendar, DollarSign, Clock } from 'lucide-react';
 
 const InvestmentDetailsModal = ({ isOpen, onClose, onSave, initialData, investmentTypeTitle }) => {
@@ -8,7 +9,8 @@ const InvestmentDetailsModal = ({ isOpen, onClose, onSave, initialData, investme
     const [formData, setFormData] = useState({
         amount: '',
         startMonth: currentMonthVal,
-        startYear: currentYearVal
+        startYear: currentYearVal,
+        duration: investmentTypeTitle === 'PPF' ? 15 : 10
     });
 
     useEffect(() => {
@@ -17,17 +19,19 @@ const InvestmentDetailsModal = ({ isOpen, onClose, onSave, initialData, investme
                 setFormData({
                     amount: initialData.amount || '',
                     startMonth: initialData.startMonth || currentMonthVal,
-                    startYear: initialData.startYear || currentYearVal
+                    startYear: initialData.startYear || currentYearVal,
+                    duration: initialData.duration || (investmentTypeTitle === 'PPF' ? 15 : 10)
                 });
             } else {
                 setFormData({
                     amount: initialData || '',
                     startMonth: currentMonthVal,
-                    startYear: currentYearVal
+                    startYear: currentYearVal,
+                    duration: investmentTypeTitle === 'PPF' ? 15 : 10
                 });
             }
         }
-    }, [isOpen, initialData, currentMonthVal, currentYearVal]);
+    }, [isOpen, initialData, currentMonthVal, currentYearVal, investmentTypeTitle]);
 
     if (!isOpen) return null;
 
@@ -41,13 +45,16 @@ const InvestmentDetailsModal = ({ isOpen, onClose, onSave, initialData, investme
             onSave({
                 amount: val,
                 startMonth: parseInt(formData.startMonth, 10),
-                startYear: parseInt(formData.startYear, 10)
+                startYear: parseInt(formData.startYear, 10),
+                duration: investmentTypeTitle === 'PPF' ? 15 : (parseInt(formData.duration, 10) || 10)
             });
         }
         onClose();
     };
 
-    return (
+    const isPPF = investmentTypeTitle === 'PPF';
+
+    return createPortal(
         <div className="modal-overlay">
             <div className="modal-content" style={{ maxWidth: '500px' }}>
                 <div className="modal-header">
@@ -108,6 +115,33 @@ const InvestmentDetailsModal = ({ isOpen, onClose, onSave, initialData, investme
                                 </select>
                             </div>
                         </div>
+
+                        {/* Extended Properties: Tenure Binding */}
+                        {isPPF ? (
+                            <div style={{ gridColumn: '1 / -1', background: 'var(--bg-card)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <span style={{ fontWeight: 600, color: 'var(--text-main)', display: 'block' }}>Mandatory Tenure: 15 Years</span>
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Maturity Date: {monthNames[parseInt(formData.startMonth, 10) - 1]} {parseInt(formData.startYear, 10) + 15}</span>
+                                </div>
+                                <span style={{ padding: '0.25rem 0.5rem', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>AUTO-LOCKED</span>
+                            </div>
+                        ) : (
+                            <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+                                <label>Tenure / Duration (Years)</label>
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}><Clock size={16} /></span>
+                                    <input 
+                                        type="number"
+                                        min="1"
+                                        max="60"
+                                        value={formData.duration}
+                                        onChange={(e) => setFormData({...formData, duration: e.target.value})}
+                                        style={{ paddingLeft: '32px' }}
+                                        placeholder="Enter duration in years"
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -142,7 +176,8 @@ const InvestmentDetailsModal = ({ isOpen, onClose, onSave, initialData, investme
                     to { opacity: 1; transform: translateY(0) scale(1); }
                 }
             `}</style>
-        </div>
+        </div>,
+        document.body
     );
 };
 

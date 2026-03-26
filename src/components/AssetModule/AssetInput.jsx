@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronRight, Settings } from 'lucide-react';
+import InvestmentDetailsModal from '../CashFlowModule/InvestmentDetailsModal';
 
 const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, setLiabilityCategories, onCalculate }) => {
     const [openAccordions, setOpenAccordions] = useState({
         insurance: false,
         retirement: false
     });
+
+    const [activeModal, setActiveModal] = useState(null);
 
     const toggleAccordion = (name) => {
         setOpenAccordions(prev => ({ ...prev, [name]: !prev[name] }));
@@ -32,6 +35,17 @@ const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, 
             ...prev,
             [category]: { ...prev[category], [item]: value }
         }));
+    };
+
+    const handleModalSave = (configObj) => {
+        if (!activeModal) return;
+        
+        if (!configObj) {
+            handleAssetChange(activeModal.category, activeModal.item, '');
+        } else {
+            handleAssetChange(activeModal.category, activeModal.item, configObj);
+        }
+        setActiveModal(null);
     };
 
     const addCustomField = (type) => {
@@ -186,9 +200,30 @@ const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, 
                             <label>Mutual Funds Portfolio</label>
                             <input type="number" value={safeAssetValue('investments', 'mutualFunds')} onChange={(e) => handleAssetChange('investments', 'mutualFunds', e.target.value)} placeholder="0" />
                         </div>
-                        <div className="input-group">
-                            <label>Fixed Deposit</label>
-                            <input type="number" value={safeAssetValue('investments', 'fixedDeposit')} onChange={(e) => handleAssetChange('investments', 'fixedDeposit', e.target.value)} placeholder="0" />
+                        <div className="input-group relative-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                Fixed Deposit
+                                {typeof safeAssetValue('investments', 'fixedDeposit') === 'object' && <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 700, background: '#d1fae5', padding: '2px 6px', borderRadius: '4px' }}>Timeline Configured</span>}
+                            </label>
+                            <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                                <input 
+                                    type="number" 
+                                    readOnly={typeof safeAssetValue('investments', 'fixedDeposit') === 'object'}
+                                    value={safeAssetValue('investments', 'fixedDeposit')?.amount ?? safeAssetValue('investments', 'fixedDeposit')} 
+                                    onChange={(e) => handleAssetChange('investments', 'fixedDeposit', e.target.value)} 
+                                    placeholder="0" 
+                                    style={{ flex: 1 }}
+                                    className="form-input"
+                                />
+                                <button 
+                                    className="btn-outline btn-icon" 
+                                    onClick={() => setActiveModal({ category: 'investments', item: 'fixedDeposit', title: 'Fixed Deposit (FD)' })}
+                                    style={{ padding: '0 0.75rem' }}
+                                    title="Configure FD Timeline Variables"
+                                >
+                                    <Settings size={18} />
+                                </button>
+                            </div>
                         </div>
                         <div className="input-group">
                             <label>Recurring Deposit</label>
@@ -446,6 +481,14 @@ const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, 
                     box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
                 }
             `}</style>
+
+            <InvestmentDetailsModal 
+                isOpen={!!activeModal}
+                onClose={() => setActiveModal(null)}
+                onSave={handleModalSave}
+                initialData={activeModal ? safeAssetValue(activeModal.category, activeModal.item) : null}
+                investmentTypeTitle={activeModal?.title || 'Investment'}
+            />
         </div>
     );
 };

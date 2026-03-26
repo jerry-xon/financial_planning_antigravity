@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Calculator, TrendingUp, HeartHandshake, Briefcase } from 'lucide-react';
 
-export const computeNPSData = (proposedNPS, expectedReturns, annuityPercent, annuityRate, selfMember, defaultNPS = 0, defaultCorpus = 0) => {
+export const computeNPSData = (proposedNPS, expectedReturns, annuityPercent, annuityRate, selfMember, defaultNPSObj = {}, defaultCorpus = 0) => {
     // Determine user demographics relative to absolute dates
     const today = new Date();
     let birthYear = today.getFullYear() - 30; // default age 30
@@ -21,16 +21,23 @@ export const computeNPSData = (proposedNPS, expectedReturns, annuityPercent, ann
     let baseStartYear = today.getFullYear();
     let baseStartMonth = today.getMonth() + 1;
     
+    const monthlyBaselineP = parseFloat(defaultNPSObj?.amount !== undefined ? defaultNPSObj.amount : defaultNPSObj) || 0;
+    if (monthlyBaselineP > 0) {
+        baseStartYear = parseInt(defaultNPSObj?.startYear) || baseStartYear;
+        baseStartMonth = parseInt(defaultNPSObj?.startMonth) || baseStartMonth;
+    }
+    
     if (proposedNPS.length > 0) {
         const earliestProposedYear = Math.min(...proposedNPS.map(p => p.startYear));
         if (earliestProposedYear < baseStartYear) {
             baseStartYear = earliestProposedYear;
             const earliestNPS = proposedNPS.find(p => p.startYear === baseStartYear);
-            baseStartMonth = earliestNPS ? earliestNPS.startMonth : 1;
+            baseStartMonth = earliestNPS ? Math.min(baseStartMonth, earliestNPS.startMonth) : baseStartMonth;
         }
     }
     
     const startAbsolute = baseStartYear * 12 + baseStartMonth;
+    const baselineStartAbsolute = monthlyBaselineP > 0 ? (parseInt(defaultNPSObj?.startYear || baseStartYear) * 12 + parseInt(defaultNPSObj?.startMonth || baseStartMonth)) : startAbsolute;
 
     let schedule = [];
     let currentAbsolute = startAbsolute;
@@ -46,7 +53,16 @@ export const computeNPSData = (proposedNPS, expectedReturns, annuityPercent, ann
     const monthlyRate = ((parseFloat(expectedReturns) || 0) / 100) / 12;
 
     while (currentAbsolute <= maturityAbsolute) {
-        let monthlyInvestment = parseFloat(defaultNPS) || 0;
+        let monthlyInvestment = 0;
+        
+        // Handle Cash Flow Baseline
+        if (monthlyBaselineP > 0 && currentAbsolute >= baselineStartAbsolute) {
+            const baselineDurationMonths = parseInt(defaultNPSObj?.duration) ? parseInt(defaultNPSObj.duration) * 12 : Infinity;
+            if ((currentAbsolute - baselineStartAbsolute) < baselineDurationMonths) {
+                monthlyInvestment += monthlyBaselineP;
+            }
+        }
+        
         proposedNPS.forEach(p => {
             const pStartAbsolute = p.startYear * 12 + p.startMonth;
             const pEndAbsolute = pStartAbsolute + (parseInt(p.duration) * 12) - 1;
@@ -115,7 +131,7 @@ const NPSCalculator = ({ allocations = [], familyMembers = [], expenseCategories
     const annuityPercent = data?.annuity ?? 40;
     const annuityRate = data?.annuityRate ?? 6.00;
 
-    const defaultNPS = parseFloat(expenseCategories?.savings?.nps?.amount !== undefined ? expenseCategories.savings.nps.amount : expenseCategories?.savings?.nps) || 0;
+    const defaultNPSObj = expenseCategories?.savings?.nps || {};
     const defaultCorpus = parseFloat(assetCategories?.retirement?.nps) || 0;
 
     const setExpectedReturns = (val) => setData({ ...data, rate: val });
@@ -125,9 +141,12 @@ const NPSCalculator = ({ allocations = [], familyMembers = [], expenseCategories
     const proposedNPS = useMemo(() => allocations.filter(a => a.type === 'NPS'), [allocations]);
     const selfMember = useMemo(() => familyMembers.find(m => m.relation === 'Self') || familyMembers[0], [familyMembers]);
 
+    const [localCorpus, setLocalCorpus] = React.useState(defaultCorpus);
+    React.useEffect(() => { setLocalCorpus(defaultCorpus); }, [defaultCorpus]);
+
     const calculationData = useMemo(() => {
-        return computeNPSData(proposedNPS, expectedReturns, annuityPercent, annuityRate, selfMember, defaultNPS, defaultCorpus);
-    }, [proposedNPS, expectedReturns, annuityPercent, annuityRate, selfMember, defaultNPS, defaultCorpus]);
+        return computeNPSData(proposedNPS, expectedReturns, annuityPercent, annuityRate, selfMember, defaultNPSObj, localCorpus);
+    }, [proposedNPS, expectedReturns, annuityPercent, annuityRate, selfMember, defaultNPSObj, localCorpus]);
 
     const { schedule, totals } = calculationData;
 
@@ -151,7 +170,7 @@ const NPSCalculator = ({ allocations = [], familyMembers = [], expenseCategories
                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '2.5rem' }}>
                         {/* Left Column: Inputs */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <div className="form-group">
+                             <div className="form-group">
                                 <label><TrendingUp size={16} /> Expected Returns (CAGR %)</label>
                                 <input 
                                     type="number" 
@@ -173,6 +192,21 @@ const NPSCalculator = ({ allocations = [], familyMembers = [], expenseCategories
                                     className="form-input" 
                                 />
                                 <small className="text-muted">Market tracking rate: 8% to 12%. Default: 10%.</small>
+                            </div>
+
+                            <div className="form-group">
+                                <label><Briefcase size={16} /> Initial Investment / Current Corpus (₹)</label>
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>₹</span>
+                                    <input 
+                                        type="number" 
+                                        value={localCorpus} 
+                                        onChange={(e) => setLocalCorpus(parseFloat(e.target.value) || 0)} 
+                                        className="form-input" 
+                                        style={{ paddingLeft: '24px' }}
+                                    />
+                                </div>
+                                <small className="text-muted">Synced from your Asset configurations automatically.</small>
                             </div>
 
                             <div className="form-group">
@@ -221,6 +255,39 @@ const NPSCalculator = ({ allocations = [], familyMembers = [], expenseCategories
                                     className="form-input" 
                                 />
                                 <small className="text-muted">Pension yield parameter: 5% to 8%. Default: 6%.</small>
+                            </div>
+
+                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+                                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem' }}>Fetched NPS Allocations</h3>
+                                {proposedNPS.length === 0 ? (
+                                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No future Allocations proposed natively.</div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        {proposedNPS.map((p) => (
+                                            <div key={p.id} className="card" style={{ padding: '1rem', border: '1px solid #10b981', background: '#ecfdf5' }}>
+                                                <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#10b981', marginBottom: '0.5rem' }}>
+                                                    {p.name || 'NPS Allocation'}
+                                                </div>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Yearly Amount</label>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{Math.round(p.amount).toLocaleString('en-IN')}</div>
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Start Date</label>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                                            {new Date(2000, p.startMonth - 1, 1).toLocaleString('default', { month: 'short' })} {p.startYear}
+                                                        </div>
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', gridColumn: '1 / -1' }}>
+                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Duration</label>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{p.duration} Years</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
