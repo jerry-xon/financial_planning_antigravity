@@ -26,6 +26,20 @@ const GoalInput = ({ goals, setGoals, onCalculate }) => {
         setGoals(prev => prev.filter(goal => goal.id !== id));
     };
 
+    const clearGoal = (id) => {
+        setGoals(prev => prev.map(goal => 
+            goal.id === id ? {
+                ...goal,
+                yearsToGoal: '',
+                presentValue: '',
+                inflationRate: 6,
+                profession: '',
+                courseDuration: '',
+                totalCourseCost: ''
+            } : goal
+        ));
+    };
+
     return (
         <div className="goal-input">
             <div className="goals-table-container" style={{ overflowX: 'auto' }}>
@@ -33,7 +47,8 @@ const GoalInput = ({ goals, setGoals, onCalculate }) => {
                     <thead>
                         <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>
                             <th style={{ padding: '1rem' }}>Life Goal Name</th>
-                            <th style={{ padding: '1rem' }}>Time (Years)</th>
+                            <th style={{ padding: '1rem' }}>Years remaining to goal</th>
+                            <th style={{ padding: '1rem' }}>Year</th>
                             <th style={{ padding: '1rem' }}>Present Value (₹)</th>
                             <th style={{ padding: '1rem' }}>Inflation (%)</th>
                             <th style={{ padding: '1rem', width: '50px' }}></th>
@@ -106,6 +121,16 @@ const GoalInput = ({ goals, setGoals, onCalculate }) => {
                                     </td>
                                     <td style={{ padding: '0.75rem' }}>
                                         <input
+                                            type="text"
+                                            value={goal.yearsToGoal ? new Date().getFullYear() + parseInt(goal.yearsToGoal, 10) : ''}
+                                            readOnly
+                                            placeholder="Year"
+                                            className="input-minimal"
+                                            style={{ width: '80px', background: 'var(--bg-main)', cursor: 'not-allowed' }}
+                                        />
+                                    </td>
+                                    <td style={{ padding: '0.75rem' }}>
+                                        <input
                                             type="number"
                                             value={goal.presentValue || ''}
                                             onChange={(e) => handleGoalChange(goal.id, 'presentValue', e.target.value)}
@@ -126,24 +151,22 @@ const GoalInput = ({ goals, setGoals, onCalculate }) => {
                                         />
                                     </td>
                                     <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                                        {!goal.isPredefined && (
-                                            <button 
-                                                onClick={() => deleteGoal(goal.id)}
-                                                style={{ 
-                                                    background: 'transparent', 
-                                                    border: 'none', 
-                                                    color: '#ff4d4f', 
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    padding: '4px'
-                                                }}
-                                                title="Delete goal"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        )}
+                                        <button 
+                                            onClick={() => goal.isPredefined ? clearGoal(goal.id) : deleteGoal(goal.id)}
+                                            style={{ 
+                                                background: 'transparent', 
+                                                border: 'none', 
+                                                color: '#ff4d4f', 
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                padding: '4px'
+                                            }}
+                                            title={goal.isPredefined ? "Clear goal" : "Delete goal"}
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
                                     </td>
                                 </tr>
                             );

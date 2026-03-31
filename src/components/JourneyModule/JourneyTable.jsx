@@ -104,14 +104,40 @@ const JourneyTable = ({ projections }) => {
                                             <span>Insurance Premiums</span>
                                             <strong>{formatCurrency(row.insurancePremium)}</strong>
                                         </div>
-                                        <div className="breakdown-item">
-                                            <span>RD</span>
-                                            <strong>{formatCurrency(row.savingsBreakdown.rd)}</strong>
-                                        </div>
-                                        <div className="breakdown-item">
-                                            <span>FD</span>
-                                            <strong>{formatCurrency(row.savingsBreakdown.fd)}</strong>
-                                        </div>
+                                        {row.savingsBreakdown.rdList && row.savingsBreakdown.rdList.length > 0 && row.savingsBreakdown.rdTotal > 0 ? (
+                                            row.savingsBreakdown.rdList.map((rd, i) => {
+                                                const amt = parseFloat(rd?.amount !== undefined ? rd.amount : rd) || 0;
+                                                if (amt === 0) return null;
+                                                return (
+                                                    <div className="breakdown-item" key={`rd-${i}`}>
+                                                        <span>RD #{i + 1}</span>
+                                                        <strong>{formatCurrency(amt * 12)}</strong>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <div className="breakdown-item">
+                                                <span>RD</span>
+                                                <strong>{formatCurrency(row.savingsBreakdown.rdTotal || row.savingsBreakdown.rd || 0)}</strong>
+                                            </div>
+                                        )}
+                                        {row.savingsBreakdown.fdList && row.savingsBreakdown.fdList.length > 0 && row.savingsBreakdown.fdTotal > 0 ? (
+                                            row.savingsBreakdown.fdList.map((fd, i) => {
+                                                const amt = parseFloat(fd?.amount !== undefined ? fd.amount : fd) || 0;
+                                                if (amt === 0) return null;
+                                                return (
+                                                    <div className="breakdown-item" key={`fd-${i}`}>
+                                                        <span>FD #{i + 1}</span>
+                                                        <strong>{formatCurrency(amt * 12)}</strong>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <div className="breakdown-item">
+                                                <span>FD</span>
+                                                <strong>{formatCurrency(row.savingsBreakdown.fdTotal || row.savingsBreakdown.fd || 0)}</strong>
+                                            </div>
+                                        )}
                                         <div className="breakdown-item">
                                             <span>PPF</span>
                                             <strong>{formatCurrency(row.savingsBreakdown.ppf)}</strong>

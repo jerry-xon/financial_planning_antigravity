@@ -19,9 +19,15 @@ const FulfillmentModule = ({
     onBack 
 }) => {
     
-    // 1. Filter goals to only those with assigned values
+    // 1. Filter and sort goals to only those with assigned values, arranged chronologically
     const activeGoals = useMemo(() => {
-        return goals.filter(g => parseFloat(g.futureValue || g.presentValue || 0) > 0);
+        return goals
+            .filter(g => parseFloat(g.futureValue || g.presentValue || 0) > 0)
+            .sort((a, b) => {
+                const yearsA = parseFloat(a.yearsToGoal) || 0;
+                const yearsB = parseFloat(b.yearsToGoal) || 0;
+                return yearsA - yearsB;
+            });
     }, [goals]);
 
     // 2. Compute calculator data once
