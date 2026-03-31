@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Calculator, TrendingUp, Wallet, ArrowRight, ShieldCheck } from 'lucide-react';
 
-export const computeFDData = (proposedFDs, expectedReturns, frequency, defaultFDObj = {}) => {
+export const computeFDData = (proposedFDs, expectedReturns, frequency, rawBaselineFDs = []) => {
     let freqMonths = 3;
     if (frequency === 'Monthly') freqMonths = 1;
     if (frequency === 'Half-Yearly') freqMonths = 6;
@@ -14,15 +14,18 @@ export const computeFDData = (proposedFDs, expectedReturns, frequency, defaultFD
     let startAbsolute = baseStartYear * 12 + baseStartMonth;
     let latestEndAbsolute = startAbsolute + 12; // default 1 year projection if no active proposal
 
-    const monthlyBaselineP = parseFloat(defaultFDObj?.amount !== undefined ? defaultFDObj.amount : defaultFDObj) || 0;
-
-    if (monthlyBaselineP > 0) {
-        baseStartYear = parseInt(defaultFDObj?.startYear) || baseStartYear;
-        baseStartMonth = parseInt(defaultFDObj?.startMonth) || baseStartMonth;
-        startAbsolute = baseStartYear * 12 + baseStartMonth;
-        const baselineEndAbsolute = startAbsolute + (parseInt(defaultFDObj?.duration || 10) * 12) - 1;
-        if (baselineEndAbsolute > latestEndAbsolute) latestEndAbsolute = baselineEndAbsolute;
-    }
+    const baselineFDs = Array.isArray(rawBaselineFDs) ? rawBaselineFDs : (rawBaselineFDs ? [rawBaselineFDs] : []);
+    
+    baselineFDs.forEach(fd => {
+        const p = parseFloat(fd?.amount !== undefined ? fd.amount : fd) || 0;
+        if (p > 0) {
+            baseStartYear = Math.min(baseStartYear, parseInt(fd?.startYear) || baseStartYear);
+            baseStartMonth = Math.min(baseStartMonth, parseInt(fd?.startMonth) || baseStartMonth);
+            startAbsolute = baseStartYear * 12 + baseStartMonth;
+            const endAbsolute = startAbsolute + (parseInt(fd?.duration || 10) * 12) - 1;
+            if (endAbsolute > latestEndAbsolute) latestEndAbsolute = endAbsolute;
+        }
+    });
 
     if (proposedFDs.length > 0) {
         let earliestProposedYear = Math.min(...proposedFDs.map(p => p.startYear));
@@ -48,20 +51,23 @@ export const computeFDData = (proposedFDs, expectedReturns, frequency, defaultFD
         matured: false
     }));
 
-    if (monthlyBaselineP > 0) {
-        const blStart = (parseInt(defaultFDObj?.startYear || baseStartYear) * 12) + parseInt(defaultFDObj?.startMonth || baseStartMonth);
-        fds.push({
-            id: 'baseline-fd',
-            startAbsolute: blStart,
-            endAbsolute: blStart + (parseInt(defaultFDObj?.duration || 10) * 12) - 1,
-            principal: monthlyBaselineP,
-            compoundingBase: monthlyBaselineP,
-            uncompoundedInterest: 0,
-            totalInterest: 0,
-            active: false,
-            matured: false
-        });
-    }
+    baselineFDs.forEach((fd, idx) => {
+        const p = parseFloat(fd?.amount !== undefined ? fd.amount : fd) || 0;
+        if (p > 0) {
+            const blStart = (parseInt(fd?.startYear || baseStartYear) * 12) + parseInt(fd?.startMonth || baseStartMonth);
+            fds.push({
+                id: `baseline-fd-${idx}`,
+                startAbsolute: blStart,
+                endAbsolute: blStart + (parseInt(fd?.duration || 1) * 12) - 1, // Fix: default FD duration is generally 1 year
+                principal: p,
+                compoundingBase: p,
+                uncompoundedInterest: 0,
+                totalInterest: 0,
+                active: false,
+                matured: false
+            });
+        }
+    });
 
     const periodicRate = ((parseFloat(expectedReturns) || 0) / 100) / 12;
 
@@ -330,24 +336,27 @@ const FDCalculator = ({ allocations = [], assetCategories = {}, data, setData })
     const fdsToRender = [];
 
     // 1. Check for Active Baseline FD
-    const defaultFDObj = assetCategories?.investments?.fixedDeposit || {};
-    const defaultCorpusValue = parseFloat(defaultFDObj?.amount !== undefined ? defaultFDObj.amount : defaultFDObj) || 0;
+    const rawFD = assetCategories?.investments?.fixedDeposit;
+    const fdArray = Array.isArray(rawFD) ? rawFD : (rawFD ? [rawFD] : []);
 
-    if (defaultCorpusValue > 0) {
-        fdsToRender.push({
-            fdKey: 'active',
-            title: 'Active Fixed Deposit (Asset Synchronized)',
-            amount: defaultCorpusValue,
-            rate: data?.rate ?? 7.00,
-            frequency: data?.frequency ?? 'Quarterly',
-            duration: parseInt(defaultFDObj?.duration) || 1, // fallback to 1 year
-            startMonth: parseInt(defaultFDObj?.startMonth) || new Date().getMonth() + 1,
-            startYear: parseInt(defaultFDObj?.startYear) || new Date().getFullYear(),
-            isReadOnly: true,
-            setRate: (val) => setData({ ...data, rate: val }),
-            setFrequency: (val) => setData({ ...data, frequency: val })
-        });
-    }
+    fdArray.forEach((fdObj, index) => {
+        const defaultCorpusValue = parseFloat(fdObj?.amount !== undefined ? fdObj.amount : fdObj) || 0;
+        if (defaultCorpusValue > 0) {
+            fdsToRender.push({
+                fdKey: `active_${index}`,
+                title: fdArray.length > 1 ? `Active Fixed Deposit #${index + 1} (Asset Synchronized)` : 'Active Fixed Deposit (Asset Synchronized)',
+                amount: defaultCorpusValue,
+                rate: data?.rate ?? 7.00,
+                frequency: data?.frequency ?? 'Quarterly',
+                duration: parseInt(fdObj?.duration) || 1, // fallback to 1 year
+                startMonth: parseInt(fdObj?.startMonth) || new Date().getMonth() + 1,
+                startYear: parseInt(fdObj?.startYear) || new Date().getFullYear(),
+                isReadOnly: true,
+                setRate: (val) => setData({ ...data, rate: val }),
+                setFrequency: (val) => setData({ ...data, frequency: val })
+            });
+        }
+    });
 
     // 2. Check for Future Proposed FDs
     const proposedFDs = useMemo(() => allocations.filter(a => a.type === 'Fixed Deposit'), [allocations]);

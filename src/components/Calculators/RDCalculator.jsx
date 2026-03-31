@@ -301,23 +301,26 @@ const RDCalculator = ({ allocations = [], expenseCategories = {}, data, setData 
     const rdsToRender = [];
 
     // 1. Check for Active Baseline RD
-    const defaultRDObj = expenseCategories?.savings?.rd || {};
-    const monthlyBaselineP = parseFloat(defaultRDObj?.amount !== undefined ? defaultRDObj.amount : defaultRDObj) || 0;
+    const rawRD = expenseCategories?.savings?.rd;
+    const rdArray = Array.isArray(rawRD) ? rawRD : (rawRD ? [rawRD] : []);
 
-    if (monthlyBaselineP > 0) {
-        rdsToRender.push({
-            rdKey: 'active',
-            title: 'Active Recurring Deposit (Cash Flow Synchronized)',
-            amount: monthlyBaselineP,
-            isMonthlyAmount: true,
-            rate: data?.rate ?? 7.00,
-            duration: parseInt(defaultRDObj?.duration) || 10,
-            startMonth: parseInt(defaultRDObj?.startMonth) || new Date().getMonth() + 1,
-            startYear: parseInt(defaultRDObj?.startYear) || new Date().getFullYear(),
-            isReadOnly: true,
-            setRate: (val) => setData({ ...data, rate: val })
-        });
-    }
+    rdArray.forEach((rdObj, index) => {
+        const monthlyBaselineP = parseFloat(rdObj?.amount !== undefined ? rdObj.amount : rdObj) || 0;
+        if (monthlyBaselineP > 0) {
+            rdsToRender.push({
+                rdKey: `active_${index}`,
+                title: rdArray.length > 1 ? `Active Recurring Deposit #${index + 1} (Cash Flow Synchronized)` : 'Active Recurring Deposit (Cash Flow Synchronized)',
+                amount: monthlyBaselineP,
+                isMonthlyAmount: true,
+                rate: data?.rate ?? 7.00,
+                duration: parseInt(rdObj?.duration) || 10,
+                startMonth: parseInt(rdObj?.startMonth) || new Date().getMonth() + 1,
+                startYear: parseInt(rdObj?.startYear) || new Date().getFullYear(),
+                isReadOnly: true,
+                setRate: (val) => setData({ ...data, rate: val })
+            });
+        }
+    });
 
     // 2. Check for Future Proposed RDs
     const proposedRDs = useMemo(() => allocations.filter(a => a.type === 'Recurring Deposit'), [allocations]);

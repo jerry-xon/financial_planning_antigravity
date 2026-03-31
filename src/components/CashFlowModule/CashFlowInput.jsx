@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 import { convertToMonthly } from './CashFlowLogic';
 import LoanDetailsModal from './LoanDetailsModal';
 import InvestmentDetailsModal from './InvestmentDetailsModal';
@@ -531,7 +532,7 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                 <div className="card" style={{ marginBottom: '1.5rem', background: 'var(--bg-main)' }}>
                     <h4 style={{ color: 'var(--primary)', marginBottom: '1.25rem', fontSize: '1.1rem' }}>C. Savings & Investments</h4>
                     <div className="input-grid-mini">
-                        {['ppf', 'nps', 'rd'].map((invKey) => {
+                        {['ppf', 'nps'].map((invKey) => {
                             const rawValue = expenseCategories.savings[invKey] || '';
                             const isConfigured = rawValue !== null && typeof rawValue === 'object' && rawValue.amount > 0;
                             const displayValue = isConfigured ? rawValue.amount : rawValue;
@@ -580,6 +581,88 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                 </div>
                             );
                         })}
+                        
+                        {/* Dynamic Recurring Deposits (RD) Array */}
+                        {(() => {
+                            const rawRD = expenseCategories.savings?.rd;
+                            const rdArray = Array.isArray(rawRD) ? rawRD : (rawRD ? [rawRD] : []);
+                            
+                            return (
+                                <div style={{ gridColumn: '1 / -1', background: 'var(--bg-main)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                                        <label style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: 0, fontWeight: 700 }}>Recurring Deposits (RD)</label>
+                                        <button 
+                                            onClick={() => {
+                                                const newRds = [...rdArray, ''];
+                                                handleExpenseChange('savings', 'rd', newRds);
+                                            }}
+                                            style={{ 
+                                                background: 'var(--primary-light)', border: '1px solid var(--primary)', 
+                                                color: 'var(--primary)', padding: '0.4rem 0.75rem', 
+                                                fontSize: '0.75rem', fontWeight: 600, borderRadius: '6px', cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            <Plus size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }} /> Add RD
+                                        </button>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                                        {rdArray.map((rdItem, rdIndex) => {
+                                            const isConfigured = rdItem !== null && typeof rdItem === 'object' && rdItem.amount > 0;
+                                            const displayValue = isConfigured ? rdItem.amount : rdItem;
+
+                                            return (
+                                                <div className="input-group" key={`rd-${rdIndex}`} style={{ marginBottom: 0, background: 'var(--bg-card)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                                        <label style={{ marginBottom: 0, fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>RD #{rdIndex + 1}</label>
+                                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                                            <button 
+                                                                onClick={() => setActiveInvModal({ key: 'rd', index: rdIndex })}
+                                                                style={{ 
+                                                                    background: 'transparent', border: 'none', 
+                                                                    color: isConfigured ? 'var(--success)' : 'var(--primary)', 
+                                                                    fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', padding: 0
+                                                                }}
+                                                            >
+                                                                {isConfigured ? '✓ Configured' : '⚙️ Configure'}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newRds = rdArray.filter((_, i) => i !== rdIndex);
+                                                                    handleExpenseChange('savings', 'rd', newRds.length > 0 ? newRds : '');
+                                                                }}
+                                                                style={{ 
+                                                                    background: 'transparent', border: 'none', 
+                                                                    color: 'var(--danger)', 
+                                                                    fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', padding: 0
+                                                                }}
+                                                            >
+                                                                <Trash2 size={14} style={{ display: 'inline', verticalAlign: 'text-bottom' }} /> Remove
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <input 
+                                                        type="number" 
+                                                        value={displayValue || ''} 
+                                                        readOnly={true}
+                                                        onChange={(e) => {
+                                                            const newRds = [...rdArray];
+                                                            newRds[rdIndex] = e.target.value;
+                                                            handleExpenseChange('savings', 'rd', newRds);
+                                                        }} 
+                                                        onWheel={(e) => e.target.blur()} 
+                                                        placeholder="0" 
+                                                        style={{ background: 'var(--bg-main)', color: isConfigured ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'not-allowed' }}
+                                                    />
+                                                </div>
+                                            );
+                                        })}
+                                        {rdArray.length === 0 && <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', margin: 0, gridColumn: '1 / -1' }}>No Recurring Deposits added.</p>}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                         <div className="input-group">
                             <label>SIPs</label>
                             <input type="number" value={expenseCategories.savings.sip || ''} onChange={(e) => handleExpenseChange('savings', 'sip', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
@@ -594,16 +677,46 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                 <InvestmentDetailsModal 
                     isOpen={!!activeInvModal}
                     onClose={() => setActiveInvModal(null)}
-                    initialData={activeInvModal ? expenseCategories.savings[activeInvModal] : null}
-                    investmentTypeTitle={activeInvModal ? activeInvModal.toUpperCase() : ''}
+                    initialData={
+                        activeInvModal 
+                            ? (typeof activeInvModal === 'string' 
+                                ? expenseCategories.savings[activeInvModal] 
+                                : Array.isArray(expenseCategories.savings[activeInvModal.key]) 
+                                    ? expenseCategories.savings[activeInvModal.key][activeInvModal.index]
+                                    : expenseCategories.savings[activeInvModal.key])
+                            : null
+                    }
+                    investmentTypeTitle={
+                        activeInvModal 
+                            ? (typeof activeInvModal === 'string' 
+                                ? activeInvModal.toUpperCase() 
+                                : activeInvModal.key.toUpperCase())
+                            : ''
+                    }
                     onSave={(configuredData) => {
-                        setExpenseCategories(prev => ({
-                            ...prev,
-                            savings: {
-                                ...prev.savings,
-                                [activeInvModal]: configuredData
-                            }
-                        }));
+                        if (typeof activeInvModal === 'string') {
+                            setExpenseCategories(prev => ({
+                                ...prev,
+                                savings: {
+                                    ...prev.savings,
+                                    [activeInvModal]: configuredData
+                                }
+                            }));
+                        } else {
+                            // Modal is an object { key, index }
+                            setExpenseCategories(prev => {
+                                const rawArray = prev.savings[activeInvModal.key];
+                                const arr = Array.isArray(rawArray) ? [...rawArray] : (rawArray ? [rawArray] : []);
+                                arr[activeInvModal.index] = configuredData;
+                                return {
+                                    ...prev,
+                                    savings: {
+                                        ...prev.savings,
+                                        [activeInvModal.key]: arr
+                                    }
+                                };
+                            });
+                        }
                     }}
                 />
             </div>

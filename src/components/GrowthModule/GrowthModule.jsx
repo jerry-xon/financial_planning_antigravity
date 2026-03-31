@@ -97,30 +97,34 @@ const GrowthModule = ({
 
     const fdData = useMemo(() => {
         const c = calculatorInputs.fd || {};
-        const defaultFDObj = assetCategories?.investments?.fixedDeposit || {};
-        return computeFDData(allocations.filter(a => a.type === 'Fixed Deposit'), parseFloat(c.rate) || 7.00, c.frequency || 'Quarterly', defaultFDObj).schedule;
+        const rawFD = assetCategories?.investments?.fixedDeposit;
+        const baselineFDs = Array.isArray(rawFD) ? rawFD : (rawFD ? [rawFD] : []);
+        return computeFDData(allocations.filter(a => a.type === 'Fixed Deposit'), parseFloat(c.rate) || 7.00, c.frequency || 'Quarterly', baselineFDs).schedule;
     }, [calculatorInputs.fd, allocations, assetCategories]);
 
     const rdData = useMemo(() => {
         const c = calculatorInputs.rd || {};
-        const defaultRDObj = expenseCategories?.savings?.rd || {};
+        const rawRD = expenseCategories?.savings?.rd;
+        const rdArray = Array.isArray(rawRD) ? rawRD : (rawRD ? [rawRD] : []);
         
         const streams = [];
         
         // 1. Baseline from Cash Flow Module
-        const monthlyBaselineP = parseFloat(defaultRDObj?.amount !== undefined ? defaultRDObj.amount : defaultRDObj) || 0;
-        if (monthlyBaselineP > 0) {
-            const today = new Date();
-            streams.push({
-                id: 'baseline-rd',
-                name: 'Cash Flow Baseline',
-                startYear: parseInt(defaultRDObj.startYear) || today.getFullYear(),
-                startMonth: parseInt(defaultRDObj.startMonth) || today.getMonth() + 1,
-                duration: parseInt(defaultRDObj.duration) || 10,
-                amount: monthlyBaselineP, // This is monthly
-                isBaseline: true
-            });
-        }
+        const today = new Date();
+        rdArray.forEach((rdObj, index) => {
+            const monthlyBaselineP = parseFloat(rdObj?.amount !== undefined ? rdObj.amount : rdObj) || 0;
+            if (monthlyBaselineP > 0) {
+                streams.push({
+                    id: `baseline-rd-${index}`,
+                    name: rdArray.length > 1 ? `Cash Flow Baseline #${index + 1}` : 'Cash Flow Baseline',
+                    startYear: parseInt(rdObj.startYear) || today.getFullYear(),
+                    startMonth: parseInt(rdObj.startMonth) || today.getMonth() + 1,
+                    duration: parseInt(rdObj.duration) || 10,
+                    amount: monthlyBaselineP, // This is monthly
+                    isBaseline: true
+                });
+            }
+        });
 
         // 2. Proposed from Allocation Module
         const proposedRDs = allocations.filter(a => a.type === 'Recurring Deposit');

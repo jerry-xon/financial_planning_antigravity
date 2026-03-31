@@ -4,7 +4,12 @@ import { EDUCATION_STANDARDS } from '../JourneyModule/ProjectionLogic';
 
 const ProfileInput = ({ members, setMembers, onCalculate }) => {
     const handleMemberChange = (index, e) => {
-        const { name, value } = e.target;
+        let { name, value } = e.target;
+
+        if (name === 'mobile') {
+            value = value.replace(/\D/g, '').slice(0, 10);
+        }
+
         const updatedMembers = [...members];
         let member = { ...updatedMembers[index], [name]: value };
 
@@ -97,6 +102,8 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                     value={member.mobile || ''}
                                     onChange={(e) => handleMemberChange(index, e)}
                                     placeholder="Enter 10-digit mobile number"
+                                    maxLength="10"
+                                    pattern="[0-9]*"
                                     required
                                 />
                             </div>
