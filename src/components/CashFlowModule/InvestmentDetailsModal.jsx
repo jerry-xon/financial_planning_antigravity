@@ -73,7 +73,7 @@ const InvestmentDetailsModal = ({ isOpen, onClose, onSave, initialData, investme
                     <div className="input-group">
                         <label>Monthly Investment / Contribution Amount (₹)</label>
                         <div style={{ position: 'relative' }}>
-                            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}><DollarSign size={16} /></span>
+                            <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontWeight: 'bold' }}>₹</span>
                             <input 
                                 type="number" 
                                 value={formData.amount} 

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Calculator, TrendingUp } from 'lucide-react';
 
-export const computePPFData = (proposedPPFs, expectedReturns, defaultPPFObj = {}, defaultCorpus = 0) => {
+export const computePPFData = (proposedPPFs, expectedReturns, defaultPPFObj = {}) => {
     let results = [];
     
     const today = new Date();
@@ -15,22 +15,26 @@ export const computePPFData = (proposedPPFs, expectedReturns, defaultPPFObj = {}
         baseStartYear = parseInt(defaultPPFObj?.startYear) || baseStartYear;
         baseStartMonth = parseInt(defaultPPFObj?.startMonth) || baseStartMonth;
     } else if (proposedPPFs.length > 0) {
-        let earliestProposedYear = Math.min(...proposedPPFs.map(p => p.startYear));
-        if (earliestProposedYear <= baseStartYear) {
-            baseStartYear = earliestProposedYear;
-            let earliestPPF = proposedPPFs.find(p => p.startYear === baseStartYear);
-            baseStartMonth = earliestPPF ? earliestPPF.startMonth : baseStartMonth;
-        }
+        const earliest = proposedPPFs.reduce((min, p) => 
+            (p.startYear < min.startYear || (p.startYear === min.startYear && p.startMonth < min.startMonth)) ? p : min
+        , proposedPPFs[0]);
+        baseStartYear = earliest.startYear;
+        baseStartMonth = earliest.startMonth;
     }
     
     const startAbsolute = baseStartYear * 12 + baseStartMonth;
     const maturityAbsolute = startAbsolute + 180 - 1; // PPF duration is strictly 15 years (180 months)
     
+    const startString = `${new Date(baseStartYear, baseStartMonth - 1).toLocaleString('default', { month: 'short' })} ${baseStartYear}`;
+    const maturityYear = Math.floor((maturityAbsolute - 1) / 12);
+    const maturityMonth = (maturityAbsolute - 1) % 12;
+    const endString = `${new Date(maturityYear, maturityMonth).toLocaleString('default', { month: 'short' })} ${maturityYear}`;
+    
     let currentYearVal = baseStartYear;
     let currentMonthVal = baseStartMonth;
     let currentAbsolute = startAbsolute;
     
-    let openingBalance = parseFloat(defaultCorpus) || 0;
+    let openingBalance = 0;
     let yearlyInvestment = 0;
 
     while (currentAbsolute <= maturityAbsolute) {
@@ -49,6 +53,11 @@ export const computePPFData = (proposedPPFs, expectedReturns, defaultPPFObj = {}
             }
         });
         
+        if (yearlyInvestment + currentMonthInvestment > 150000) {
+            currentMonthInvestment = 150000 - yearlyInvestment;
+        }
+        if (currentMonthInvestment < 0) currentMonthInvestment = 0;
+
         yearlyInvestment += currentMonthInvestment;
 
         // Rollover logic at the end of the calendar year or absolute end of tenure
@@ -77,26 +86,22 @@ export const computePPFData = (proposedPPFs, expectedReturns, defaultPPFObj = {}
         currentMonthVal = (currentMonthVal % 12) + 1;
     }
 
-    return results;
+    return { results, startString, endString };
 };
 
-const PPFCalculator = ({ allocations = [], expenseCategories = {}, assetCategories = {}, data, setData }) => {
+const PPFCalculator = ({ allocations = [], expenseCategories = {}, data, setData }) => {
     const expectedReturns = data?.rate ?? 7.10;
     const setExpectedReturns = (val) => setData({ ...data, rate: val });
 
     const defaultPPFObj = expenseCategories?.savings?.ppf || {};
-    const defaultCorpus = parseFloat(assetCategories?.retirement?.ppf) || 0;
 
     const proposedPPFs = useMemo(() => {
         return allocations.filter(a => a.type === 'PPF');
     }, [allocations]);
 
-    const [localCorpus, setLocalCorpus] = React.useState(defaultCorpus);
-    React.useEffect(() => { setLocalCorpus(defaultCorpus); }, [defaultCorpus]);
-
-    const calculationData = useMemo(() => {
-        return computePPFData(proposedPPFs, expectedReturns, defaultPPFObj, localCorpus);
-    }, [proposedPPFs, expectedReturns, defaultPPFObj, localCorpus]);
+    const { results: calculationData, startString, endString } = useMemo(() => {
+        return computePPFData(proposedPPFs, expectedReturns, defaultPPFObj);
+    }, [proposedPPFs, expectedReturns, defaultPPFObj]);
 
     const finalValue = calculationData.length > 0 ? calculationData[calculationData.length - 1].endValue : 0;
     const totalInvested = calculationData.reduce((sum, row) => sum + row.investment, 0);
@@ -112,7 +117,7 @@ const PPFCalculator = ({ allocations = [], expenseCategories = {}, assetCategori
                     </div>
                 </div>
 
-                {proposedPPFs.length === 0 && defaultPPF === 0 && defaultCorpus === 0 ? (
+                {proposedPPFs.length === 0 && (parseFloat(defaultPPFObj?.amount !== undefined ? defaultPPFObj.amount : defaultPPFObj) || 0) === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3rem', border: '2px dashed var(--border)', borderRadius: '12px', color: 'var(--text-muted)' }}>
                         <p>No active PPF found in the local Cash Flow Baseline nor proposed in the Allocation Module.</p>
                         <p style={{ fontSize: '0.9rem' }}>Go back to Step 4 or Step 9 to map your baseline or to add a future PPF allocation.</p>
@@ -143,21 +148,6 @@ const PPFCalculator = ({ allocations = [], expenseCategories = {}, assetCategori
                                     className="form-input" 
                                 />
                                 <small className="text-muted">Range: 5.00% to 9.00%. Default: 7.10%.</small>
-                            </div>
-
-                            <div className="form-group">
-                                <label><Calculator size={16} /> Initial Investment / Current Corpus (₹)</label>
-                                <div style={{ position: 'relative' }}>
-                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>₹</span>
-                                    <input 
-                                        type="number" 
-                                        value={localCorpus} 
-                                        onChange={(e) => setLocalCorpus(parseFloat(e.target.value) || 0)} 
-                                        className="form-input" 
-                                        style={{ paddingLeft: '24px' }}
-                                    />
-                                </div>
-                                <small className="text-muted">Synced from your Asset configurations automatically.</small>
                             </div>
 
                             <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
@@ -196,7 +186,7 @@ const PPFCalculator = ({ allocations = [], expenseCategories = {}, assetCategori
                                 color: 'white',
                                 boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                             }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
                                     <div>
                                         <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Projected Value</p>
                                         <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 800 }}>₹{Math.round(finalValue).toLocaleString('en-IN')}</h2>
@@ -208,6 +198,19 @@ const PPFCalculator = ({ allocations = [], expenseCategories = {}, assetCategori
                                     <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
                                         <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Wealth Created</p>
                                         <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>₹{Math.round(finalValue - totalInvested).toLocaleString('en-IN')}</h3>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '2rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
+                                    <div>
+                                        <p style={{ margin: '0 0 0.25rem 0', opacity: 0.8, fontSize: '0.8rem', textTransform: 'uppercase' }}>Start Date</p>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>{startString}</div>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 0.25rem 0', opacity: 0.8, fontSize: '0.8rem', textTransform: 'uppercase' }}>Maturity Date</p>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>{endString}</div>
+                                    </div>
+                                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                                        <span style={{ background: 'rgba(255,255,255,0.2)', padding: '4px 12px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 600 }}>Fixed 15 Year Tenure</span>
                                     </div>
                                 </div>
                             </div>

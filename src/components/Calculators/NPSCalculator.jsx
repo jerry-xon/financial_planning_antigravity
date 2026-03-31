@@ -161,7 +161,7 @@ const NPSCalculator = ({ allocations = [], familyMembers = [], expenseCategories
                     </div>
                 </div>
 
-                {proposedNPS.length === 0 && defaultNPS === 0 && defaultCorpus === 0 ? (
+                {proposedNPS.length === 0 && (parseFloat(defaultNPSObj?.amount !== undefined ? defaultNPSObj.amount : defaultNPSObj) || 0) === 0 && defaultCorpus === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3rem', border: '2px dashed var(--border)', borderRadius: '12px', color: 'var(--text-muted)' }}>
                         <p>No active NPS found in the Cash Flow Baseline nor proposed in the Allocation Module.</p>
                         <p style={{ fontSize: '0.9rem' }}>Go back to Step 4 or Step 9 to map your retirement benefits.</p>

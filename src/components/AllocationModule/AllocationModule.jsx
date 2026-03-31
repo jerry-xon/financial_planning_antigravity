@@ -3,6 +3,7 @@ import { PieChart, Plus, Trash2, ArrowRight, Wallet, Target, TrendingUp, Chevron
 
 const AllocationModule = ({ 
     familyMembers = [],
+    expenseCategories = {},
     netInvestibleSurplus, 
     allocations, 
     setAllocations, 
@@ -62,13 +63,30 @@ const AllocationModule = ({
     // Global PPF constraints auto-correction
     useEffect(() => {
         const ppfAllocations = allocations.filter(a => a.type === 'PPF');
-        if (ppfAllocations.length === 0) return;
+        const existingPpf = expenseCategories?.savings?.ppf;
+        const hasExistingPpf = existingPpf && parseFloat(existingPpf.amount) > 0;
 
-        const earliest = ppfAllocations.reduce((min, p) => 
-            (p.startYear < min.startYear || (p.startYear === min.startYear && p.startMonth < min.startMonth)) ? p : min
-        , ppfAllocations[0]);
+        if (ppfAllocations.length === 0 && !hasExistingPpf) return;
 
-        const globalPpfEndAbsolute = (earliest.startYear + 15) * 12 + earliest.startMonth - 1;
+        let earliestStartYear = currentYear;
+        let earliestStartMonth = currentMonth;
+
+        if (hasExistingPpf) {
+            earliestStartYear = parseInt(existingPpf.startYear) || currentYear;
+            earliestStartMonth = parseInt(existingPpf.startMonth) || currentMonth;
+        } else if (ppfAllocations.length > 0) {
+            const earliest = ppfAllocations.reduce((min, p) => 
+                (p.startYear < min.startYear || (p.startYear === min.startYear && p.startMonth < min.startMonth)) ? p : min
+            , ppfAllocations[0]);
+            earliestStartYear = earliest.startYear;
+            earliestStartMonth = earliest.startMonth;
+        }
+
+        const globalPpfEndAbsolute = (earliestStartYear + 15) * 12 + earliestStartMonth - 1;
+        
+        const existingAnnualAmount = hasExistingPpf ? (parseFloat(existingPpf.amount) * 12) : 0;
+        const maxAnnualLimitForProposed = Math.max(0, 150000 - existingAnnualAmount);
+
         let totalPpfAnnualAmount = 0;
         let needsCorrection = false;
         
@@ -79,16 +97,24 @@ const AllocationModule = ({
             
             // Amount Constraint
             totalPpfAnnualAmount += parseFloat(correctedItem.amount || 0);
-            if (totalPpfAnnualAmount > 150000) {
-                const excess = totalPpfAnnualAmount - 150000;
+            if (totalPpfAnnualAmount > maxAnnualLimitForProposed) {
+                const excess = totalPpfAnnualAmount - maxAnnualLimitForProposed;
                 correctedItem.amount -= excess;
-                totalPpfAnnualAmount = 150000;
+                totalPpfAnnualAmount = maxAnnualLimitForProposed;
                 if (correctedItem.amount < 0) correctedItem.amount = 0;
                 needsCorrection = true;
             }
             
+            // Start Date Constraint
+            let itemStartAbsolute = correctedItem.startYear * 12 + correctedItem.startMonth;
+            if (itemStartAbsolute > globalPpfEndAbsolute) {
+                correctedItem.startYear = Math.floor((globalPpfEndAbsolute - 1) / 12);
+                correctedItem.startMonth = (globalPpfEndAbsolute - 1) % 12 + 1;
+                itemStartAbsolute = globalPpfEndAbsolute;
+                needsCorrection = true;
+            }
+            
             // Duration Constraint
-            const itemStartAbsolute = correctedItem.startYear * 12 + correctedItem.startMonth;
             const diffMonths = globalPpfEndAbsolute - itemStartAbsolute + 1;
             const maxAllowedDuration = Math.max(0, Math.min(15, Math.floor(diffMonths / 12)));
             
@@ -103,7 +129,7 @@ const AllocationModule = ({
         if (needsCorrection) {
             setAllocations(correctedAllocations);
         }
-    }, [allocations, setAllocations]);
+    }, [allocations, setAllocations, expenseCategories, currentYear, currentMonth]);
 
     // Derived data for the dynamic table
     const dynamicColumns = useMemo(() => {
@@ -254,10 +280,12 @@ const AllocationModule = ({
                                                     onChange={(e) => {
                                                         let val = Math.round(parseFloat(e.target.value)) || 0;
                                                         if (item.type === 'PPF') {
+                                                            const existingPpfAmt = parseFloat(expenseCategories?.savings?.ppf?.amount || 0) * 12;
                                                             const otherPpfsAnnualSum = allocations
                                                                 .filter(a => a.type === 'PPF' && a.id !== item.id)
                                                                 .reduce((sum, a) => sum + parseFloat(a.amount || 0), 0);
-                                                            const maxMonthly = Math.max(0, Math.floor((150000 - otherPpfsAnnualSum) / 12));
+                                                            const totalAvailableYearly = Math.max(0, 150000 - existingPpfAmt - otherPpfsAnnualSum);
+                                                            const maxMonthly = Math.max(0, Math.floor(totalAvailableYearly / 12));
                                                             if (val > maxMonthly) {
                                                                 val = maxMonthly;
                                                             }
@@ -337,11 +365,24 @@ const AllocationModule = ({
                                                         onChange={(e) => {
                                                             let val = parseInt(e.target.value) || 0;
                                                             if (item.type === 'PPF') {
-                                                                const ppfAllocations = allocations.filter(a => a.type === 'PPF');
-                                                                const earliest = ppfAllocations.reduce((min, p) => 
-                                                                    (p.startYear < min.startYear || (p.startYear === min.startYear && p.startMonth < min.startMonth)) ? p : min
-                                                                , ppfAllocations[0]);
-                                                                const globalPpfEndAbsolute = (earliest.startYear + 15) * 12 + earliest.startMonth - 1;
+                                                                const existingPpf = expenseCategories?.savings?.ppf;
+                                                                const hasExistingPpf = existingPpf && parseFloat(existingPpf.amount) > 0;
+                                                                let earliestStartYear = currentYear;
+                                                                let earliestStartMonth = currentMonth;
+                                                                
+                                                                if (hasExistingPpf) {
+                                                                    earliestStartYear = parseInt(existingPpf.startYear) || currentYear;
+                                                                    earliestStartMonth = parseInt(existingPpf.startMonth) || currentMonth;
+                                                                } else {
+                                                                    const ppfAllocations = allocations.filter(a => a.type === 'PPF');
+                                                                    const earliest = ppfAllocations.reduce((min, p) => 
+                                                                        (p.startYear < min.startYear || (p.startYear === min.startYear && p.startMonth < min.startMonth)) ? p : min
+                                                                    , ppfAllocations[0]);
+                                                                    earliestStartYear = earliest ? earliest.startYear : currentYear;
+                                                                    earliestStartMonth = earliest ? earliest.startMonth : currentMonth;
+                                                                }
+
+                                                                const globalPpfEndAbsolute = (earliestStartYear + 15) * 12 + earliestStartMonth - 1;
                                                                 const itemStartAbsolute = item.startYear * 12 + item.startMonth;
                                                                 const diffMonths = globalPpfEndAbsolute - itemStartAbsolute + 1;
                                                                 const maxAllowedDuration = Math.max(0, Math.min(15, Math.floor(diffMonths / 12)));
@@ -412,7 +453,7 @@ const AllocationModule = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {projections.slice(0, 15).map((row) => {
+                                {projections.map((row) => {
                                     const allocationsByType = {};
                                     dynamicColumns.forEach(type => {
                                         allocationsByType[type] = row.activeAllocations
@@ -442,7 +483,6 @@ const AllocationModule = ({
                             </tbody>
                         </table>
                     </div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>* Showing next 15 years of projection.</p>
                 </div>
             </div>
 

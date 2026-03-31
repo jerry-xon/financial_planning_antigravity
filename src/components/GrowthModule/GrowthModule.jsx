@@ -76,23 +76,68 @@ const GrowthModule = ({
 
     const ppfData = useMemo(() => {
         const c = calculatorInputs.ppf || {};
-        return computePPFData(allocations.filter(a => a.type === 'PPF'), parseFloat(c.rate) || 7.10);
-    }, [calculatorInputs.ppf, allocations]);
+        const defaultPPFObj = expenseCategories?.savings?.ppf || {};
+        return computePPFData(allocations.filter(a => a.type === 'PPF'), parseFloat(c.rate) || 7.10, defaultPPFObj).results;
+    }, [calculatorInputs.ppf, allocations, expenseCategories]);
 
     const npsData = useMemo(() => {
         const c = calculatorInputs.nps || {};
-        return computeNPSData(allocations.filter(a => a.type === 'NPS'), parseFloat(c.rate) || 10, parseFloat(c.annuity) || 40, parseFloat(c.annuityRate) || 6, self).schedule;
-    }, [calculatorInputs.nps, allocations, self]);
+        const defaultNPSObj = expenseCategories?.savings?.nps || {};
+        const defaultCorpus = parseFloat(assetCategories?.retirement?.nps) || 0;
+        return computeNPSData(
+            allocations.filter(a => a.type === 'NPS'), 
+            parseFloat(c.rate) || 10, 
+            parseFloat(c.annuity) || 40, 
+            parseFloat(c.annuityRate) || 6, 
+            self,
+            defaultNPSObj,
+            defaultCorpus
+        ).schedule;
+    }, [calculatorInputs.nps, allocations, self, expenseCategories, assetCategories]);
 
     const fdData = useMemo(() => {
         const c = calculatorInputs.fd || {};
-        return computeFDData(allocations.filter(a => a.type === 'Fixed Deposit'), parseFloat(c.rate) || 7.00, c.frequency || 'Quarterly').schedule;
-    }, [calculatorInputs.fd, allocations]);
+        const defaultFDObj = assetCategories?.investments?.fixedDeposit || {};
+        return computeFDData(allocations.filter(a => a.type === 'Fixed Deposit'), parseFloat(c.rate) || 7.00, c.frequency || 'Quarterly', defaultFDObj).schedule;
+    }, [calculatorInputs.fd, allocations, assetCategories]);
 
     const rdData = useMemo(() => {
         const c = calculatorInputs.rd || {};
-        return computeRDData(allocations.filter(a => a.type === 'Recurring Deposit'), parseFloat(c.rate) || 7.00).schedule;
-    }, [calculatorInputs.rd, allocations]);
+        const defaultRDObj = expenseCategories?.savings?.rd || {};
+        
+        const streams = [];
+        
+        // 1. Baseline from Cash Flow Module
+        const monthlyBaselineP = parseFloat(defaultRDObj?.amount !== undefined ? defaultRDObj.amount : defaultRDObj) || 0;
+        if (monthlyBaselineP > 0) {
+            const today = new Date();
+            streams.push({
+                id: 'baseline-rd',
+                name: 'Cash Flow Baseline',
+                startYear: parseInt(defaultRDObj.startYear) || today.getFullYear(),
+                startMonth: parseInt(defaultRDObj.startMonth) || today.getMonth() + 1,
+                duration: parseInt(defaultRDObj.duration) || 10,
+                amount: monthlyBaselineP, // This is monthly
+                isBaseline: true
+            });
+        }
+
+        // 2. Proposed from Allocation Module
+        const proposedRDs = allocations.filter(a => a.type === 'Recurring Deposit');
+        proposedRDs.forEach(p => {
+            streams.push({
+                id: p.id,
+                name: p.name || 'Proposed RD',
+                startYear: parseInt(p.startYear),
+                startMonth: parseInt(p.startMonth),
+                duration: parseInt(p.duration),
+                amount: parseFloat(p.amount) || 0, // This is annual
+                isBaseline: false
+            });
+        });
+
+        return computeRDData(streams, parseFloat(c.rate) || 7.00).schedule;
+    }, [calculatorInputs.rd, allocations, expenseCategories]);
 
     const insuranceData = useMemo(() => {
         return calculateYearlyInsuranceSummary(policies) || [];

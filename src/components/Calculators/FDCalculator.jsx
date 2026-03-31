@@ -159,40 +159,49 @@ export const computeFDData = (proposedFDs, expectedReturns, frequency, defaultFD
     return { schedule, totals };
 };
 
-const FDCalculator = ({ allocations = [], assetCategories = {}, data, setData }) => {
-    const expectedReturns = data?.rate ?? 7.00;
-    const frequency = data?.frequency ?? 'Quarterly';
+const FDEngine = ({
+    fdKey,
+    title,
+    isReadOnly,
+    amount,
+    rate,
+    frequency,
+    duration,
+    startMonth,
+    startYear,
+    setRate,
+    setFrequency,
+    noActiveMessage
+}) => {
+    const [localAmount, setLocalAmount] = React.useState(amount);
+    React.useEffect(() => { setLocalAmount(amount); }, [amount]);
 
-    const defaultCorpus = parseFloat(assetCategories?.investments?.fixedDeposit) || 0;
-
-    const setExpectedReturns = (val) => setData({ ...data, rate: val });
-    const setFrequency = (val) => setData({ ...data, frequency: val });
-
-    const proposedFDs = useMemo(() => allocations.filter(a => a.type === 'Fixed Deposit'), [allocations]);
-
-    const [localCorpus, setLocalCorpus] = React.useState(defaultCorpus);
-    React.useEffect(() => { setLocalCorpus(defaultCorpus); }, [defaultCorpus]);
+    const activeFDObj = useMemo(() => {
+        return { amount: localAmount, startMonth, startYear, duration };
+    }, [localAmount, startMonth, startYear, duration]);
 
     const calculationData = useMemo(() => {
-        return computeFDData(proposedFDs, expectedReturns, frequency, localCorpus);
-    }, [proposedFDs, expectedReturns, frequency, localCorpus]);
+        return computeFDData([], rate, frequency, activeFDObj);
+    }, [rate, frequency, activeFDObj]);
 
     const { schedule, totals } = calculationData;
 
     return (
-        <div className="fade-in" style={{ padding: '1rem' }}>
+        <div className="fade-in" style={{ padding: '1rem', marginBottom: '3rem' }}>
             <div className="card" style={{ maxWidth: '1400px', margin: '0 auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
-                    <ShieldCheck size={32} color="var(--primary)" />
+                    <ShieldCheck size={32} color={isReadOnly ? "var(--success)" : "var(--primary)"} />
                     <div>
-                        <h1 style={{ margin: 0 }}>Fixed Deposit (FD) Calculator</h1>
-                        <p className="text-muted" style={{ margin: 0 }}>Project guaranteed returns with adjustable compounding frequencies.</p>
+                        <h1 style={{ margin: 0 }}>{title}</h1>
+                        <p className="text-muted" style={{ margin: 0 }}>
+                            {isReadOnly ? "Timeline mapping for your proposed or synchronized Asset FD." : "Project guaranteed returns with adjustable compounding frequencies."}
+                        </p>
                     </div>
                 </div>
 
-                {proposedFDs.length === 0 && defaultCorpus === 0 ? (
+                {(localAmount === 0 && !isReadOnly) ? (
                     <div style={{ textAlign: 'center', padding: '3rem', border: '2px dashed var(--border)', borderRadius: '12px', color: 'var(--text-muted)' }}>
-                        <p>No active FD found in the global Asset Baseline nor proposed natively.</p>
+                        <p>{noActiveMessage || "No active FD mapped."}</p>
                         <p style={{ fontSize: '0.9rem' }}>Go back to Step 8 or Step 9 to inject your baseline or allocate future installments.</p>
                     </div>
                 ) : (
@@ -206,17 +215,19 @@ const FDCalculator = ({ allocations = [], assetCategories = {}, data, setData })
                                     step="0.1"
                                     min="5"
                                     max="9"
-                                    value={expectedReturns} 
+                                    value={rate} 
                                     onChange={(e) => {
+                                        if (!setRate) return;
                                         let val = parseFloat(e.target.value);
-                                        setExpectedReturns(isNaN(val) ? '' : val);
+                                        setRate(isNaN(val) ? '' : val);
                                     }} 
                                     onBlur={(e) => {
+                                        if (!setRate) return;
                                         let val = parseFloat(e.target.value);
                                         if (isNaN(val)) val = 7.00;
                                         if (val < 5) val = 5;
                                         if (val > 9) val = 9;
-                                        setExpectedReturns(val.toFixed(2));
+                                        setRate(val.toFixed(2));
                                     }}
                                     className="form-input" 
                                 />
@@ -224,25 +235,26 @@ const FDCalculator = ({ allocations = [], assetCategories = {}, data, setData })
                             </div>
 
                             <div className="form-group">
-                                <label><ShieldCheck size={16} /> Initial Investment / Current Corpus (₹)</label>
+                                <label><ShieldCheck size={16} /> Deposit Amount (₹)</label>
                                 <div style={{ position: 'relative' }}>
                                     <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>₹</span>
                                     <input 
                                         type="number" 
-                                        value={localCorpus} 
-                                        onChange={(e) => setLocalCorpus(parseFloat(e.target.value) || 0)} 
+                                        value={localAmount} 
+                                        readOnly={isReadOnly}
+                                        style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed', paddingLeft: '24px' } : { paddingLeft: '24px' }}
+                                        onChange={(e) => !isReadOnly && setLocalAmount(parseFloat(e.target.value) || 0)} 
                                         className="form-input" 
-                                        style={{ paddingLeft: '24px' }}
                                     />
                                 </div>
-                                <small className="text-muted">Synced from your Asset configurations automatically.</small>
+                                <small className="text-muted">{isReadOnly ? "Locked to your synchronized configuration." : "Manual Standalone Testing Mode."}</small>
                             </div>
 
                             <div className="form-group">
                                 <label><Calculator size={16} /> Compounding Frequency</label>
                                 <select 
                                     value={frequency} 
-                                    onChange={(e) => setFrequency(e.target.value)}
+                                    onChange={(e) => setFrequency && setFrequency(e.target.value)}
                                     className="form-input"
                                 >
                                     <option value="Monthly">Monthly</option>
@@ -251,39 +263,6 @@ const FDCalculator = ({ allocations = [], assetCategories = {}, data, setData })
                                     <option value="Annually">Annually</option>
                                 </select>
                                 <small className="text-muted">Indian banks strictly default to Quarterly compounding.</small>
-                            </div>
-
-                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-                                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem' }}>Fetched FD Allocations</h3>
-                                {proposedFDs.length === 0 ? (
-                                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No future Allocations proposed natively.</div>
-                                ) : (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                        {proposedFDs.map((p) => (
-                                            <div key={p.id} className="card" style={{ padding: '1rem', border: '1px solid #059669', background: '#ecfdf5' }}>
-                                                <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#059669', marginBottom: '0.5rem' }}>
-                                                    {p.name || 'FD Allocation'}
-                                                </div>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Deposit Amount</label>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{Math.round(p.amount).toLocaleString('en-IN')}</div>
-                                                    </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Start Date</label>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                                                            {new Date(2000, p.startMonth - 1, 1).toLocaleString('default', { month: 'short' })} {p.startYear}
-                                                        </div>
-                                                    </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', gridColumn: '1 / -1' }}>
-                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Duration</label>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{p.duration} Years</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
                         </div>
 
@@ -346,4 +325,73 @@ const FDCalculator = ({ allocations = [], assetCategories = {}, data, setData })
         </div>
     );
 };
+
+const FDCalculator = ({ allocations = [], assetCategories = {}, data, setData }) => {
+    const fdsToRender = [];
+
+    // 1. Check for Active Baseline FD
+    const defaultFDObj = assetCategories?.investments?.fixedDeposit || {};
+    const defaultCorpusValue = parseFloat(defaultFDObj?.amount !== undefined ? defaultFDObj.amount : defaultFDObj) || 0;
+
+    if (defaultCorpusValue > 0) {
+        fdsToRender.push({
+            fdKey: 'active',
+            title: 'Active Fixed Deposit (Asset Synchronized)',
+            amount: defaultCorpusValue,
+            rate: data?.rate ?? 7.00,
+            frequency: data?.frequency ?? 'Quarterly',
+            duration: parseInt(defaultFDObj?.duration) || 1, // fallback to 1 year
+            startMonth: parseInt(defaultFDObj?.startMonth) || new Date().getMonth() + 1,
+            startYear: parseInt(defaultFDObj?.startYear) || new Date().getFullYear(),
+            isReadOnly: true,
+            setRate: (val) => setData({ ...data, rate: val }),
+            setFrequency: (val) => setData({ ...data, frequency: val })
+        });
+    }
+
+    // 2. Check for Future Proposed FDs
+    const proposedFDs = useMemo(() => allocations.filter(a => a.type === 'Fixed Deposit'), [allocations]);
+    proposedFDs.forEach((fd) => {
+        fdsToRender.push({
+            fdKey: `future_${fd.id}`,
+            title: `Future Adjustment FD: ${fd.name || 'Allocation'}`,
+            amount: parseFloat(fd.amount) || 0,
+            rate: data?.rate ?? 7.00,
+            frequency: data?.frequency ?? 'Quarterly',
+            duration: parseInt(fd.duration) || 1,
+            startMonth: parseInt(fd.startMonth) || 1,
+            startYear: parseInt(fd.startYear) || new Date().getFullYear(),
+            isReadOnly: true,
+            setRate: (val) => setData({ ...data, rate: val }),
+            setFrequency: (val) => setData({ ...data, frequency: val })
+        });
+    });
+
+    // 3. Standalone Manual Calculator if empty
+    if (fdsToRender.length === 0) {
+        fdsToRender.push({
+            fdKey: 'manual',
+            title: 'Standalone Fixed Deposit Calculator',
+            amount: 0,
+            rate: data?.rate ?? 7.00,
+            frequency: data?.frequency ?? 'Quarterly',
+            duration: 1,
+            startMonth: new Date().getMonth() + 1,
+            startYear: new Date().getFullYear(),
+            setRate: (val) => setData({ ...data, rate: val }),
+            setFrequency: (val) => setData({ ...data, frequency: val }),
+            isReadOnly: false,
+            noActiveMessage: "No active FD found in the global Asset Baseline nor proposed natively."
+        });
+    }
+
+    return (
+        <div>
+            {fdsToRender.map(fdConfig => (
+                <FDEngine key={fdConfig.fdKey} {...fdConfig} />
+            ))}
+        </div>
+    );
+};
+
 export default FDCalculator;

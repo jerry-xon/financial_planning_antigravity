@@ -857,6 +857,7 @@ function App() {
               {currentStep === 9 && (
                 <AllocationModule
                   familyMembers={familyMembers}
+                  expenseCategories={expenseCategories}
                   netInvestibleSurplus={
                     (journeyProjections.find(p => p.year === new Date().getFullYear()))?.netInvestibleSurplus || 0
                   }

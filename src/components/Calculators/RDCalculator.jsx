@@ -1,41 +1,26 @@
 import React, { useMemo } from 'react';
 import { Calculator, TrendingUp, RefreshCcw, ShieldCheck } from 'lucide-react';
 
-export const computeRDData = (proposedRDs, expectedReturns, defaultRDObj = {}, defaultCorpus = 0) => {
+export const computeRDData = (allRDStreams = [], expectedReturns = 7.00) => {
     // Standard Indian RDs compound quarterly mathematically
     const freqMonths = 3;
 
-    const monthlyBaselineP = parseFloat(defaultRDObj?.amount !== undefined ? defaultRDObj.amount : defaultRDObj) || 0;
-
-    const today = new Date();
-    let baseStartYear = today.getFullYear();
-    let baseStartMonth = today.getMonth() + 1;
-    
-    // Evaluate if we should start the timeline from the CashFlow Baseline instead
-    if (monthlyBaselineP > 0) {
-        baseStartYear = parseInt(defaultRDObj?.startYear) || baseStartYear;
-        baseStartMonth = parseInt(defaultRDObj?.startMonth) || baseStartMonth;
-    }
-    
-    let startAbsolute = baseStartYear * 12 + baseStartMonth;
-    let latestEndAbsolute = startAbsolute + 12; // default 1 year projection if nothing else is planned
-
-    if (proposedRDs.length > 0) {
-        let earliestProposedYear = Math.min(...proposedRDs.map(p => p.startYear));
-        if (earliestProposedYear < baseStartYear) {
-            baseStartYear = earliestProposedYear;
-            let earliestRDs = proposedRDs.filter(p => p.startYear === baseStartYear);
-            baseStartMonth = Math.min(baseStartMonth, ...earliestRDs.map(p => p.startMonth)); // safely handle overlap with baseline
-            startAbsolute = baseStartYear * 12 + baseStartMonth;
-        }
-        latestEndAbsolute = Math.max(...proposedRDs.map(p => (p.startYear * 12 + p.startMonth) + (parseInt(p.duration) * 12) - 1));
+    if (!allRDStreams || allRDStreams.length === 0) {
+        return { schedule: [], totals: { globalDeposit: 0, globalInterest: 0, finalMaturity: 0 } };
     }
 
-    let rds = proposedRDs.map(p => ({
+    let startAbsolute = Math.min(...allRDStreams.map(s => s.startYear * 12 + s.startMonth));
+    let latestEndAbsolute = Math.max(...allRDStreams.map(s => (s.startYear * 12 + s.startMonth) + (parseInt(s.duration) * 12) - 1));
+
+    let baseStartYear = Math.floor((startAbsolute - 1) / 12);
+    let baseStartMonth = ((startAbsolute - 1) % 12) + 1;
+
+    let rds = allRDStreams.map(p => ({
         id: p.id,
+        name: p.name,
         startAbsolute: p.startYear * 12 + p.startMonth,
         endAbsolute: (p.startYear * 12 + p.startMonth) + (parseInt(p.duration) * 12) - 1,
-        annualAmount: parseFloat(p.amount) || 0, // In AllocationModule, item.amount is the ANNUAL sum
+        monthlyAmount: p.isBaseline ? (parseFloat(p.amount) || 0) : (parseFloat(p.amount) || 0) / 12, // Baseline amount is monthly, Allocation amount is annual
         compoundingBase: 0,
         uncompoundedInterest: 0,
         active: false,
@@ -49,14 +34,8 @@ export const computeRDData = (proposedRDs, expectedReturns, defaultRDObj = {}, d
     let currentYearVal = baseStartYear;
     let currentMonthVal = baseStartMonth;
 
-    let yearlyOpening = parseFloat(defaultCorpus) || 0;
+    let yearlyOpening = 0;
     
-    // Baseline RD simulation if cashflow exists
-    let baselineCompoundingBase = parseFloat(defaultCorpus) || 0;
-    let baselineUncompoundedInterest = 0;
-    // We bind the baseline absolute start effectively here
-    const baselineStartAbsolute = monthlyBaselineP > 0 ? (parseInt(defaultRDObj?.startYear || baseStartYear) * 12 + parseInt(defaultRDObj?.startMonth || baseStartMonth)) : startAbsolute;
-
     let yearlyDeposit = 0;
     let yearlyInterest = 0;
     let yearlyMaturity = 0;
@@ -76,7 +55,7 @@ export const computeRDData = (proposedRDs, expectedReturns, defaultRDObj = {}, d
                 // Start of month: Add monthly P if still within paying duration
                 let monthlyP = 0;
                 if (currentAbsolute <= rd.endAbsolute) {
-                    monthlyP = rd.annualAmount / 12;
+                    monthlyP = rd.monthlyAmount;
                     rd.compoundingBase += monthlyP;
                     yearlyDeposit += monthlyP;
                     globalDeposit += monthlyP;
@@ -105,41 +84,13 @@ export const computeRDData = (proposedRDs, expectedReturns, defaultRDObj = {}, d
                 yearlyMaturity += rd.compoundingBase;
             }
         });
-        
-        // Handle baseline RD if it exists
-        if (monthlyBaselineP > 0 || baselineCompoundingBase > 0) {
-            // Apply new contributions ONLY if we've reached or passed the Cash Flow baseline start date
-            if (currentAbsolute >= baselineStartAbsolute) {
-                // If there's an explicit duration in the Baseline Object, stop contributing after it expires
-                const baselineDurationMonths = parseInt(defaultRDObj?.duration) ? parseInt(defaultRDObj.duration) * 12 : Infinity;
-                const monthsSinceBaseline = currentAbsolute - baselineStartAbsolute;
-                
-                if (monthsSinceBaseline < baselineDurationMonths) {
-                    baselineCompoundingBase += monthlyBaselineP;
-                    yearlyDeposit += monthlyBaselineP;
-                    globalDeposit += monthlyBaselineP;
-                }
-            }
-            
-            const interest = baselineCompoundingBase * periodicRate;
-            baselineUncompoundedInterest += interest;
-            monthInterest += interest;
-            globalInterest += interest;
-            
-            const monthsActive = currentAbsolute - startAbsolute + 1;
-            if (monthsActive > 0 && monthsActive % freqMonths === 0) {
-                baselineCompoundingBase += baselineUncompoundedInterest;
-                baselineUncompoundedInterest = 0;
-            }
-        }
 
         yearlyInterest += monthInterest;
 
         if (currentMonthVal === 12 || currentAbsolute === latestEndAbsolute) {
-            // Calculate closing balance as sum of all active RDs + baseline
+            // Calculate closing balance as sum of all active RDs
             let closingBalance = rds.filter(rd => rd.active && !rd.matured)
                                     .reduce((sum, rd) => sum + rd.compoundingBase + rd.uncompoundedInterest, 0);
-            closingBalance += baselineCompoundingBase + baselineUncompoundedInterest;
 
             schedule.push({
                 year: currentYearVal,
@@ -167,45 +118,62 @@ export const computeRDData = (proposedRDs, expectedReturns, defaultRDObj = {}, d
     const totals = {
         globalDeposit,
         globalInterest,
-        finalMaturity: rds.filter(rd => rd.matured).reduce((sum, rd) => sum + rd.compoundingBase, 0) + baselineCompoundingBase + baselineUncompoundedInterest
+        finalMaturity: rds.filter(rd => rd.matured).reduce((sum, rd) => sum + rd.compoundingBase, 0)
     };
 
     return { schedule, totals };
 };
 
-const RDCalculator = ({ allocations = [], expenseCategories = {}, assetCategories = {}, data, setData }) => {
-    const expectedReturns = data?.rate ?? 7.00;
+const RDEngine = ({
+    rdKey,
+    title,
+    isReadOnly,
+    amount,
+    isMonthlyAmount,
+    duration,
+    startMonth,
+    startYear,
+    rate,
+    setRate,
+    noActiveMessage
+}) => {
+    const [localAmount, setLocalAmount] = React.useState(amount);
+    React.useEffect(() => { setLocalAmount(amount); }, [amount]);
 
-    const defaultRDObj = expenseCategories?.savings?.rd || {};
-    const defaultCorpus = parseFloat(assetCategories?.investments?.recurringDeposit) || 0;
-
-    const setExpectedReturns = (val) => setData({ ...data, rate: val });
-
-    const proposedRDs = useMemo(() => allocations.filter(a => a.type === 'Recurring Deposit'), [allocations]);
-
-    const [localCorpus, setLocalCorpus] = React.useState(defaultCorpus);
-    React.useEffect(() => { setLocalCorpus(defaultCorpus); }, [defaultCorpus]);
+    const activeRDObj = useMemo(() => {
+        return [{
+            id: rdKey,
+            name: title,
+            startYear,
+            startMonth,
+            duration,
+            amount: localAmount, 
+            isBaseline: isMonthlyAmount 
+        }];
+    }, [rdKey, title, startYear, startMonth, duration, localAmount, isMonthlyAmount]);
 
     const calculationData = useMemo(() => {
-        return computeRDData(proposedRDs, expectedReturns, defaultRDObj, localCorpus);
-    }, [proposedRDs, expectedReturns, defaultRDObj, localCorpus]);
+        return computeRDData(activeRDObj, rate);
+    }, [activeRDObj, rate]);
 
     const { schedule, totals } = calculationData;
 
     return (
-        <div className="fade-in" style={{ padding: '1rem' }}>
+        <div className="fade-in" style={{ padding: '1rem', marginBottom: '3rem' }}>
             <div className="card" style={{ maxWidth: '1400px', margin: '0 auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
-                    <RefreshCcw size={32} color="var(--primary)" />
+                    <RefreshCcw size={32} color={isReadOnly ? "var(--success)" : "var(--primary)"} />
                     <div>
-                        <h1 style={{ margin: 0 }}>Recurring Deposit (RD) Calculator</h1>
-                        <p className="text-muted" style={{ margin: 0 }}>Project guaranteed returns with strict Indian Quarterly Compounding rules.</p>
+                        <h1 style={{ margin: 0 }}>{title}</h1>
+                        <p className="text-muted" style={{ margin: 0 }}>
+                            {isReadOnly ? "Timeline mapping for your proposed or synchronized Cash Flow RD." : "Project guaranteed returns with strict Indian Quarterly Compounding rules."}
+                        </p>
                     </div>
                 </div>
 
-                {proposedRDs.length === 0 && defaultRD === 0 && defaultCorpus === 0 ? (
+                {(localAmount === 0 && !isReadOnly) ? (
                     <div style={{ textAlign: 'center', padding: '3rem', border: '2px dashed var(--border)', borderRadius: '12px', color: 'var(--text-muted)' }}>
-                        <p>No active RD found in the global Cash Flow Baseline nor proposed natively.</p>
+                        <p>{noActiveMessage || "No active RD mapped."}</p>
                         <p style={{ fontSize: '0.9rem' }}>Go back to Step 4 or Step 9 to inject your baseline or allocate future installments.</p>
                     </div>
                 ) : (
@@ -219,17 +187,19 @@ const RDCalculator = ({ allocations = [], expenseCategories = {}, assetCategorie
                                     step="0.1"
                                     min="5"
                                     max="9"
-                                    value={expectedReturns} 
+                                    value={rate} 
                                     onChange={(e) => {
+                                        if (!setRate) return;
                                         let val = parseFloat(e.target.value);
-                                        setExpectedReturns(isNaN(val) ? '' : val);
+                                        setRate(isNaN(val) ? '' : val);
                                     }} 
                                     onBlur={(e) => {
+                                        if (!setRate) return;
                                         let val = parseFloat(e.target.value);
                                         if (isNaN(val)) val = 7.00;
                                         if (val < 5) val = 5;
                                         if (val > 9) val = 9;
-                                        setExpectedReturns(val.toFixed(2));
+                                        setRate(val.toFixed(2));
                                     }}
                                     className="form-input" 
                                 />
@@ -237,18 +207,19 @@ const RDCalculator = ({ allocations = [], expenseCategories = {}, assetCategorie
                             </div>
 
                             <div className="form-group">
-                                <label><ShieldCheck size={16} /> Initial Investment / Current Corpus (₹)</label>
+                                <label><ShieldCheck size={16} /> {isMonthlyAmount ? 'Monthly Deposit (₹)' : 'Yearly Deposit (₹)'}</label>
                                 <div style={{ position: 'relative' }}>
                                     <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>₹</span>
                                     <input 
                                         type="number" 
-                                        value={localCorpus} 
-                                        onChange={(e) => setLocalCorpus(parseFloat(e.target.value) || 0)} 
+                                        value={localAmount} 
+                                        readOnly={isReadOnly}
+                                        style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed', paddingLeft: '24px' } : { paddingLeft: '24px' }}
+                                        onChange={(e) => !isReadOnly && setLocalAmount(parseFloat(e.target.value) || 0)} 
                                         className="form-input" 
-                                        style={{ paddingLeft: '24px' }}
                                     />
                                 </div>
-                                <small className="text-muted">Synced from your Asset configurations automatically.</small>
+                                <small className="text-muted">{isReadOnly ? "Locked to your synchronized configuration." : "Manual Standalone Testing Mode."}</small>
                             </div>
 
                             <div className="form-group">
@@ -263,39 +234,6 @@ const RDCalculator = ({ allocations = [], expenseCategories = {}, assetCategorie
                                     Quarterly (Fixed)
                                 </div>
                                 <small className="text-muted">Indian RD banking regulations strictly default to quarterly interest accrual.</small>
-                            </div>
-
-                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-                                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem' }}>Fetched RD Allocations</h3>
-                                {proposedRDs.length === 0 ? (
-                                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No future Allocations proposed natively.</div>
-                                ) : (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                        {proposedRDs.map((p) => (
-                                            <div key={p.id} className="card" style={{ padding: '1rem', border: '1px solid #3b82f6', background: '#eff6ff' }}>
-                                                <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#3b82f6', marginBottom: '0.5rem' }}>
-                                                    {p.name || 'RD Allocation'}
-                                                </div>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Yearly Amount</label>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{Math.round(p.amount).toLocaleString('en-IN')}</div>
-                                                    </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Start Date</label>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                                                            {new Date(2000, p.startMonth - 1, 1).toLocaleString('default', { month: 'short' })} {p.startYear}
-                                                        </div>
-                                                    </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', gridColumn: '1 / -1' }}>
-                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Duration</label>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{p.duration} Years</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
                         </div>
 
@@ -355,6 +293,71 @@ const RDCalculator = ({ allocations = [], expenseCategories = {}, assetCategorie
                     </div>
                 )}
             </div>
+        </div>
+    );
+};
+
+const RDCalculator = ({ allocations = [], expenseCategories = {}, data, setData }) => {
+    const rdsToRender = [];
+
+    // 1. Check for Active Baseline RD
+    const defaultRDObj = expenseCategories?.savings?.rd || {};
+    const monthlyBaselineP = parseFloat(defaultRDObj?.amount !== undefined ? defaultRDObj.amount : defaultRDObj) || 0;
+
+    if (monthlyBaselineP > 0) {
+        rdsToRender.push({
+            rdKey: 'active',
+            title: 'Active Recurring Deposit (Cash Flow Synchronized)',
+            amount: monthlyBaselineP,
+            isMonthlyAmount: true,
+            rate: data?.rate ?? 7.00,
+            duration: parseInt(defaultRDObj?.duration) || 10,
+            startMonth: parseInt(defaultRDObj?.startMonth) || new Date().getMonth() + 1,
+            startYear: parseInt(defaultRDObj?.startYear) || new Date().getFullYear(),
+            isReadOnly: true,
+            setRate: (val) => setData({ ...data, rate: val })
+        });
+    }
+
+    // 2. Check for Future Proposed RDs
+    const proposedRDs = useMemo(() => allocations.filter(a => a.type === 'Recurring Deposit'), [allocations]);
+    proposedRDs.forEach((rd) => {
+        rdsToRender.push({
+            rdKey: `future_${rd.id}`,
+            title: `Future Adjustment RD: ${rd.name || 'Allocation'}`,
+            amount: parseFloat(rd.amount) || 0,
+            isMonthlyAmount: false,
+            rate: data?.rate ?? 7.00,
+            duration: parseInt(rd.duration) || 10,
+            startMonth: parseInt(rd.startMonth) || 1,
+            startYear: parseInt(rd.startYear) || new Date().getFullYear(),
+            isReadOnly: true,
+            setRate: (val) => setData({ ...data, rate: val })
+        });
+    });
+
+    // 3. Standalone Manual Calculator if empty
+    if (rdsToRender.length === 0) {
+        rdsToRender.push({
+            rdKey: 'manual',
+            title: 'Standalone Recurring Deposit Calculator',
+            amount: 0,
+            isMonthlyAmount: true,
+            rate: data?.rate ?? 7.00,
+            duration: 10,
+            startMonth: new Date().getMonth() + 1,
+            startYear: new Date().getFullYear(),
+            setRate: (val) => setData({ ...data, rate: val }),
+            isReadOnly: false,
+            noActiveMessage: "No active RD found in the global Cash Flow Baseline nor proposed natively."
+        });
+    }
+
+    return (
+        <div>
+            {rdsToRender.map(rdConfig => (
+                <RDEngine key={rdConfig.rdKey} {...rdConfig} />
+            ))}
         </div>
     );
 };

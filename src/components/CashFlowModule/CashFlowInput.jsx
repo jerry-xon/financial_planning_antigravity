@@ -541,17 +541,32 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                 <div className="input-group" key={invKey}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '0.25rem' }}>
                                         <label style={{ marginBottom: 0 }}>{labelNames[invKey]}</label>
-                                        <button 
-                                            onClick={() => setActiveInvModal(invKey)}
-                                            style={{ 
-                                                background: 'transparent', border: 'none', 
-                                                color: isConfigured ? 'var(--success)' : 'var(--primary)', 
-                                                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
-                                                textDecoration: 'none', padding: 0
-                                            }}
-                                        >
-                                            {isConfigured ? '✓ Configured' : '⚙️ Configure Details'}
-                                        </button>
+                                        <div style={{ display: 'flex', gap: '12px' }}>
+                                            <button 
+                                                onClick={() => setActiveInvModal(invKey)}
+                                                style={{ 
+                                                    background: 'transparent', border: 'none', 
+                                                    color: isConfigured ? 'var(--success)' : 'var(--primary)', 
+                                                    fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                                                    textDecoration: 'none', padding: 0
+                                                }}
+                                            >
+                                                {isConfigured ? '✓ Configured' : '⚙️ Configure'}
+                                            </button>
+                                            {isConfigured && (
+                                                <button
+                                                    onClick={() => handleExpenseChange('savings', invKey, null)}
+                                                    style={{ 
+                                                        background: 'transparent', border: 'none', 
+                                                        color: 'var(--danger)', 
+                                                        fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                                                        textDecoration: 'none', padding: 0
+                                                    }}
+                                                >
+                                                    ✕ Clear
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                     <input 
                                         type="number" 

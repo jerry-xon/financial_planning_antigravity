@@ -18,6 +18,9 @@ const JourneyModule = ({
     projections: passedProjections
 }) => {
     
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+
     const handleRateChange = (name, value) => {
         setInflationRates({
             ...inflationRates,
@@ -198,7 +201,11 @@ const JourneyModule = ({
                                                 <input 
                                                     type="number" 
                                                     value={adj.startYear} 
-                                                    onChange={(e) => updateAdjustment(adj.id, 'startYear', e.target.value)}
+                                                    onChange={(e) => {
+                                                        let val = parseInt(e.target.value) || currentYear;
+                                                        if (val < currentYear) val = currentYear;
+                                                        updateAdjustment(adj.id, 'startYear', val);
+                                                    }}
                                                 />
                                             </div>
                                             <div className="input-group" style={{ marginBottom: 0 }}>
@@ -288,12 +295,27 @@ const JourneyModule = ({
                                             <div className="input-group" style={{ marginBottom: 0 }}>
                                                 <label>Start Month/Year</label>
                                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                    <select value={adj.startMonth || 1} onChange={(e) => updateAdjustment(adj.id, 'startMonth', e.target.value)}>
+                                                    <select value={adj.startMonth || 1} onChange={(e) => {
+                                                        let val = parseInt(e.target.value);
+                                                        if (adj.startYear <= currentYear && val < currentMonth) {
+                                                            val = currentMonth;
+                                                        }
+                                                        updateAdjustment(adj.id, 'startMonth', val);
+                                                    }}>
                                                         {[...Array(12)].map((_, i) => (
                                                             <option key={i+1} value={i+1}>{new Date(2000, i, 1).toLocaleString('default', { month: 'short' })}</option>
                                                         ))}
                                                     </select>
-                                                    <input type="number" value={adj.startYear} onChange={(e) => updateAdjustment(adj.id, 'startYear', e.target.value)} style={{ width: '80px' }} />
+                                                    <input type="number" value={adj.startYear} onChange={(e) => {
+                                                        let val = parseInt(e.target.value) || currentYear;
+                                                        if (val <= currentYear) {
+                                                            val = currentYear;
+                                                            if ((adj.startMonth || 1) < currentMonth) {
+                                                                updateAdjustment(adj.id, 'startMonth', currentMonth);
+                                                            }
+                                                        }
+                                                        updateAdjustment(adj.id, 'startYear', val);
+                                                    }} style={{ width: '80px' }} />
                                                 </div>
                                             </div>
                                             <div className="input-group" style={{ marginBottom: 0, gridColumn: 'span 5', background: 'var(--bg-card)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>

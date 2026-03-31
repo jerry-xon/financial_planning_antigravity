@@ -275,7 +275,7 @@ const TwoWheelerCalculator = ({ data, setData, expenseCategories, journeyAdjustm
     }
 
     // 2. Check for Future Journey Loans
-    const futureLoans = (journeyAdjustments || []).filter(a => a.type === 'loan' && a.loanCategory === 'Two-Wheeler Loan');
+    const futureLoans = (journeyAdjustments || []).filter(a => a.type === 'loan' && a.loanCategory === 'twoWheelerLoan');
     futureLoans.forEach((fl, i) => {
         loansToRender.push({
             loanKey: `future_${fl.id}`,

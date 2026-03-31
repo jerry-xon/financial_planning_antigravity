@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 const LoanDetailsModal = ({ isOpen, onClose, onSave, initialData, loanTypeTitle }) => {
     const [formData, setFormData] = useState({
@@ -50,7 +51,7 @@ const LoanDetailsModal = ({ isOpen, onClose, onSave, initialData, loanTypeTitle 
         onClose();
     };
 
-    return (
+    return createPortal(
         <div style={{
             position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
             background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
@@ -130,7 +131,8 @@ const LoanDetailsModal = ({ isOpen, onClose, onSave, initialData, loanTypeTitle 
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
