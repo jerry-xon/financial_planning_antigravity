@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Copy, CreditCard, Tag, X } from 'lucide-react';
 import ReportView from '../ReportModule/ReportView';
 import { createCheckoutTransaction } from '../../services/checkoutService';
+import { createRazorpayOrder, verifyRazorpaySignature } from '../../services/razorpayEdgeService';
 
 const RAZORPAY_SCRIPT_ID = 'razorpay-checkout-js';
 const REPORT_PRICE_INR = 499;
@@ -145,20 +146,43 @@ const CheckoutGate = ({ user, planId, reportProps }) => {
       return;
     }
 
-    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-    if (!razorpayKey) {
-      setCouponMessage('Missing VITE_RAZORPAY_KEY_ID in environment configuration.');
+    const { data: orderData, error: orderError } = await createRazorpayOrder({
+      amountInr: 0,
+      currency: 'INR',
+      notes: {
+        userId,
+        planId: planId || '',
+        couponCode: couponData.code,
+        flow: 'coupon_zero_checkout',
+      },
+    });
+
+    if (orderError || !orderData?.keyId) {
+      setCouponMessage(orderError?.message || 'Unable to start Razorpay coupon checkout.');
       setIsRecordingZeroTxn(false);
       return;
     }
 
     const options = {
-      key: razorpayKey,
-      amount: 0,
-      currency: 'INR',
+      key: orderData.keyId,
+      amount: Number(orderData.amount ?? 0),
+      currency: orderData.currency || 'INR',
+      ...(orderData.orderId ? { order_id: orderData.orderId } : {}),
       name: 'FinPlan',
       description: 'Coupon Checkout (100% OFF)',
       handler: async (response) => {
+        const { data: verifyData, error: verifyError } = await verifyRazorpaySignature({
+          razorpay_payment_id: response?.razorpay_payment_id || '',
+          razorpay_order_id: response?.razorpay_order_id || '',
+          razorpay_signature: response?.razorpay_signature || '',
+        });
+
+        if (verifyError || !verifyData?.verified) {
+          setCouponMessage('Coupon checkout completed, but signature verification failed.');
+          setIsRecordingZeroTxn(false);
+          return;
+        }
+
         const { error } = await createCheckoutTransaction({
           planId,
           amountInr: 0,
@@ -227,21 +251,43 @@ const CheckoutGate = ({ user, planId, reportProps }) => {
       return;
     }
 
-    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-    if (!razorpayKey) {
-      setCouponMessage('Missing VITE_RAZORPAY_KEY_ID in environment configuration.');
+    const { data: orderData, error: orderError } = await createRazorpayOrder({
+      amountInr: REPORT_PRICE_INR,
+      currency: 'INR',
+      notes: {
+        userId,
+        planId: planId || '',
+        flow: 'paid_checkout',
+      },
+    });
+
+    if (orderError || !orderData?.keyId || !orderData?.orderId) {
+      setCouponMessage(orderError?.message || 'Unable to create Razorpay order.');
       setIsPaying(false);
       return;
     }
 
     const options = {
-      key: razorpayKey,
-      amount: REPORT_PRICE_INR * 100,
-      currency: 'INR',
+      key: orderData.keyId,
+      amount: orderData.amount,
+      currency: orderData.currency || 'INR',
+      order_id: orderData.orderId,
       name: 'FinPlan',
       description: 'Complete Overview & Report Download Access',
       image: '',
       handler: async (response) => {
+        const { data: verifyData, error: verifyError } = await verifyRazorpaySignature({
+          razorpay_payment_id: response?.razorpay_payment_id || '',
+          razorpay_order_id: response?.razorpay_order_id || '',
+          razorpay_signature: response?.razorpay_signature || '',
+        });
+
+        if (verifyError || !verifyData?.verified) {
+          setCouponMessage('Payment received, but signature verification failed.');
+          setIsPaying(false);
+          return;
+        }
+
         const { error } = await createCheckoutTransaction({
           planId,
           amountInr: REPORT_PRICE_INR,
