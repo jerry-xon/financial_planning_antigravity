@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { PieChart, Plus, Trash2, ArrowRight, Wallet, Target, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { PieChart, Plus, Trash2, ArrowRight, Wallet, Target, TrendingUp, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 
 const AllocationModule = ({ 
     familyMembers = [],
@@ -14,6 +15,13 @@ const AllocationModule = ({
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
     const [collapsedIds, setCollapsedIds] = useState(new Set());
+    const [hasAcknowledgedDeficit, setHasAcknowledgedDeficit] = useState(false);
+
+    useEffect(() => {
+        if (!projections.some(p => p.yearHasDeficit)) {
+            setHasAcknowledgedDeficit(false);
+        }
+    }, [projections]);
 
     const toggleCollapse = (id) => {
         const newCollapsed = new Set(collapsedIds);
@@ -141,8 +149,84 @@ const AllocationModule = ({
     const isRecurring = (type) => ['SIP', 'PPF', 'NPS', 'Life Insurance', 'Recurring Deposit'].includes(type);
     const hasDuration = (type) => isRecurring(type) || type === 'Fixed Deposit';
 
+    const deficitInfo = useMemo(() => {
+        const deficitYear = projections.find(p => p.yearHasDeficit);
+        if (deficitYear) {
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            return {
+                year: deficitYear.year,
+                month: deficitYear.yearDeficitMonth ? months[deficitYear.yearDeficitMonth - 1] : null
+            };
+        }
+        return null;
+    }, [projections]);
+
     return (
         <div className="allocation-module fade-in">
+            {deficitInfo && !hasAcknowledgedDeficit && createPortal(
+                <div style={{
+                    position: 'fixed',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 9999,
+                    animation: 'fadeIn 0.2s ease-out'
+                }}>
+                    <div style={{
+                        background: 'var(--bg-main)',
+                        padding: '2rem',
+                        borderRadius: '12px',
+                        maxWidth: '450px',
+                        width: '90%',
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        textAlign: 'center',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '1rem',
+                        border: '1px solid rgba(239, 68, 68, 0.5)'
+                    }}>
+                        <div style={{
+                            width: '48px', height: '48px',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#ef4444'
+                        }}>
+                            <AlertTriangle size={28} />
+                        </div>
+                        <h3 style={{ margin: 0, color: '#ef4444' }}>Warning: Over-allocated!</h3>
+                        <p style={{ margin: 0, color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                            Your proposed investments exceed your accumulated cash flow <strong>{deficitInfo.month ? ` starting around ${deficitInfo.month} ${deficitInfo.year}` : ` in ${deficitInfo.year}`}</strong>. 
+                            <br/><br/>
+                            Please ensure you generate enough surplus before committing to these allocations.
+                        </p>
+                        <button 
+                            onClick={() => setHasAcknowledgedDeficit(true)}
+                            style={{
+                                background: '#ef4444',
+                                color: '#fff',
+                                border: 'none',
+                                padding: '0.75rem 2rem',
+                                borderRadius: '8px',
+                                fontSize: '1rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                marginTop: '0.5rem',
+                                width: '100%'
+                            }}
+                        >
+                            OK, I understand
+                        </button>
+                    </div>
+                </div>,
+                document.body
+            )}
+            
             <div className="card" style={{ marginBottom: '1.5rem', overflowX: 'auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
                     <PieChart size={24} className="text-primary" />
@@ -486,6 +570,31 @@ const AllocationModule = ({
                 </div>
             </div>
 
+            {deficitInfo && hasAcknowledgedDeficit && (
+                <div style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    color: '#ef4444',
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    marginTop: '2rem',
+                    marginBottom: '-1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    animation: 'fadeIn 0.3s'
+                }}>
+                    <AlertTriangle size={24} style={{ flexShrink: 0 }} />
+                    <div>
+                        <strong style={{ display: 'block', marginBottom: '4px' }}>Warning: Over-allocated!</strong>
+                        <p style={{ margin: 0, fontSize: '0.85rem' }}>
+                            Your proposed investments exceed your accumulated cash flow{deficitInfo.month ? ` starting around ${deficitInfo.month} ${deficitInfo.year}` : ` in ${deficitInfo.year}`}. 
+                            Please ensure you generate enough surplus before committing to these allocations.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
                 <button className="btn btn-secondary" onClick={onBack}>
                     Back to Journey
@@ -493,6 +602,11 @@ const AllocationModule = ({
                 <button 
                     className="btn btn-primary" 
                     onClick={onNext} 
+                    disabled={!!deficitInfo}
+                    style={{ 
+                        opacity: deficitInfo ? 0.5 : 1, 
+                        cursor: deficitInfo ? 'not-allowed' : 'pointer' 
+                    }}
                 >
                     Proceed to Portfolio Growth
                 </button>

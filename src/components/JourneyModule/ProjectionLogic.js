@@ -32,6 +32,8 @@ export const generateProjections = ({
     loanProposals = [],
     currentYearLedger
 }) => {
+    let cumulativeNetInvestibleSurplus = 0; // Tracks running cash flow balance month-by-month across all years
+    
     const {
         incomeIncrement = 0,
         householdInflation = 0,
@@ -344,6 +346,105 @@ export const generateProjections = ({
         const savingsAndInvestments = (savingsMonthly * 12) + totalInsuranceOutflow; 
         const netInvestibleSurplus = surplusBeforeSaving - savingsAndInvestments;
 
+        // --- NEW: Cumulative Month-by-Month Validation ---
+        // Calculate the base surplus of the year BEFORE any Journey adjustments or Allocations
+        const baselineTotalOutflow = annualOutflow + totalEducationExpenses;
+        const baselineSurplusBeforeSaving = netInflowAfterTax - baselineTotalOutflow;
+        const baseNetInvestibleSurplusAnnual = baselineSurplusBeforeSaving - savingsAndInvestments;
+        const monthlyBaselineInflow = baseNetInvestibleSurplusAnnual / 12;
+
+        let yearHasDeficit = false;
+        let yearDeficitMonth = null;
+        let lowestCumulativeSurplus = null;
+
+        const currentMonthAbsolute = new Date().getMonth() + 1;
+        const startMonthLimit = (i === 0) ? currentMonthAbsolute : 1;
+
+        for (let m = startMonthLimit; m <= 12; m++) {
+            let monthlyJourneyDeduction = 0;
+            let monthlyAllocationDeduction = 0;
+            const currentAbsoluteMonth = (year * 12) + m;
+
+            // 1. Calculate Monthly Journey Deductions
+            combinedAdjustments.forEach(adj => {
+                if (adj.type === 'loan') {
+                    const adjStartYear = parseInt(adj.startYear);
+                    const adjStartMonth = parseInt(adj.startMonth) || 1;
+                    const tenureMonths = parseInt(adj.tenure) || 12;
+                    const emi = parseFloat(adj.emi) || 0;
+
+                    const loanStartAbsoluteMonth = (adjStartYear * 12) + adjStartMonth;
+                    const loanEndAbsoluteMonth = loanStartAbsoluteMonth + tenureMonths - 1;
+
+                    if (currentAbsoluteMonth >= loanStartAbsoluteMonth && currentAbsoluteMonth <= loanEndAbsoluteMonth) {
+                        monthlyJourneyDeduction += emi;
+                    }
+                } else {
+                    const adjStartYear = parseInt(adj.startYear);
+                    const adjStartMonth = parseInt(adj.startMonth) || 1;
+                    const adjDuration = parseInt(adj.duration) || 1;
+                    const adjAmount = parseFloat(adj.amount) || 0;
+                    
+                    if (year >= adjStartYear && year < (adjStartYear + adjDuration)) {
+                        // Distribute the annual amount over active months
+                        if (year === adjStartYear) {
+                            if (m >= adjStartMonth) {
+                                monthlyJourneyDeduction += (adjAmount / (13 - adjStartMonth)); 
+                            }
+                        } else {
+                            monthlyJourneyDeduction += (adjAmount / 12);
+                        }
+                    }
+                }
+            });
+
+            // 2. Calculate Monthly Allocation Deductions
+            investmentAllocations.forEach(alloc => {
+                const isRecurring = ['SIP', 'PPF', 'NPS', 'Life Insurance', 'Recurring Deposit'].includes(alloc.type);
+                const isLifeInsurance = alloc.type === 'Life Insurance';
+
+                if (isLifeInsurance) return; // Handled in savingsAndInvestments already as totalInsuranceOutflow
+
+                const allocStartYear = parseInt(alloc.startYear);
+                const allocStartMonth = parseInt(alloc.startMonth) || 1;
+                const allocDuration = parseInt(alloc.duration) || 1;
+                const annualAmount = parseFloat(alloc.amount) || 0;
+
+                if (isRecurring) {
+                    if (year >= allocStartYear && year < (allocStartYear + allocDuration)) {
+                        if (year === allocStartYear) {
+                            if (m >= allocStartMonth) {
+                                monthlyAllocationDeduction += (annualAmount / 12);
+                            }
+                        } else {
+                            monthlyAllocationDeduction += (annualAmount / 12);
+                        }
+                    }
+                } else {
+                    // Lumpsum / Fixed Deposit / Other One-Time
+                    // We assume one-time allocations occur strictly on their startMonth.
+                    if (year === allocStartYear && m === allocStartMonth) {
+                        monthlyAllocationDeduction += annualAmount;
+                    }
+                }
+            });
+
+            // Apply to cumulative
+            cumulativeNetInvestibleSurplus += monthlyBaselineInflow;
+            cumulativeNetInvestibleSurplus -= monthlyJourneyDeduction;
+            cumulativeNetInvestibleSurplus -= monthlyAllocationDeduction;
+
+            if (lowestCumulativeSurplus === null || cumulativeNetInvestibleSurplus < lowestCumulativeSurplus) {
+                lowestCumulativeSurplus = cumulativeNetInvestibleSurplus;
+            }
+
+            if (cumulativeNetInvestibleSurplus < 0 && !yearHasDeficit) {
+                yearHasDeficit = true;
+                yearDeficitMonth = m;
+            }
+        }
+        // --- END Cumulative Validation ---
+
         // 4. Proposed Investment Allocations (Step 9) - These are ADDITIONAL investments proposed from the Allocation Module
         let yearAllocationsTotal = 0;
         const activeAllocations = [];
@@ -451,7 +552,10 @@ export const generateProjections = ({
             netInvestibleSurplus,
             yearAllocationsTotal,
             activeAllocations,
-            unallocatedSurplus
+            unallocatedSurplus,
+            lowestCumulativeSurplus,
+            yearHasDeficit,
+            yearDeficitMonth
         });
     }
 
