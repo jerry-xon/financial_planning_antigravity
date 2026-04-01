@@ -15,7 +15,7 @@ import ProtectionGapModule from './components/ProtectionGapModule/ProtectionGapM
 import AllocationModule from './components/AllocationModule/AllocationModule';
 import GrowthModule from './components/GrowthModule/GrowthModule';
 import FulfillmentModule from './components/FulfillmentModule/FulfillmentModule';
-import ReportView from './components/ReportModule/ReportView';
+import CheckoutGate from './components/CheckoutModule/CheckoutGate';
 import CalculatorPlaceholder from './components/Calculators/CalculatorPlaceholder';
 import SIPCalculator from './components/Calculators/SIPCalculator';
 import PersonalLoanCalculator from './components/Calculators/PersonalLoanCalculator';
@@ -903,17 +903,21 @@ function App() {
                 />
               )}
               {currentStep === 12 && (
-                <ReportView
-                  familyMembers={familyMembers}
-                  income={income}
-                  expenseCategories={expenseCategories}
-                  assetCategories={assetCategories}
-                  liabilityCategories={liabilityCategories}
-                  goals={goals}
-                  policies={policies}
-                  allocations={investmentAllocations}
-                  goalMappings={goalMappings}
-                  onBack={() => { setCurrentStep(11); window.scrollTo(0, 0); }}
+                <CheckoutGate
+                  user={user}
+                  planId={planId}
+                  reportProps={{
+                    familyMembers,
+                    income,
+                    expenseCategories,
+                    assetCategories,
+                    liabilityCategories,
+                    goals,
+                    policies,
+                    allocations: investmentAllocations,
+                    goalMappings,
+                    onBack: () => { setCurrentStep(11); window.scrollTo(0, 0); }
+                  }}
                 />
               )}
             </>

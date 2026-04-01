@@ -246,7 +246,44 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- ============================================
--- 7. GRANTS FOR AUTHENTICATED USERS
+-- 7. CREATE checkout_transactions TABLE
+-- ============================================
+create table if not exists public.checkout_transactions (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  plan_id uuid references public.financial_plans(id) on delete set null,
+  amount_inr numeric not null default 0,
+  currency text not null default 'INR',
+  status text not null default 'SUCCESS',
+  payment_provider text not null,
+  payment_method text not null,
+  coupon_code text,
+  provider_payment_id text,
+  provider_order_id text,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create index if not exists checkout_transactions_user_id_idx on public.checkout_transactions(user_id);
+create index if not exists checkout_transactions_plan_id_idx on public.checkout_transactions(plan_id);
+
+alter table public.checkout_transactions enable row level security;
+
+drop policy if exists "Users can view own checkout transactions" on public.checkout_transactions;
+drop policy if exists "Users can insert own checkout transactions" on public.checkout_transactions;
+
+create policy "Users can view own checkout transactions"
+  on public.checkout_transactions
+  for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert own checkout transactions"
+  on public.checkout_transactions
+  for insert
+  with check (auth.uid() = user_id);
+
+-- ============================================
+-- 8. GRANTS FOR AUTHENTICATED USERS
 -- ============================================
 grant usage on schema public to authenticated;
 grant all privileges on all tables in schema public to authenticated;
