@@ -5,6 +5,20 @@ import { supabase } from '../lib/supabase';
  * Handles all authentication operations using Supabase Auth
  */
 
+const resolveRedirectBaseUrl = () => {
+  const configuredSiteUrl = import.meta.env.VITE_SITE_URL;
+  if (configuredSiteUrl && configuredSiteUrl.trim()) {
+    return configuredSiteUrl.trim().replace(/\/+$/, '');
+  }
+  return window.location.origin;
+};
+
+const buildRedirectUrl = (path = '/') => {
+  const baseUrl = resolveRedirectBaseUrl();
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${baseUrl}${normalizedPath}`;
+};
+
 // Sign up with email and password
 export const signUpWithEmail = async (email, password, fullName, role = 'user', company = '') => {
   try {
@@ -49,7 +63,7 @@ export const signInWithGoogle = async (role = 'user') => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: buildRedirectUrl('/'),
         queryParams: {
           role: role,
         },
@@ -104,7 +118,7 @@ export const getSession = async () => {
 export const resetPassword = async (email) => {
   try {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: buildRedirectUrl('/reset-password'),
     });
 
     if (error) throw error;
