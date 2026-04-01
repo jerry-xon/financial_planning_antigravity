@@ -45,6 +45,7 @@ function App() {
   const { user } = useAuth();
   
   // Supabase plan ID
+  //just a comment
   const [planId, setPlanId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
