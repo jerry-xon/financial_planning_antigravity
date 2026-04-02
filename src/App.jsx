@@ -825,6 +825,12 @@ function App() {
                   familyMembers={familyMembers}
                   expenseCategories={expenseCategories}
                   policies={policies}
+                  assetCategories={assetCategories}
+                  calculatorInputs={calculatorInputs}
+                  proposedSIPs={proposedSIPs}
+                  proposedEquities={proposedEquities}
+                  goals={goals}
+                  goalMappings={goalMappings}
                   onNext={() => { setCurrentStep(7); window.scrollTo(0, 0); }}
                   onBack={() => { setCurrentStep(5); window.scrollTo(0, 0); }}
                 />

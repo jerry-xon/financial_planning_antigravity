@@ -1,8 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import ProtectionGapOutput from './ProtectionGapOutput';
+import FinancialPyramid from './FinancialPyramid';
 import { calculateProtectionGap } from './ProtectionGapLogic';
 
-const ProtectionGapModule = ({ familyMembers, expenseCategories, policies, onNext, onBack }) => {
+const ProtectionGapModule = ({ 
+    familyMembers, 
+    expenseCategories, 
+    policies, 
+    assetCategories,
+    calculatorInputs,
+    proposedSIPs,
+    proposedEquities,
+    goals,
+    goalMappings,
+    onNext, 
+    onBack 
+}) => {
     const [results, setResults] = useState(null);
 
     useEffect(() => {
@@ -12,7 +25,7 @@ const ProtectionGapModule = ({ familyMembers, expenseCategories, policies, onNex
 
     return (
         <div className="fade-in" style={{ marginTop: '2rem' }}>
-            <div className="card">
+            <div className="card" style={{ marginBottom: '2rem' }}>
                 <h1>Protection Gap Analysis (Module 6)</h1>
                 <p className="text-muted" style={{ marginBottom: '1.5rem' }}>
                     We analyze the gap between your Human Life Value (HLV) and your existing life insurance coverage.
@@ -22,6 +35,18 @@ const ProtectionGapModule = ({ familyMembers, expenseCategories, policies, onNex
                     <strong>Note:</strong> Multiplier of 200x monthly expenses is used to estimate the capital required to sustain your family's lifestyle in your absence.
                 </div>
             </div>
+
+            <FinancialPyramid 
+                expenseCategories={expenseCategories}
+                policies={policies}
+                assetCategories={assetCategories}
+                calculatorInputs={calculatorInputs}
+                proposedSIPs={proposedSIPs}
+                proposedEquities={proposedEquities}
+                goals={goals}
+                goalMappings={goalMappings}
+                protectionGapResults={results}
+            />
 
             <ProtectionGapOutput results={results} />
 
