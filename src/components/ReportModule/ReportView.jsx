@@ -6,6 +6,12 @@ import { categorizeGoals } from '../GoalModule/GoalLogic';
 import { Download, Printer, CheckCircle, TrendingUp, AlertTriangle, Clock, Shield } from 'lucide-react';
 import { calculateYearlyInsuranceSummary, getInsuredNamesList, getPolicyColumns } from '../InsuranceModule/InsuranceLogic';
 
+import FinancialPyramid from '../ProtectionGapModule/FinancialPyramid';
+import { calculateProtectionGap } from '../ProtectionGapModule/ProtectionGapLogic';
+import IncomeTaxModule from '../IncomeTaxModule/IncomeTaxModule';
+import JourneyTable from '../JourneyModule/JourneyTable';
+import GrowthModule from '../GrowthModule/GrowthModule';
+
 const ReportView = ({ 
     familyMembers, 
     income, 
@@ -16,6 +22,10 @@ const ReportView = ({
     policies,
     allocations = [],
     goalMappings = {},
+    contingencyFund,
+    journeyAdjustments = [],
+    projections = [],
+    calculatorInputs = {},
     onBack
 }) => {
     const profileResults = calculateFamilyProfile(familyMembers);
@@ -27,6 +37,10 @@ const ReportView = ({
     const insuranceSummary = calculateYearlyInsuranceSummary(policies);
     const policyColumns = getPolicyColumns(policies);
     const insuredNames = getInsuredNamesList(policies);
+
+    const protectionGapResults = calculateProtectionGap(expenseCategories, policies, familyMembers);
+    const proposedSIPs = allocations.filter(a => a.type === 'SIP');
+    const proposedEquities = allocations.filter(a => a.type === 'Direct Equity & ETFs');
 
     const handlePrint = () => {
         window.print();
@@ -48,48 +62,8 @@ const ReportView = ({
                 </div>
             </div>
 
-            <div className="report-dashboard grid" style={{ marginTop: '2rem' }}>
-                <div className="card">
-                    <h4><TrendingUp size={18} inline="true" /> Financial Standing</h4>
-                    <div className="stat-row">
-                        <span>Net Worth:</span>
-                        <strong>{formatCurrency(assetResults.netWorth)}</strong>
-                    </div>
-                    <div className="stat-row">
-                        <span>Monthly Surplus Rate:</span>
-                        <strong style={{ color: cashFlowResults.isHealthy ? 'var(--accent)' : 'var(--primary)' }}>
-                            {cashFlowResults.surplusRate.toFixed(1)}%
-                        </strong>
-                    </div>
-                    <div className="stat-row">
-                        <span>Disp. Income Rate:</span>
-                        <strong style={{ color: cashFlowResults.disposableIncomeRate >= 0 ? 'var(--accent)' : '#ef4444' }}>
-                            {cashFlowResults.disposableIncomeRate.toFixed(1)}%
-                        </strong>
-                    </div>
-                    <div className="stat-row">
-                        <span>Disposable Income:</span>
-                        <strong style={{ color: cashFlowResults.disposableIncome >= 0 ? 'var(--accent)' : '#ef4444' }}>
-                            {formatCurrency(cashFlowResults.disposableIncome)}
-                        </strong>
-                    </div>
-                </div>
-
-                <div className="card">
-                    <h4><CheckCircle size={18} inline="true" /> Goals Tracked</h4>
-                    <div className="stat-row">
-                        <span>Total Life Goals:</span>
-                        <strong>{validGoals.length}</strong>
-                    </div>
-                    <div className="stat-row">
-                        <span>Total Future Cost:</span>
-                        <strong>{formatCurrency(validGoals.reduce((sum, g) => sum + (parseFloat(g.futureCost) || 0), 0))}</strong>
-                    </div>
-                </div>
-            </div>
-
             <div className="report-sections" style={{ marginTop: '2rem' }}>
-                {/* Profile Summary */}
+                {/* 1. Profile Summary */}
                 <section className="report-section card">
                     <h3>1. Family Profile</h3>
                     <table className="report-table">
@@ -131,24 +105,24 @@ const ReportView = ({
                     </table>
                 </section>
 
-                {/* Cash Flow Summary */}
+                {/* 2. Cash Flow Summary */}
                 <section className="report-section card" style={{ marginTop: '1.5rem' }}>
-                    <h3>2. Monthly Cash Flow & Ratios</h3>
+                    <h3>2. Income - Expenses - Surplus Analysis</h3>
                     <div className="grid">
                         <div className="summary-box">
                             <label>Total Monthly Income</label>
                             <strong>{formatCurrency(cashFlowResults.totalIncome)}</strong>
                         </div>
                         <div className="summary-box">
-                            <label>Total Expenses (A+B)</label>
+                            <label>Household expenses + EMIs + Insurance</label>
                             <strong style={{ color: '#ef4444' }}>{formatCurrency(cashFlowResults.totalExpenses)}</strong>
                         </div>
                         <div className="summary-box">
-                            <label>Monthly Surplus (A)</label>
-                            <strong style={{ color: 'var(--accent)' }}>{formatCurrency(cashFlowResults.surplus)}</strong>
+                            <label>Savings and Investments</label>
+                            <strong style={{ color: 'var(--primary)' }}>{formatCurrency(cashFlowResults.totalInvestments || Object.values(expenseCategories?.savings || {}).reduce((sum, v) => sum + (v ? (parseFloat(typeof v === 'object' ? v.amount : v) || 0) : 0), 0))}</strong>
                         </div>
                         <div className="summary-box" style={{ background: 'var(--bg-main)' }}>
-                            <label>Disposable Income (A-C)</label>
+                            <label>Disposable Income</label>
                             <strong style={{ color: cashFlowResults.disposableIncome >= 0 ? 'var(--accent)' : '#ef4444' }}>
                                 {formatCurrency(cashFlowResults.disposableIncome)}
                             </strong>
@@ -179,10 +153,57 @@ const ReportView = ({
                     </div>
                 </section>
 
-                {/* Assets & Liabilities */}
+                {/* 3. Protection Gap Analysis */}
+                <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                    <h3>3. Protection Gap Analysis</h3>
+                    <FinancialPyramid 
+                        isReadOnlyMode={true}
+                        expenseCategories={expenseCategories}
+                        policies={policies}
+                        assetCategories={assetCategories}
+                        calculatorInputs={calculatorInputs}
+                        proposedSIPs={proposedSIPs}
+                        proposedEquities={proposedEquities}
+                        goals={validGoals}
+                        goalMappings={goalMappings}
+                        protectionGapResults={protectionGapResults}
+                    />
+                </section>
+
+                {/* 4. Contingency Fund Planning */}
                 <section className="report-section card" style={{ marginTop: '1.5rem' }}>
-                    <h3>3. Net Worth Statement</h3>
+                    <h3>4. Contingency Fund Planning</h3>
+                    <div style={{ padding: '1.5rem', background: 'var(--bg-main)', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Allocated Contingency Fund</div>
+                            <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--primary)' }}>
+                                {formatCurrency(contingencyFund || 0)}
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Recommended Basis</div>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                                Min 3 to 6 months of expenses
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* 5. Net Worth Statement */}
+                <section className="report-section card" style={{ marginTop: '1.5rem' }}>
+                    <h3>5. Net Worth Statement</h3>
                     <div className="grid">
+                        <div>
+                            <h4>Liabilities</h4>
+                            <div className="stat-row-mini">
+                                <span>Personal/Home Loans</span>
+                                <span>{formatCurrency(assetResults.totalLiabilities)}</span>
+                            </div>
+                            <div className="stat-row" style={{ borderTop: '1px solid var(--border)', marginTop: '0.5rem' }}>
+                                <span>Total Liabilities</span>
+                                <strong>{formatCurrency(assetResults.totalLiabilities)}</strong>
+                            </div>
+                        </div>
                         <div>
                             <h4>Assets</h4>
                             {assetResults.assetBreakdown.map((a, i) => (
@@ -196,23 +217,16 @@ const ReportView = ({
                                 <strong>{formatCurrency(assetResults.totalAssets)}</strong>
                             </div>
                         </div>
-                        <div>
-                            <h4>Liabilities</h4>
-                            <div className="stat-row-mini">
-                                <span>Personal/Home Loans</span>
-                                <span>{formatCurrency(assetResults.totalLiabilities)}</span>
-                            </div>
-                            <div className="stat-row" style={{ borderTop: '1px solid var(--border)', marginTop: '0.5rem' }}>
-                                <span>Total Liabilities</span>
-                                <strong>{formatCurrency(assetResults.totalLiabilities)}</strong>
-                            </div>
-                        </div>
+                    </div>
+                    <div className="stat-row" style={{ borderTop: '2px solid var(--primary)', marginTop: '1.5rem', paddingTop: '1rem', background: 'var(--bg-main)', padding: '1rem', borderRadius: '8px' }}>
+                        <span>Net Worth</span>
+                        <strong style={{ fontSize: '1.5rem', color: 'var(--primary)' }}>{formatCurrency(assetResults.netWorth)}</strong>
                     </div>
                 </section>
 
-                {/* Life Goals */}
+                {/* 6. Life Goals */}
                 <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
-                    <h3>4. Life Goals Projections</h3>
+                    <h3>6. Life Goals Projections</h3>
                     {['short', 'medium', 'long'].map(key => (
                         <div key={key} style={{ marginBottom: '1.5rem' }}>
                             <h4 style={{ textTransform: 'capitalize' }}>{key} Term Goals</h4>
@@ -242,10 +256,10 @@ const ReportView = ({
                     ))}
                 </section>
                 
-                {/* Insurance & Protection Summary */}
+                {/* 7. Insurance & Protection Summary */}
                 {policies.length > 0 && (
                     <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
-                        <h3>5. Insurance & Protection Summary</h3>
+                        <h3>7. Insurance & Protection Summary</h3>
                         
                         <div style={{ marginBottom: '2rem' }}>
                             <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -311,10 +325,45 @@ const ReportView = ({
                     </section>
                 )}
 
-                {/* Investment Strategy */}
+                {/* 8. Planned Future Financial Adjustments */}
+                {journeyAdjustments && journeyAdjustments.length > 0 && (
+                    <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                        <h3>8. Planned Future Financial Adjustments</h3>
+                        <div style={{ overflowX: 'auto' }}>
+                            <table className="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name / Category</th>
+                                        <th>Type</th>
+                                        <th>Start Date</th>
+                                        <th>Duration</th>
+                                        <th>Annual Impact</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {journeyAdjustments.map((adj, i) => {
+                                        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                                        const monthName = adj.startMonth ? monthNames[adj.startMonth - 1] : "Jan";
+                                        return (
+                                            <tr key={i}>
+                                                <td>{adj.name || adj.loanCategory || 'Adjustment'}</td>
+                                                <td style={{ textTransform: 'capitalize' }}>{adj.type || 'Expense'}</td>
+                                                <td>{monthName} {adj.startYear}</td>
+                                                <td>{adj.duration || 1} {adj.duration === 1 ? 'Year' : 'Years'}</td>
+                                                <td style={{ color: '#ef4444', fontWeight: 600 }}>{formatCurrency(adj.amount || 0)}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                )}
+
+                {/* 9. Investment Strategy */}
                 {allocations.length > 0 && (
                     <section className="report-section card" style={{ marginTop: '1.5rem' }}>
-                        <h3>6. Planned Investment Strategy</h3>
+                        <h3>9. Planned Investment Strategy</h3>
                         <p className="text-muted" style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>
                             Based on your investible surplus, the following investments are planned to achieve your financial objectives.
                         </p>
@@ -343,12 +392,12 @@ const ReportView = ({
                     </section>
                 )}
 
-                {/* Goal Funding Roadmap */}
-                {goals.length > 0 && (
+                {/* 10. Goal Funding Roadmap */}
+                {validGoals.length > 0 && (
                     <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
-                        <h3>7. Goal Funding Roadmap</h3>
+                        <h3>10. Goal Funding Roadmap</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {goals.map((g, i) => {
+                            {validGoals.map((g, i) => {
                                 const mappingDict = goalMappings[g.id] || {};
                                 const selectedSources = Object.keys(mappingDict);
                                 const isMapped = selectedSources.length > 0;
@@ -412,6 +461,52 @@ const ReportView = ({
                         </div>
                     </section>
                 )}
+
+                {/* 11. Income tax */}
+                <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                    <IncomeTaxModule 
+                        familyMembers={familyMembers}
+                        income={income}
+                        isCalculatorMode={true}
+                    />
+                </section>
+
+                {/* 12. Inflow - Outflow till Retirement */}
+                {projections && projections.length > 0 && (
+                    <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                        <h3>12. Inflow - Outflow till Retirement</h3>
+                        <JourneyTable projections={projections} />
+                    </section>
+                )}
+
+                {/* 13. Net Worth Still Retirement */}
+                <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                    <GrowthModule 
+                        isReadOnlyMode={true}
+                        familyMembers={familyMembers}
+                        assetCategories={assetCategories}
+                        expenseCategories={expenseCategories}
+                        allocations={allocations}
+                        goals={validGoals}
+                        calculatorInputs={calculatorInputs}
+                        journeyProjections={projections}
+                        policies={policies}
+                        goalMappings={goalMappings}
+                    />
+                </section>
+
+                {/* 14. Disclaimer */}
+                <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    <h3 style={{ borderBottom: 'none', marginBottom: '1rem', color: 'var(--text-main)' }}>Disclaimer</h3>
+                    <p style={{ marginBottom: '0.5rem' }}>This financial plan has been prepared by Finbrella based on the information provided by you. The projections, assumptions, and recommendations are based on current data, historical trends, and standard financial models.</p>
+                    <p style={{ marginBottom: '0.5rem' }}>All future projections (including returns, inflation, and goal outcomes) are estimates only and may vary due to market movements, economic changes, policy changes, or other unforeseen factors.</p>
+                    <p style={{ marginBottom: '0.5rem' }}>This report should be treated as a guidance document (roadmap) and not as a guarantee of results. It is recommended that the plan be reviewed periodically and updated as circumstances change.</p>
+                    <p style={{ marginBottom: '0.5rem' }}>The accuracy of this report is dependent on the completeness and correctness of the information provided by you. Any inaccuracies or changes in inputs may significantly impact the outcomes.</p>
+                    <p style={{ marginBottom: '0.5rem' }}>While due care has been taken in preparing this report using automated tools and algorithms, it may be subject to system limitations or errors.</p>
+                    <p style={{ marginBottom: '0.5rem' }}>This report does not constitute legal, tax, or investment advice. You are advised to consult relevant professionals before making financial decisions.</p>
+                    <p style={{ marginBottom: '0' }}>Finbrella shall not be held liable for any decisions taken based on this report.</p>
+                </section>
+
             </div>
 
             <style>{`

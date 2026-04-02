@@ -922,6 +922,10 @@ function App() {
                     policies,
                     allocations: investmentAllocations,
                     goalMappings,
+                    contingencyFund,
+                    journeyAdjustments,
+                    projections: journeyProjections,
+                    calculatorInputs,
                     onBack: () => { setCurrentStep(11); window.scrollTo(0, 0); }
                   }}
                 />

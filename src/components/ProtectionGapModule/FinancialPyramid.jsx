@@ -12,7 +12,8 @@ const FinancialPyramid = ({
     proposedEquities = [],
     goals = [],
     goalMappings = {},
-    protectionGapResults
+    protectionGapResults,
+    isReadOnlyMode = false
 }) => {
     const [activeLayer, setActiveLayer] = useState(null);
 
@@ -182,19 +183,21 @@ const FinancialPyramid = ({
     const activeData = activeLayer ? pyramidLayers.find(l => l.id === activeLayer) : pyramidLayers[3];
 
     return (
-        <div className="card" style={{ marginBottom: '3rem', borderTop: '4px solid var(--primary)' }}>
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                <h2 style={{ color: 'var(--primary)', margin: '0 0 0.5rem 0' }}>The Financial Pyramid</h2>
-                <p className="text-muted" style={{ margin: 0 }}>A sturdy financial plan consists of four distinct stages. Click each layer to view your status.</p>
-            </div>
+        <div className="card" style={{ marginBottom: '3rem', borderTop: '4px solid var(--primary)', ...(isReadOnlyMode && { padding: '2rem', boxShadow: 'none', border: 'none' }) }}>
+            {!isReadOnlyMode && (
+                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                    <h2 style={{ color: 'var(--primary)', margin: '0 0 0.5rem 0' }}>The Financial Pyramid</h2>
+                    <p className="text-muted" style={{ margin: 0 }}>A sturdy financial plan consists of four distinct stages. Click each layer to view your status.</p>
+                </div>
+            )}
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'center', justifyContent: isReadOnlyMode ? 'center' : 'flex-start' }}>
                 {/* Visual Pyramid */}
-                <div style={{ flex: '1 1 350px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                <div style={{ flex: '1 1 350px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', maxWidth: isReadOnlyMode ? '500px' : 'none' }}>
                     {pyramidLayers.map((layer) => (
                         <div 
                             key={layer.id}
-                            onClick={() => setActiveLayer(layer.id)}
+                            onClick={() => !isReadOnlyMode && setActiveLayer(layer.id)}
                             style={{
                                 width: layer.width,
                                 background: layer.bgGradient,
@@ -204,15 +207,15 @@ const FinancialPyramid = ({
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 color: 'white',
-                                cursor: 'pointer',
+                                cursor: isReadOnlyMode ? 'default' : 'pointer',
                                 transition: 'all 0.3s ease',
-                                transform: (activeLayer || pyramidLayers[3].id) === layer.id ? 'scale(1.05)' : 'scale(1)',
-                                boxShadow: (activeLayer || pyramidLayers[3].id) === layer.id ? '0 10px 15px -3px rgba(0, 0, 0, 0.3)' : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                                zIndex: (activeLayer || pyramidLayers[3].id) === layer.id ? 10 : 1,
-                                border: (activeLayer || pyramidLayers[3].id) === layer.id ? '2px solid rgba(255,255,255,0.8)' : '1px solid transparent',
-                                opacity: activeLayer && activeLayer !== layer.id ? 0.7 : 1
+                                transform: !isReadOnlyMode && (activeLayer || pyramidLayers[3].id) === layer.id ? 'scale(1.05)' : 'scale(1)',
+                                boxShadow: !isReadOnlyMode && (activeLayer || pyramidLayers[3].id) === layer.id ? '0 10px 15px -3px rgba(0, 0, 0, 0.3)' : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                zIndex: !isReadOnlyMode && (activeLayer || pyramidLayers[3].id) === layer.id ? 10 : 1,
+                                border: !isReadOnlyMode && (activeLayer || pyramidLayers[3].id) === layer.id ? '2px solid rgba(255,255,255,0.8)' : '1px solid transparent',
+                                opacity: !isReadOnlyMode && activeLayer && activeLayer !== layer.id ? 0.7 : 1
                             }}
-                            title={`Click to view ${layer.title} details`}
+                            title={isReadOnlyMode ? layer.title : `Click to view ${layer.title} details`}
                         >
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
                                 <div style={{ fontWeight: 700, fontSize: '1rem', letterSpacing: '0.5px' }}>{layer.title}</div>
@@ -223,37 +226,41 @@ const FinancialPyramid = ({
                 </div>
 
                 {/* Details Card */}
-                <div style={{ flex: '1 1 400px' }}>
-                    <div style={{ 
-                        background: 'var(--bg-card)', 
-                        padding: '2rem', 
-                        borderRadius: '12px', 
-                        border: '1px solid var(--border)',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                        minHeight: '260px'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px dashed var(--border)' }}>
-                            <div style={{ background: activeData.color, color: 'white', padding: '10px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                {activeData.icon}
+                {!isReadOnlyMode && (
+                    <div style={{ flex: '1 1 400px' }}>
+                        <div style={{ 
+                            background: 'var(--bg-card)', 
+                            padding: '2rem', 
+                            borderRadius: '12px', 
+                            border: '1px solid var(--border)',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                            minHeight: '260px'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px dashed var(--border)' }}>
+                                <div style={{ background: activeData.color, color: 'white', padding: '10px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {activeData.icon}
+                                </div>
+                                <div>
+                                    <h3 style={{ margin: 0, color: activeData.color }}>{activeData.title}</h3>
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{activeData.subtitle}</span>
+                                </div>
                             </div>
-                            <div>
-                                <h3 style={{ margin: 0, color: activeData.color }}>{activeData.title}</h3>
-                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{activeData.subtitle}</span>
-                            </div>
+
+                            {activeData.content}
+
                         </div>
-
-                        {activeData.content}
-
                     </div>
-                </div>
+                )}
             </div>
             
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginTop: '2.5rem', background: 'rgba(37, 99, 235, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--primary)' }}>
-                <Info color="var(--primary)" size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
-                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-main)' }}>
-                    <strong>Note:</strong> Build your financial pyramid from the ground up. Ensure your <em>Protection</em> foundation is rock solid before moving substantial capital towards <em>Growth Investments</em> to safeguard against unforeseen setbacks.
-                </p>
-            </div>
+            {!isReadOnlyMode && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginTop: '2.5rem', background: 'rgba(37, 99, 235, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--primary)' }}>
+                    <Info color="var(--primary)" size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-main)' }}>
+                        <strong>Note:</strong> Build your financial pyramid from the ground up. Ensure your <em>Protection</em> foundation is rock solid before moving substantial capital towards <em>Growth Investments</em> to safeguard against unforeseen setbacks.
+                    </p>
+                </div>
+            )}
         </div>
     );
 };

@@ -21,7 +21,8 @@ const GrowthModule = ({
     goalMappings = {},
     goals = [],
     onNext, 
-    onBack 
+    onBack,
+    isReadOnlyMode = false
 }) => {
     // 1. Identify Target Timeline
     const self = familyMembers.find(m => m.relation?.toLowerCase() === 'self') || familyMembers[0];
@@ -242,15 +243,19 @@ const GrowthModule = ({
 
     return (
         <div className="growth-module fade-in">
-            <div className="card" style={{ marginBottom: '1.5rem', maxWidth: '100vw', overflowX: 'hidden' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
-                    <BarChart3 size={24} className="text-primary" />
-                    <h2 style={{ margin: 0 }}>Step 10: Year-wise Net Worth Tracker</h2>
-                </div>
-                
-                <p className="text-muted" style={{ marginBottom: '2rem' }}>
-                    Track how your entire worth grows over time, including current investments, ongoing savings, insurance maturity and surplus allocations.
-                </p>
+            <div className="card" style={{ marginBottom: '1.5rem', maxWidth: '100vw', overflowX: 'hidden', ...(isReadOnlyMode && { padding: '2rem', boxShadow: 'none', border: 'none' }) }}>
+                {!isReadOnlyMode && (
+                    <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
+                            <BarChart3 size={24} className="text-primary" />
+                            <h2 style={{ margin: 0 }}>Step 10: Year-wise Net Worth Tracker</h2>
+                        </div>
+                        
+                        <p className="text-muted" style={{ marginBottom: '2rem' }}>
+                            Track how your entire worth grows over time, including current investments, ongoing savings, insurance maturity and surplus allocations.
+                        </p>
+                    </>
+                )}
 
                 <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
                     <div className="stat-card" style={{ background: 'var(--bg-main)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
@@ -316,14 +321,16 @@ const GrowthModule = ({
                 </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem', marginBottom: '4rem' }}>
-                <button className="btn btn-secondary" onClick={onBack}>
-                    Back to Allocation
-                </button>
-                <button className="btn btn-primary" onClick={onNext}>
-                    Proceed to Goal Roadmap
-                </button>
-            </div>
+            {!isReadOnlyMode && (
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem', marginBottom: '4rem' }}>
+                    <button className="btn btn-secondary" onClick={onBack}>
+                        Back to Allocation
+                    </button>
+                    <button className="btn btn-primary" onClick={onNext}>
+                        Proceed to Goal Roadmap
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
