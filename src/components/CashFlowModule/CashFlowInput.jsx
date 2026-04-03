@@ -3,10 +3,30 @@ import { Plus, Trash2 } from 'lucide-react';
 import { convertToMonthly } from './CashFlowLogic';
 import LoanDetailsModal from './LoanDetailsModal';
 import InvestmentDetailsModal from './InvestmentDetailsModal';
+import DocumentUploadButton from '../common/DocumentUploadButton';
 
 const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, currentYearLedger, setCurrentYearLedger, subStep }) => {
     const [activeModal, setActiveModal] = useState(null);
     const [activeInvModal, setActiveInvModal] = useState(null);
+    const [policyDocs, setPolicyDocs] = useState({});
+
+    React.useEffect(() => {
+        const saved = localStorage.getItem('cashflow_policy_docs');
+        if (saved) {
+            try { setPolicyDocs(JSON.parse(saved)); } catch (e) {}
+        }
+    }, []);
+
+    const handleDocsChange = (insKey, fileName) => {
+        const newDocs = { ...policyDocs };
+        if (fileName) {
+            newDocs[insKey] = fileName;
+        } else {
+            delete newDocs[insKey];
+        }
+        setPolicyDocs(newDocs);
+        localStorage.setItem('cashflow_policy_docs', JSON.stringify(newDocs));
+    };
 
     const handleIncomeChange = (e) => {
         const { name, value } = e.target;
@@ -427,59 +447,87 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                     <h4 style={{ color: 'var(--primary)', marginBottom: '1.25rem', fontSize: '1.1rem' }}>B2. Insurance Premiums</h4>
                     <div className="insurance-grid">
                         {[
-                            { key: 'health', label: 'Health Insurance' },
-                            { key: 'car', label: 'Car Insurance' },
-                            { key: 'bike', label: 'Two-wheeler Insurance' },
+                            { key: 'health', label: 'Health Insurance', info: 'We can review your existing policy, please upload the policy document.' },
+                            { key: 'car', label: 'Car Insurance', info: 'If you want competitive quotes for car insurance, please upload the existing car insurance policy. We will share quotes before the due date.' },
+                            { key: 'bike', label: 'Two-wheeler Insurance', info: 'If you want competitive quotes for 2-wheeler insurance, please upload the existing insurance policy. We will share quotes before the due date.' },
                             { key: 'others', label: 'Others (Insurance)' }
                         ].map((ins) => (
-                            <div key={ins.key} className="insurance-input-row" style={{ display: 'grid', gridTemplateColumns: '1.2fr 140px 140px', gap: '1rem', marginBottom: '1rem', alignItems: 'end' }}>
-                                <div className="input-group" style={{ marginBottom: 0 }}>
-                                    <label>{ins.label}</label>
-                                    <input 
-                                        type="number" 
-                                        value={expenseCategories.insurance[ins.key].value} 
-                                        onChange={(e) => handleInsuranceChange(ins.key, 'value', e.target.value)} 
-                                        onWheel={(e) => e.target.blur()} 
-                                        placeholder="0" 
-                                    />
-                                </div>
-                                <div className="input-group" style={{ marginBottom: 0 }}>
-                                    <label>Frequency</label>
-                                    <select 
-                                        value={expenseCategories.insurance[ins.key].frequency} 
-                                        onChange={(e) => handleInsuranceChange(ins.key, 'frequency', e.target.value)}
-                                        style={{ height: '42px' }}
-                                    >
-                                        <option value="Annual">Annual</option>
-                                        <option value="Half Yearly">Half Yearly</option>
-                                        <option value="Quarterly">Quarterly</option>
-                                        <option value="Monthly">Monthly</option>
-                                    </select>
-                                </div>
-                                <div className="input-group" style={{ marginBottom: 0 }}>
-                                    <label>Monthly Premium (₹)</label>
-                                    <div style={{ 
-                                        height: '42px', 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        padding: '0 1rem', 
-                                        background: 'var(--bg-card)', 
-                                        border: '1px solid var(--border)', 
-                                        borderRadius: '6px',
-                                        color: 'var(--primary)',
-                                        fontWeight: 600,
-                                        fontSize: '0.9rem'
-                                    }}>
-                                        {Math.round(convertToMonthly(expenseCategories.insurance[ins.key].value, expenseCategories.insurance[ins.key].frequency)).toLocaleString('en-IN')}
+                            <div key={ins.key} style={{ marginBottom: '1.5rem' }}>
+                                <div className="insurance-input-row" style={{ display: 'grid', gridTemplateColumns: ['health', 'car', 'bike'].includes(ins.key) ? 'minmax(200px, 1fr) auto 120px 140px' : '1fr 140px 140px', gap: '1rem', alignItems: 'end', marginBottom: '0.5rem' }}>
+                                    <div className="input-group" style={{ marginBottom: 0 }}>
+                                        <label>{ins.label}</label>
+                                        <input 
+                                            type="number" 
+                                            value={expenseCategories.insurance[ins.key].value} 
+                                            onChange={(e) => handleInsuranceChange(ins.key, 'value', e.target.value)} 
+                                            onWheel={(e) => e.target.blur()} 
+                                            placeholder="0" 
+                                        />
+                                    </div>
+                                    
+                                    {['health', 'car', 'bike'].includes(ins.key) && (
+                                        <div className="input-group" style={{ marginBottom: 0, alignSelf: 'end' }}>
+                                            <DocumentUploadButton 
+                                                label="Upload Policy"
+                                                documentName={policyDocs[ins.key]}
+                                                onUploadComplete={(fileName) => handleDocsChange(ins.key, fileName)}
+                                                onDeleteComplete={() => handleDocsChange(ins.key, null)}
+                                            />
+                                        </div>
+                                    )}
+
+                                    <div className="input-group" style={{ marginBottom: 0 }}>
+                                        <label>Frequency</label>
+                                        <select 
+                                            value={expenseCategories.insurance[ins.key].frequency} 
+                                            onChange={(e) => handleInsuranceChange(ins.key, 'frequency', e.target.value)}
+                                            style={{ height: '42px' }}
+                                        >
+                                            <option value="Annual">Annual</option>
+                                            <option value="Half Yearly">Half Yearly</option>
+                                            <option value="Quarterly">Quarterly</option>
+                                            <option value="Monthly">Monthly</option>
+                                        </select>
+                                    </div>
+                                    <div className="input-group" style={{ marginBottom: 0 }}>
+                                        <label>Monthly (₹)</label>
+                                        <div style={{ 
+                                            height: '42px', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            padding: '0 1rem', 
+                                            background: 'var(--bg-card)', 
+                                            border: '1px solid var(--border)', 
+                                            borderRadius: '6px',
+                                            color: 'var(--primary)',
+                                            fontWeight: 600,
+                                            fontSize: '0.9rem'
+                                        }}>
+                                            {Math.round(convertToMonthly(expenseCategories.insurance[ins.key].value, expenseCategories.insurance[ins.key].frequency)).toLocaleString('en-IN')}
+                                        </div>
                                     </div>
                                 </div>
+                                {ins.info && (
+                                    <div style={{ 
+                                        fontWeight: 800, 
+                                        fontSize: '1rem', 
+                                        color: 'var(--primary)', 
+                                        marginTop: '0.25rem',
+                                        background: 'rgba(37, 99, 235, 0.05)',
+                                        padding: '0.5rem 1rem',
+                                        borderRadius: '6px',
+                                        borderLeft: '4px solid var(--primary)'
+                                    }}>
+                                        {ins.info}
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
 
                     <div className="insurance-grid" style={{ marginTop: '1rem' }}>
                         {familyMembers.map((member) => (
-                            <div key={member.name || member.relation} className="insurance-input-row" style={{ display: 'grid', gridTemplateColumns: '1.2fr 140px 140px', gap: '1rem', marginBottom: '1rem', alignItems: 'end' }}>
+                            <div key={member.name || member.relation} className="insurance-input-row" style={{ display: 'grid', gridTemplateColumns: '1fr 140px 140px', gap: '1rem', marginBottom: '1rem', alignItems: 'end' }}>
                                 <div className="input-group" style={{ marginBottom: 0 }}>
                                     <label>Life Insurance Premium ({member.name || member.relation})</label>
                                     <input 

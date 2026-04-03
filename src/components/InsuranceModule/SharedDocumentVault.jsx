@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase, isSupabaseEnabled } from '../../lib/supabase';
 import { Upload, File, FileText, Image as ImageIcon, Trash2, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
+import { uploadDocument, deleteDocument, getDocumentUrl, listDocuments } from '../../services/DocumentService';
 
-const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 
 const SharedDocumentVault = () => {
@@ -30,18 +30,7 @@ const SharedDocumentVault = () => {
             setLoading(true);
             setError(null);
             
-            const { data, error: fetchError } = await supabase.storage
-                .from('policy_documents')
-                .list(user.id + '/', {
-                    limit: 100,
-                    offset: 0,
-                    sortBy: { column: 'created_at', order: 'desc' },
-                });
-
-            if (fetchError) throw fetchError;
-            
-            // Filter out any potential placeholder/folder items returned by list API
-            const validFiles = (data || []).filter(f => f.name && f.id);
+            const validFiles = await listDocuments(user.id);
             setFiles(validFiles);
         } catch (err) {
             console.error('Error fetching files:', err);
@@ -63,11 +52,6 @@ const SharedDocumentVault = () => {
             return;
         }
 
-        if (file.size > MAX_FILE_SIZE) {
-            setError('File size exceeds the 8 MB limit.');
-            return;
-        }
-
         await uploadFile(file);
     };
 
@@ -78,20 +62,7 @@ const SharedDocumentVault = () => {
             setUploading(true);
             setError(null);
             
-            const fileExt = file.name.split('.').pop();
-            // Create a unique sanitized filename to prevent overrides
-            const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-            const filePath = `${user.id}/${fileName}`;
-
-            const { error: uploadError } = await supabase.storage
-                .from('policy_documents')
-                .upload(filePath, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
-
-            if (uploadError) throw uploadError;
-
+            await uploadDocument(file, user.id);
             // Refresh list
             await fetchFiles();
         } catch (err) {
@@ -107,13 +78,7 @@ const SharedDocumentVault = () => {
 
         try {
             setError(null);
-            const filePath = `${user.id}/${fileName}`;
-            const { error: deleteError } = await supabase.storage
-                .from('policy_documents')
-                .remove([filePath]);
-
-            if (deleteError) throw deleteError;
-
+            await deleteDocument(fileName, user.id);
             // Update local state instead of doing another API call to keep UI snappy
             setFiles(files.filter(f => f.name !== fileName));
         } catch (err) {
@@ -125,15 +90,9 @@ const SharedDocumentVault = () => {
     const openFile = async (fileName) => {
         try {
             setError(null);
-            const filePath = `${user.id}/${fileName}`;
-            // Create a signed URL valid for 60 seconds
-            const { data, error } = await supabase.storage
-                .from('policy_documents')
-                .createSignedUrl(filePath, 60);
-
-            if (error) throw error;
-            if (data?.signedUrl) {
-                window.open(data.signedUrl, '_blank');
+            const signedUrl = await getDocumentUrl(fileName, user.id);
+            if (signedUrl) {
+                window.open(signedUrl, '_blank');
             }
         } catch (err) {
             console.error('Error generating signed URL:', err);
