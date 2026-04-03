@@ -5,6 +5,7 @@ import InsuranceInput from './InsuranceInput';
 import InsuranceOutput from './InsuranceOutput';
 import { calculateYearlyInsuranceSummary, getInsuredNamesList } from './InsuranceLogic';
 import { convertToAnnual } from '../CashFlowModule/CashFlowLogic';
+import SharedDocumentVault from './SharedDocumentVault';
 
 const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategories, setExpenseCategories, investmentAllocations = [], onNext, onBack, setCurrentStep }) => {
     const [results, setResults] = useState(null);
@@ -402,6 +403,8 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                         </div>
                     )}
                 </div>
+                
+                <SharedDocumentVault />
 
                 {/* Unified Generate Report Button */}
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
