@@ -309,6 +309,10 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                         </button>
                     </div>
 
+                    <div style={{ textAlign: 'center', marginBottom: '2.5rem', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                        <em>If you find any difficulty in filling out the complete insurance details, upload your policy documents below and we will assist you.</em>
+                    </div>
+
                     {/* Future Proposed Policies from Allocation Module */}
                     {investmentAllocations && investmentAllocations.filter(a => a.type === 'Life Insurance').length > 0 && (
                         <div style={{ marginTop: '2rem', marginBottom: '2.5rem' }}>
