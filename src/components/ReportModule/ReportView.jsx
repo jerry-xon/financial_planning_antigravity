@@ -3,10 +3,11 @@ import { calculateFamilyProfile } from '../ProfileModule/ProfileLogic';
 import { calculateCashFlow, formatCurrency } from '../CashFlowModule/CashFlowLogic';
 import { calculateNetWorth } from '../AssetModule/AssetLogic';
 import { categorizeGoals } from '../GoalModule/GoalLogic';
-import { Download, Printer, CheckCircle, TrendingUp, AlertTriangle, Clock, Shield } from 'lucide-react';
+import { Download, Printer, CheckCircle, TrendingUp, AlertTriangle, Clock, Shield, CheckCircle2, AlertCircle } from 'lucide-react';
 import { calculateYearlyInsuranceSummary, getInsuredNamesList, getPolicyColumns } from '../InsuranceModule/InsuranceLogic';
 
 import FinancialPyramid from '../ProtectionGapModule/FinancialPyramid';
+import ProtectionGapOutput from '../ProtectionGapModule/ProtectionGapOutput';
 import { calculateProtectionGap } from '../ProtectionGapModule/ProtectionGapLogic';
 import IncomeTaxModule from '../IncomeTaxModule/IncomeTaxModule';
 import JourneyTable from '../JourneyModule/JourneyTable';
@@ -118,6 +119,10 @@ const ReportView = ({
                             <strong style={{ color: '#ef4444' }}>{formatCurrency(cashFlowResults.totalExpenses)}</strong>
                         </div>
                         <div className="summary-box">
+                            <label>Monthly Surplus</label>
+                            <strong style={{ color: cashFlowResults.surplus >= 0 ? 'var(--accent)' : '#ef4444' }}>{formatCurrency(cashFlowResults.surplus)}</strong>
+                        </div>
+                        <div className="summary-box">
                             <label>Savings and Investments</label>
                             <strong style={{ color: 'var(--primary)' }}>{formatCurrency(cashFlowResults.totalInvestments || Object.values(expenseCategories?.savings || {}).reduce((sum, v) => sum + (v ? (parseFloat(typeof v === 'object' ? v.amount : v) || 0) : 0), 0))}</strong>
                         </div>
@@ -168,6 +173,9 @@ const ReportView = ({
                         goalMappings={goalMappings}
                         protectionGapResults={protectionGapResults}
                     />
+                    <div style={{ marginTop: '2rem' }}>
+                        <ProtectionGapOutput results={protectionGapResults} />
+                    </div>
                 </section>
 
                 {/* 4. Contingency Fund Planning */}
@@ -392,36 +400,77 @@ const ReportView = ({
                     </section>
                 )}
 
-                {/* 10. Goal Funding Roadmap */}
+                {/* 10. Goal Fulfillment Roadmap */}
                 {validGoals.length > 0 && (
                     <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
-                        <h3>10. Goal Funding Roadmap</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <h3>10. Goal Fulfillment Roadmap</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             {validGoals.map((g, i) => {
                                 const mappingDict = goalMappings[g.id] || {};
                                 const selectedSources = Object.keys(mappingDict);
-                                const isMapped = selectedSources.length > 0;
+                                const totalAssigned = Object.values(mappingDict).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+                                const shortfall = g.futureCost - totalAssigned;
+                                const isFullyFunded = Math.round(shortfall) <= 0;
+                                const hasAssignments = totalAssigned > 0;
                                 
                                 const hasLoan = selectedSources.includes('loan');
                                 const hasRealEstate = selectedSources.includes('realEstate');
 
                                 return (
-                                    <div key={i} style={{ 
-                                        padding: '1rem', 
-                                        border: '1px solid var(--border)', 
-                                        borderRadius: '8px',
-                                        background: isMapped ? 'rgba(52, 211, 153, 0.05)' : 'rgba(239, 68, 68, 0.05)'
+                                    <div key={i} className="goal-fulfillment-card" style={{ 
+                                        background: 'var(--bg-main)', 
+                                        borderRadius: '16px', 
+                                        border: `2px solid ${isFullyFunded ? 'var(--success)' : 'var(--border)'}`,
+                                        overflow: 'hidden'
                                     }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <strong>{g.name || g.placeholder}</strong>
-                                            <span style={{ fontSize: '0.8rem', color: isMapped ? 'var(--success)' : '#ef4444', fontWeight: 700 }}>
-                                                {isMapped ? 'FUNDING SOURCE ASSIGNED' : 'NO SOURCE ASSIGNED'}
-                                            </span>
+                                        {/* Header Row */}
+                                        <div style={{ 
+                                            padding: '1.5rem', 
+                                            display: 'flex', 
+                                            justifyContent: 'space-between', 
+                                            alignItems: 'center',
+                                            borderBottom: hasAssignments ? '1px solid var(--border)' : 'none',
+                                            background: isFullyFunded ? 'rgba(52, 211, 153, 0.05)' : 'transparent',
+                                            flexWrap: 'wrap',
+                                            gap: '1rem'
+                                        }}>
+                                            <div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                                    {isFullyFunded ? <CheckCircle2 size={18} className="text-success" /> : <AlertCircle size={18} style={{ color: '#ef4444' }} />}
+                                                    <h3 style={{ margin: 0, fontSize: '1.25rem', borderBottom: 'none' }}>{g.name || g.placeholder}</h3>
+                                                </div>
+                                                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                                                    Target Year: <strong style={{ color: 'var(--text-main)' }}>{g.targetYear}</strong> | 
+                                                    Target Cost: <strong style={{ color: 'var(--text-main)' }}>{formatCurrency(g.futureCost)}</strong>
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'right', display: 'flex', gap: '1.5rem', background: 'var(--bg-card)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left' }}>
+                                                    <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                                                        Assigned
+                                                    </div>
+                                                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                                                        {formatCurrency(totalAssigned)}
+                                                    </div>
+                                                </div>
+                                                <div style={{ width: '1px', background: 'var(--border)' }}></div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'right' }}>
+                                                    <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                                                        Pending Needed
+                                                    </div>
+                                                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: isFullyFunded ? 'var(--success)' : '#ef4444' }}>
+                                                        {isFullyFunded ? 'Fully Funded' : formatCurrency(shortfall)}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        {isMapped && (
-                                            <div style={{ marginTop: '8px', fontSize: '0.85rem' }}>
-                                                <span className="text-muted">Funding Sources:</span> 
-                                                <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+
+                                        {hasAssignments && (
+                                            <div style={{ padding: '1.5rem' }}>
+                                                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '1rem', textTransform: 'uppercase' }}>
+                                                    Maturity Value Allocated from Funding Sources
+                                                </div>
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
                                                     {selectedSources.map(sid => {
                                                         const hardcodedSources = [
                                                             { id: 'sip', name: 'SIP' },
@@ -436,16 +485,25 @@ const ReportView = ({
                                                         const amount = parseFloat(mappingDict[sid]) || 0;
                                                         
                                                         return (
-                                                            <span key={sid} style={{ background: 'var(--border)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                                {source?.name || sid}: <strong>{formatCurrency(amount)}</strong>
-                                                            </span>
+                                                            <div key={sid} style={{
+                                                                padding: '1rem',
+                                                                borderRadius: '8px',
+                                                                background: 'rgba(37, 99, 235, 0.05)',
+                                                                border: '1px solid var(--primary)',
+                                                                display: 'flex',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'center'
+                                                            }}>
+                                                                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)' }}>{source?.name || sid}</div>
+                                                                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>{formatCurrency(amount)}</div>
+                                                            </div>
                                                         );
                                                     })}
                                                 </div>
                                                 
                                                 {/* Explicit Roadmap Action Notes */}
                                                 {(hasLoan || hasRealEstate) && (
-                                                    <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '6px' }}>
+                                                    <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '8px' }}>
                                                         <strong style={{ color: '#d97706', fontSize: '0.8rem', display: 'block', marginBottom: '4px' }}><AlertTriangle size={14} inline="true" /> ACTIONABLE NOTES:</strong>
                                                         <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#b45309', fontSize: '0.8rem' }}>
                                                             {hasLoan && <li>This goal relies on a Loan. Please navigate to the <strong>Standalone Loan Calculators</strong> to verify EMIs fits within your projected Unallocated Surplus for the year {g.targetYear || (new Date().getFullYear() + Math.round(parseFloat(g.yearsToGoal) || 0))}.</li>}
@@ -479,8 +537,9 @@ const ReportView = ({
                     </section>
                 )}
 
-                {/* 13. Net Worth Still Retirement */}
+                {/* 13. Net Worth till Retirement */}
                 <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                    <h3>13. Net Worth till Retirement</h3>
                     <GrowthModule 
                         isReadOnlyMode={true}
                         familyMembers={familyMembers}

@@ -493,13 +493,38 @@ function App() {
     loadPlan();
   }, [user]);
 
+  const expandedGoals = useMemo(() => {
+    let result = [];
+    goals.forEach(g => {
+        let duration = Math.max(1, parseInt(g.courseDuration) || 1);
+        if (duration > 1) {
+             const totalFutureValue = parseFloat(g.futureValue) || (parseFloat(g.presentValue) * Math.pow(1 + (parseFloat(g.inflationRate) || 8) / 100, parseFloat(g.yearsToGoal) || 0));
+             const perYearFutureValue = totalFutureValue / duration;
+             for (let i = 0; i < duration; i++) {
+                 result.push({
+                     ...g,
+                     id: `${g.id}_yr${i+1}`,
+                     name: `${g.name || g.placeholder} - Year ${i+1}`,
+                     yearsToGoal: parseFloat(g.yearsToGoal) + i,
+                     futureValue: perYearFutureValue,
+                     presentValue: 0,
+                     courseDuration: 1 
+                 });
+             }
+        } else {
+             result.push({ ...g, courseDuration: 1 });
+        }
+    });
+    return result;
+  }, [goals]);
+
   const journeyProjections = useMemo(() => {
     if (!familyMembers.find(m => m.relation?.toLowerCase() === 'self')) return [];
     return generateProjections({
       familyMembers,
       income,
       expenseCategories,
-      goals,
+      goals: goals,
       inflationRates,
       journeyAdjustments,
       investmentAllocations,
@@ -893,7 +918,7 @@ function App() {
               {currentStep === 11 && (
                 <FulfillmentModule
                   familyMembers={familyMembers}
-                  goals={goals}
+                  goals={expandedGoals}
                   allocations={investmentAllocations}
                   goalMappings={goalMappings}
                   setGoalMappings={setGoalMappings}
@@ -918,7 +943,7 @@ function App() {
                     expenseCategories,
                     assetCategories,
                     liabilityCategories,
-                    goals,
+                    goals: expandedGoals,
                     policies,
                     allocations: investmentAllocations,
                     goalMappings,
@@ -947,7 +972,7 @@ function App() {
                   familyMembers={familyMembers}
                   proposedSIPs={proposedSIPs}
                   goalMappings={goalMappings}
-                  goals={goals}
+                  goals={expandedGoals}
                   data={calculatorInputs.sip}
                   setData={updateCalculatorData('sip')}
                 />
@@ -998,7 +1023,7 @@ function App() {
                   familyMembers={familyMembers} 
                   proposedLumpsums={proposedLumpsums}
                   goalMappings={goalMappings}
-                  goals={goals}
+                  goals={expandedGoals}
                   data={calculatorInputs.lumpsum}
                   setData={updateCalculatorData('lumpsum')}
                 />
@@ -1013,7 +1038,7 @@ function App() {
                     familyMembers={familyMembers}
                     proposedEquities={proposedEquities}
                     goalMappings={goalMappings}
-                    goals={goals}
+                    goals={expandedGoals}
                   />
                 </div>
               )}
