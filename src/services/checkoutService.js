@@ -1,3 +1,4 @@
+/* FLAG_PAYMENT_DISABLED:
 import { supabase } from '../lib/supabase';
 
 export const createCheckoutTransaction = async ({
@@ -43,3 +44,6 @@ export const createCheckoutTransaction = async ({
     return { data: null, error };
   }
 };
+*/
+
+export const createCheckoutTransaction = async () => ({ data: null, error: new Error('Payment disabled') });

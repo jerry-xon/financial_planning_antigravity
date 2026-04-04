@@ -15,7 +15,7 @@ import ProtectionGapModule from './components/ProtectionGapModule/ProtectionGapM
 import AllocationModule from './components/AllocationModule/AllocationModule';
 import GrowthModule from './components/GrowthModule/GrowthModule';
 import FulfillmentModule from './components/FulfillmentModule/FulfillmentModule';
-import CheckoutGate from './components/CheckoutModule/CheckoutGate';
+// FLAG_PAYMENT_DISABLED: import CheckoutGate from './components/CheckoutModule/CheckoutGate';
 import ReportView from './components/ReportModule/ReportView';
 import CalculatorPlaceholder from './components/Calculators/CalculatorPlaceholder';
 import SIPCalculator from './components/Calculators/SIPCalculator';
@@ -923,7 +923,8 @@ function App() {
                 />
               )}
               {currentStep === 8 && (
-                <CheckoutGate user={user} planId={planId} onBack={() => { setCurrentStep(7); window.scrollTo(0, 0); }}>
+                <>
+                {/* FLAG_PAYMENT_DISABLED: <CheckoutGate user={user} planId={planId} onBack={() => { setCurrentStep(7); window.scrollTo(0, 0); }}> */}
                   <JourneyModule
                     familyMembers={familyMembers}
                     income={income}
@@ -938,7 +939,8 @@ function App() {
                     onNext={() => { handleStepProgression(9); }}
                     onBack={() => { setCurrentStep(7); window.scrollTo(0, 0); }}
                   />
-                </CheckoutGate>
+                {/* FLAG_PAYMENT_DISABLED: </CheckoutGate> */}
+                </>
               )}
               {currentStep === 9 && (
                 <AllocationModule

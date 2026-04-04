@@ -1,3 +1,4 @@
+/* FLAG_PAYMENT_DISABLED: 
 import { useEffect, useMemo, useState } from 'react';
 import { Copy, CreditCard, Tag, X } from 'lucide-react';
 import { createCheckoutTransaction } from '../../services/checkoutService';
@@ -453,4 +454,7 @@ const CheckoutGate = ({ user, planId, children, onBack }) => {
   );
 };
 
+export default CheckoutGate;
+*/
+const CheckoutGate = ({ children }) => <>{children}</>;
 export default CheckoutGate;

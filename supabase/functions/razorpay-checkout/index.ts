@@ -1,3 +1,4 @@
+/* FLAG_PAYMENT_DISABLED:
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -178,4 +179,14 @@ serve(async (req) => {
   }
 
   return json(400, { success: false, error: 'Unsupported action' });
+});
+*/
+
+import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
+
+serve(async () => {
+    return new Response(JSON.stringify({ error: "Payment disabled" }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+    });
 });
