@@ -50,8 +50,24 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // State for tracking the current navigation step (1-9)
+  // State for tracking the current navigation step (1-12)
   const [currentStep, setCurrentStep] = useState(1);
+  const [maxStep, setMaxStep] = useState(1); // Track maximum unlocked step
+
+  // Helper to handle step progression securely with async storage track
+  const handleStepProgression = async (nextStep) => {
+    setCurrentStep(nextStep);
+    try {
+      const storedMax = await Promise.resolve(localStorage.getItem(`max_step_${planId}`));
+      const currentMax = storedMax ? parseInt(storedMax, 10) : 1;
+      const newMax = Math.max(currentMax, maxStep, nextStep);
+      setMaxStep(newMax);
+      await Promise.resolve(localStorage.setItem(`max_step_${planId}`, newMax.toString()));
+    } catch (e) {
+      console.warn("Async storage saving failed", e);
+    }
+    window.scrollTo(0, 0);
+  };
 
   // New states for Secondary Navigation (Calculators)
   const [activeSection, setActiveSection] = useState('modules'); // 'modules' or 'calculators'
@@ -166,6 +182,7 @@ function App() {
   const resetState = () => {
     setPlanId(null);
     setCurrentStep(1);
+    setMaxStep(1);
     setActiveSection('modules');
     setActiveCalculator(null);
     setInsuranceMode(null);
@@ -283,6 +300,23 @@ function App() {
       if (data) {
         console.log('Successfully loaded plan:', data.id);
         setPlanId(data.id);
+        
+        // Initialize max step from async storage and DB
+        const initializeMaxStep = async () => {
+          try {
+             const stored = await Promise.resolve(localStorage.getItem(`max_step_${data.id}`));
+             let newMax = data.current_step || 1;
+             if (stored) {
+                newMax = Math.max(parseInt(stored, 10), newMax);
+             }
+             setMaxStep(newMax);
+             await Promise.resolve(localStorage.setItem(`max_step_${data.id}`, newMax.toString()));
+          } catch(e) {
+             setMaxStep(data.current_step || 1);
+          }
+        };
+        initializeMaxStep();
+
         setCurrentStep(data.current_step || 1);
         setInsuranceMode(data.insurance_mode || null);
         setFamilyMembers(data.family_members && data.family_members.length > 0 
@@ -665,18 +699,20 @@ function App() {
                   <div key={name} style={{ position: 'relative' }} className={name === 'Cash Flow' ? 'nav-dropdown-wrapper' : ''}>
                       <button
                         className={`btn ${activeSection === 'modules' && currentStep === idx + 1 ? 'btn-primary' : ''}`}
-                        disabled={name === 'Insurance' && insuranceMode === 'anyway'}
+                        disabled={(name === 'Insurance' && insuranceMode === 'anyway') || (idx + 1 > maxStep)}
                         onClick={() => {
-                          setCurrentStep(idx + 1);
-                          setActiveSection('modules');
-                          if (name === 'Cash Flow') setCashFlowSubStep(1);
+                          if (idx + 1 <= maxStep) {
+                            setCurrentStep(idx + 1);
+                            setActiveSection('modules');
+                            if (name === 'Cash Flow') setCashFlowSubStep(1);
+                          }
                         }}
                         style={{ 
                           padding: '0.4rem 0.8rem', 
                           fontSize: '0.8rem', 
                           whiteSpace: 'nowrap',
-                          opacity: name === 'Insurance' && insuranceMode === 'anyway' ? 0.5 : 1,
-                          cursor: name === 'Insurance' && insuranceMode === 'anyway' ? 'not-allowed' : 'pointer'
+                          opacity: (name === 'Insurance' && insuranceMode === 'anyway') || (idx + 1 > maxStep) ? 0.5 : 1,
+                          cursor: (name === 'Insurance' && insuranceMode === 'anyway') || (idx + 1 > maxStep) ? 'not-allowed' : 'pointer'
                         }}
                       >
                         {idx + 1}. {name}
@@ -699,10 +735,13 @@ function App() {
                               overflow: 'hidden'
                           }}>
                               <button 
+                                disabled={idx + 1 > maxStep}
                                 onClick={() => {
-                                  setCurrentStep(idx + 1);
-                                  setActiveSection('modules');
-                                  setCashFlowSubStep(1);
+                                  if (idx + 1 <= maxStep) {
+                                    setCurrentStep(idx + 1);
+                                    setActiveSection('modules');
+                                    setCashFlowSubStep(1);
+                                  }
                                 }}
                                 style={{
                                     padding: '0.6rem 1rem',
@@ -712,17 +751,21 @@ function App() {
                                     borderBottom: '1px solid var(--border)',
                                     color: cashFlowSubStep === 1 && currentStep === 2 ? 'var(--primary)' : 'var(--text-main)',
                                     fontSize: '0.8rem',
-                                    cursor: 'pointer',
+                                    cursor: idx + 1 > maxStep ? 'not-allowed' : 'pointer',
+                                    opacity: idx + 1 > maxStep ? 0.5 : 1,
                                     fontWeight: cashFlowSubStep === 1 && currentStep === 2 ? '600' : '400'
                                 }}
                               >
                                   2.1 Income & Ledger
                               </button>
                               <button 
+                                disabled={idx + 1 > maxStep}
                                 onClick={() => {
-                                  setCurrentStep(idx + 1);
-                                  setActiveSection('modules');
-                                  setCashFlowSubStep(2);
+                                  if (idx + 1 <= maxStep) {
+                                    setCurrentStep(idx + 1);
+                                    setActiveSection('modules');
+                                    setCashFlowSubStep(2);
+                                  }
                                 }}
                                 style={{
                                     padding: '0.6rem 1rem',
@@ -731,7 +774,8 @@ function App() {
                                     border: 'none',
                                     color: cashFlowSubStep === 2 && currentStep === 2 ? 'var(--primary)' : 'var(--text-main)',
                                     fontSize: '0.8rem',
-                                    cursor: 'pointer',
+                                    cursor: idx + 1 > maxStep ? 'not-allowed' : 'pointer',
+                                    opacity: idx + 1 > maxStep ? 0.5 : 1,
                                     fontWeight: cashFlowSubStep === 2 && currentStep === 2 ? '600' : '400'
                                 }}
                               >
@@ -795,7 +839,7 @@ function App() {
                 <ProfileModule
                   members={familyMembers}
                   setMembers={setFamilyMembers}
-                  onNext={() => { setCurrentStep(2); window.scrollTo(0, 0); }}
+                  onNext={() => { handleStepProgression(2); }}
                 />
               )}
               {currentStep === 2 && (
@@ -809,7 +853,7 @@ function App() {
                   setCurrentYearLedger={setCurrentYearLedger}
                   cashFlowSubStep={cashFlowSubStep}
                   setCashFlowSubStep={setCashFlowSubStep}
-                  onNext={() => { setCurrentStep(3); setCashFlowSubStep(1); window.scrollTo(0, 0); }}
+                  onNext={() => { handleStepProgression(3); setCashFlowSubStep(1); }}
                   onBack={() => { setCurrentStep(1); window.scrollTo(0, 0); }}
                   setCurrentStep={setCurrentStep}
                 />
@@ -820,7 +864,7 @@ function App() {
                   setAssetCategories={setAssetCategories}
                   liabilityCategories={liabilityCategories}
                   setLiabilityCategories={setLiabilityCategories}
-                  onNext={() => { setCurrentStep(4); window.scrollTo(0, 0); }}
+                  onNext={() => { handleStepProgression(4); }}
                   onBack={() => { setCurrentStep(2); window.scrollTo(0, 0); }}
                 />
               )}
@@ -829,7 +873,7 @@ function App() {
                   familyMembers={familyMembers}
                   goals={goals}
                   setGoals={setGoals}
-                  onNext={() => { setCurrentStep(5); window.scrollTo(0, 0); }}
+                  onNext={() => { handleStepProgression(5); }}
                   onBack={() => { setCurrentStep(3); window.scrollTo(0, 0); }}
                 />
               )}
@@ -841,7 +885,7 @@ function App() {
                   expenseCategories={expenseCategories}
                   setExpenseCategories={setExpenseCategories}
                   investmentAllocations={investmentAllocations}
-                  onNext={() => { setCurrentStep(6); window.scrollTo(0, 0); }}
+                  onNext={() => { handleStepProgression(6); }}
                   onBack={() => { setCurrentStep(4); window.scrollTo(0, 0); }}
                   setCurrentStep={setCurrentStep}
                 />
@@ -857,7 +901,7 @@ function App() {
                   proposedEquities={proposedEquities}
                   goals={goals}
                   goalMappings={goalMappings}
-                  onNext={() => { setCurrentStep(7); window.scrollTo(0, 0); }}
+                  onNext={() => { handleStepProgression(7); }}
                   onBack={() => { setCurrentStep(5); window.scrollTo(0, 0); }}
                 />
               )}
@@ -866,7 +910,7 @@ function App() {
                   expenseCategories={expenseCategories}
                   contingencyFund={contingencyFund}
                   setContingencyFund={setContingencyFund}
-                  onNext={() => { setCurrentStep(8); window.scrollTo(0, 0); }}
+                  onNext={() => { handleStepProgression(8); }}
                   onBack={() => { setCurrentStep(6); window.scrollTo(0, 0); }}
                 />
               )}
@@ -883,7 +927,7 @@ function App() {
                     setJourneyAdjustments={setJourneyAdjustments}
                     policies={policies}
                     projections={journeyProjections}
-                    onNext={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
+                    onNext={() => { handleStepProgression(9); }}
                     onBack={() => { setCurrentStep(7); window.scrollTo(0, 0); }}
                   />
                 </CheckoutGate>
@@ -898,7 +942,7 @@ function App() {
                   allocations={investmentAllocations}
                   setAllocations={setInvestmentAllocations}
                   projections={journeyProjections}
-                  onNext={() => { setCurrentStep(10); window.scrollTo(0, 0); }}
+                  onNext={() => { handleStepProgression(10); }}
                   onBack={() => { setCurrentStep(8); window.scrollTo(0, 0); }}
                 />
               )}
@@ -914,7 +958,7 @@ function App() {
                   policies={policies}
                   goalMappings={goalMappings}
                   currentYearLedger={currentYearLedger}
-                  onNext={() => { setCurrentStep(11); window.scrollTo(0, 0); }}
+                  onNext={() => { handleStepProgression(11); }}
                   onBack={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
                 />
               )}
@@ -932,7 +976,7 @@ function App() {
                   setLoanProposals={setLoanProposals}
                   allocationPlans={allocationPlans}
                   setAllocationPlans={setAllocationPlans}
-                  onNext={() => { setCurrentStep(12); window.scrollTo(0, 0); }}
+                  onNext={() => { handleStepProgression(12); }}
                   onBack={() => { setCurrentStep(10); window.scrollTo(0, 0); }}
                 />
               )}
