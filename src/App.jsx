@@ -31,6 +31,8 @@ import PPFCalculator from './components/Calculators/PPFCalculator';
 import NPSCalculator from './components/Calculators/NPSCalculator';
 import FDCalculator from './components/Calculators/FDCalculator';
 import RDCalculator from './components/Calculators/RDCalculator';
+import MobileWebComingSoon from '@/components/common/MobileWebComingSoon';
+import { useBreakpoints } from '@/hooks';
 import { useAuth } from './contexts/AuthContext';
 import { signOut } from './services/authService';
 import { getActivePlan, updateFinancialPlan } from './services/financialPlanService';
@@ -44,6 +46,7 @@ import { getActivePlan, updateFinancialPlan } from './services/financialPlanServ
  */
 function App() {
   const { user } = useAuth();
+  const { lg } = useBreakpoints();
   
   // Supabase plan ID
   const [planId, setPlanId] = useState(null);
@@ -646,6 +649,11 @@ function App() {
         <div>Loading...</div>
       </div>
     );
+  }
+
+  // Tablet/desktop (lg+, same 768px threshold as the hook): full app. Narrow phone browsers: coming-soon (using lg, not !xl, so portrait iPads still qualify).
+  if (!lg) {
+    return <MobileWebComingSoon />;
   }
 
   return (
