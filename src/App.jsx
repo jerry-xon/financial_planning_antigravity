@@ -16,6 +16,7 @@ import AllocationModule from './components/AllocationModule/AllocationModule';
 import GrowthModule from './components/GrowthModule/GrowthModule';
 import FulfillmentModule from './components/FulfillmentModule/FulfillmentModule';
 import CheckoutGate from './components/CheckoutModule/CheckoutGate';
+import ReportView from './components/ReportModule/ReportView';
 import CalculatorPlaceholder from './components/Calculators/CalculatorPlaceholder';
 import SIPCalculator from './components/Calculators/SIPCalculator';
 import PersonalLoanCalculator from './components/Calculators/PersonalLoanCalculator';
@@ -870,20 +871,22 @@ function App() {
                 />
               )}
               {currentStep === 8 && (
-                <JourneyModule
-                  familyMembers={familyMembers}
-                  income={income}
-                  expenseCategories={expenseCategories}
-                  goals={goals}
-                  inflationRates={inflationRates}
-                  setInflationRates={setInflationRates}
-                  journeyAdjustments={journeyAdjustments}
-                  setJourneyAdjustments={setJourneyAdjustments}
-                  policies={policies}
-                  projections={journeyProjections}
-                  onNext={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
-                  onBack={() => { setCurrentStep(7); window.scrollTo(0, 0); }}
-                />
+                <CheckoutGate user={user} planId={planId} onBack={() => { setCurrentStep(7); window.scrollTo(0, 0); }}>
+                  <JourneyModule
+                    familyMembers={familyMembers}
+                    income={income}
+                    expenseCategories={expenseCategories}
+                    goals={goals}
+                    inflationRates={inflationRates}
+                    setInflationRates={setInflationRates}
+                    journeyAdjustments={journeyAdjustments}
+                    setJourneyAdjustments={setJourneyAdjustments}
+                    policies={policies}
+                    projections={journeyProjections}
+                    onNext={() => { setCurrentStep(9); window.scrollTo(0, 0); }}
+                    onBack={() => { setCurrentStep(7); window.scrollTo(0, 0); }}
+                  />
+                </CheckoutGate>
               )}
               {currentStep === 9 && (
                 <AllocationModule
@@ -934,25 +937,21 @@ function App() {
                 />
               )}
               {currentStep === 12 && (
-                <CheckoutGate
-                  user={user}
-                  planId={planId}
-                  reportProps={{
-                    familyMembers,
-                    income,
-                    expenseCategories,
-                    assetCategories,
-                    liabilityCategories,
-                    goals: expandedGoals,
-                    policies,
-                    allocations: investmentAllocations,
-                    goalMappings,
-                    contingencyFund,
-                    journeyAdjustments,
-                    projections: journeyProjections,
-                    calculatorInputs,
-                    onBack: () => { setCurrentStep(11); window.scrollTo(0, 0); }
-                  }}
+                <ReportView
+                  familyMembers={familyMembers}
+                  income={income}
+                  expenseCategories={expenseCategories}
+                  assetCategories={assetCategories}
+                  liabilityCategories={liabilityCategories}
+                  goals={expandedGoals}
+                  policies={policies}
+                  allocations={investmentAllocations}
+                  goalMappings={goalMappings}
+                  contingencyFund={contingencyFund}
+                  journeyAdjustments={journeyAdjustments}
+                  projections={journeyProjections}
+                  calculatorInputs={calculatorInputs}
+                  onBack={() => { setCurrentStep(11); window.scrollTo(0, 0); }}
                 />
               )}
             </>

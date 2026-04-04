@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Copy, CreditCard, Tag, X } from 'lucide-react';
-import ReportView from '../ReportModule/ReportView';
 import { createCheckoutTransaction } from '../../services/checkoutService';
 import { createRazorpayOrder, verifyRazorpaySignature } from '../../services/razorpayEdgeService';
 
@@ -33,7 +32,7 @@ const randomCodeSegment = (length = 5) => {
   return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 };
 
-const CheckoutGate = ({ user, planId, reportProps }) => {
+const CheckoutGate = ({ user, planId, children, onBack }) => {
   const userId = user?.id || 'anonymous';
   const userEmail = user?.email || '';
   const userLabel = userEmail.split('@')[0] || 'Client';
@@ -340,16 +339,16 @@ const CheckoutGate = ({ user, planId, reportProps }) => {
   };
 
   if (isUnlocked) {
-    return <ReportView {...reportProps} />;
+    return children;
   }
 
   return (
     <>
       <div className="card fade-in" style={{ maxWidth: '860px', margin: '0 auto' }}>
         <div style={{ padding: '2rem', borderBottom: '1px solid var(--border)' }}>
-          <h2 style={{ margin: 0 }}>Complete Checkout to Unlock Overview</h2>
+          <h2 style={{ margin: 0 }}>Complete Checkout to Unlock Journey</h2>
           <p className="text-muted" style={{ marginTop: '0.75rem' }}>
-            Pay once to view the complete Module 12 Overview and download/print your report.
+            Pay once to view all the Modules and download/print your report.
           </p>
         </div>
 
@@ -361,12 +360,9 @@ const CheckoutGate = ({ user, planId, reportProps }) => {
                   <CreditCard size={18} /> Razorpay Checkout
                 </p>
                 <p className="text-muted" style={{ margin: '0.5rem 0 0 0' }}>
-                  Amount payable: <strong>INR {REPORT_PRICE_INR}</strong>
+                  <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>Amount payable: INR 1999.00</span>
                 </p>
               </div>
-              <button className="btn btn-primary" onClick={handlePayWithRazorpay} disabled={isPaying}>
-                {isPaying ? 'Opening Checkout...' : 'Pay with Razorpay'}
-              </button>
             </div>
           </div>
 
@@ -393,7 +389,6 @@ const CheckoutGate = ({ user, planId, reportProps }) => {
                   color: 'var(--text-main)',
                 }}
               />
-              <button className="btn" onClick={copyCoupon}>Copy My Code</button>
               <button className="btn btn-primary" onClick={handleApplyCoupon}>Apply Coupon</button>
               <button
                 className="btn btn-primary"
@@ -401,7 +396,7 @@ const CheckoutGate = ({ user, planId, reportProps }) => {
                 disabled={!couponValidated || isRecordingZeroTxn || couponData?.used}
                 style={{ opacity: !couponValidated || couponData?.used ? 0.65 : 1 }}
               >
-                {isRecordingZeroTxn ? 'Recording INR 0 Transaction...' : 'Complete INR 0 Transaction'}
+                {isRecordingZeroTxn ? 'Recording Transaction...' : 'Complete Transaction'}
               </button>
             </div>
             {couponMessage && (
@@ -411,8 +406,8 @@ const CheckoutGate = ({ user, planId, reportProps }) => {
             )}
           </div>
 
-          <button className="btn btn-secondary" onClick={reportProps.onBack} style={{ justifySelf: 'start' }}>
-            Back to Roadmap
+          <button className="btn btn-secondary" onClick={onBack} style={{ justifySelf: 'start' }}>
+            Back to Contingency
           </button>
         </div>
       </div>
