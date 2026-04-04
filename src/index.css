@@ -154,3 +154,119 @@ input:focus, select:focus, textarea:focus {
 .fade-in {
   animation: fadeIn 0.4s ease-out forwards;
 }
+
+/* --- App Shell & Navigation Drawers --- */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  background: var(--bg-main);
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 70px;
+  background: var(--bg-card);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
+  z-index: 1000;
+  overflow-x: hidden;
+  overflow-y: auto;
+  white-space: nowrap;
+  /* Hide scrollbar for a cleaner look */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar:hover {
+  width: 260px;
+  box-shadow: 0 0 24px rgba(0,0,0,0.08); /* Premium depth */
+}
+
+/* Sidebar Specifics */
+.left-drawer { left: 0; border-right: 1px solid var(--border); }
+.right-drawer { right: 0; border-left: 1px solid var(--border); }
+
+/* Force standard inner width so flexbox doesn't shrink icons */
+.sidebar-header {
+  padding: 1.5rem;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--primary);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 260px; 
+}
+
+/* Hide text in collapsed state */
+.sidebar .nav-label {
+  opacity: 0;
+  transition: opacity 0.2s 0.1s;
+}
+
+.sidebar:hover .nav-label {
+  opacity: 1;
+}
+
+.sidebar-btn {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  padding: 0.85rem 1.4rem;
+  width: 260px; 
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
+}
+
+.sidebar svg {
+  flex-shrink: 0;
+}
+
+.sidebar-btn:hover:not(:disabled) {
+  background: var(--bg-main);
+  color: var(--primary);
+}
+
+.sidebar-btn.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-left: 3px solid var(--primary);
+  font-weight: 600;
+}
+
+.sidebar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.main-content-wrapper {
+  flex: 1;
+  padding: 1.5rem 3rem;
+  margin-left: 70px;
+  margin-right: 70px;
+  transition: margin 0.3s;
+  max-width: 1300px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .right-drawer { display: none; }
+  .main-content-wrapper { margin-right: 0; padding: 1rem; }
+}

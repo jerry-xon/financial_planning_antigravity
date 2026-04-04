@@ -1,4 +1,9 @@
-import { LogOut, User } from 'lucide-react';
+import { 
+  LogOut, User, Users, ArrowRightLeft, Wallet, Target, Shield, 
+  Umbrella, LifeBuoy, Map, PieChart, TrendingUp, ListChecks, 
+  LayoutDashboard, Calculator, Percent, Landmark, Car, 
+  GraduationCap, LineChart, MoveDown, PiggyBank, Home 
+} from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import AssetModule from './components/AssetModule/AssetModule';
 import RoleBasedRouting from './components/Auth/RoleBasedRouting';
@@ -659,195 +664,105 @@ function App() {
   return (
     <RoleBasedRouting>
       <ProtectedRoute>
-        <div className="app-container">
-        <style>{`
-          .nav-dropdown-wrapper .sub-nav-dropdown {
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s ease;
-            transform: translateY(-10px);
-          }
-          .nav-dropdown-wrapper:hover .sub-nav-dropdown {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-          }
-        `}</style>
-        <header style={{
-          height: 'auto',
-          padding: '1rem 0',
-          borderBottom: '1px solid var(--border)',
-          marginBottom: '2rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
-            <h1 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--primary)' }}>FinPlan</h1>
+        <div className="app-shell">
+        {/* Left Drawer: Process Navigation */}
+        <aside className="sidebar left-drawer">
+          <div className="sidebar-header">
+            <LayoutDashboard size={24} color="var(--primary)" />
+            <span className="nav-label">FinPlan Start</span>
+          </div>
+          
+          <div style={{ flex: 1, padding: '1rem 0' }}>
+            {[
+              { name: 'Profile', icon: Users },
+              { name: 'Cash Flow', icon: ArrowRightLeft },
+              { name: 'Assets', icon: Wallet },
+              { name: 'Goals', icon: Target },
+              { name: 'Insurance', icon: Shield },
+              { name: 'Protection Gap', icon: Umbrella },
+              { name: 'Contingency', icon: LifeBuoy },
+              { name: 'Journey', icon: Map },
+              { name: 'Allocation', icon: PieChart },
+              { name: 'Growth', icon: TrendingUp },
+              { name: 'Roadmap', icon: ListChecks },
+              { name: 'Overview', icon: LayoutDashboard }
+            ].map((mod, idx) => (
+              <div key={mod.name} style={{ position: 'relative' }}>
+                <button
+                  className={`sidebar-btn ${activeSection === 'modules' && currentStep === idx + 1 ? 'active' : ''}`}
+                  disabled={(mod.name === 'Insurance' && insuranceMode === 'anyway') || (idx + 1 > maxStep)}
+                  onClick={() => {
+                    if (idx + 1 <= maxStep) {
+                      setCurrentStep(idx + 1);
+                      setActiveSection('modules');
+                      if (mod.name === 'Cash Flow') setCashFlowSubStep(1);
+                    }
+                  }}
+                >
+                  <mod.icon size={20} />
+                  <span className="nav-label">{idx + 1}. {mod.name}</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </aside>
+
+        {/* Right Drawer: Calculators Navigation */}
+        <aside className="sidebar right-drawer">
+          <div className="sidebar-header" style={{ color: 'var(--text-main)' }}>
+            <Calculator size={24} />
+            <span className="nav-label">Calculators</span>
+          </div>
+          <div style={{ flex: 1, padding: '1rem 0' }}>
+            {[
+              { id: 'tax', label: 'Income Tax', icon: Landmark },
+              { id: 'sip', label: 'SIP', icon: LineChart },
+              { id: 'ppf', label: 'PPF', icon: PiggyBank },
+              { id: 'nps', label: 'NPS', icon: Umbrella },
+              { id: 'fd', label: 'Fixed Deposit', icon: Percent },
+              { id: 'rd', label: 'Recurring Dep.', icon: ArrowRightLeft },
+              { id: 'per_loan', label: 'Personal Loan', icon: User },
+              { id: 'home_loan', label: 'Home Loan', icon: Home },
+              { id: 'car_loan', label: 'Car Loan', icon: Car },
+              { id: 'two_wheeler_loan', label: 'Two-Wheeler', icon: Car },
+              { id: 'edu_loan', label: 'Edu. Loan', icon: GraduationCap },
+              { id: 'lumpsum', label: 'Lumpsum', icon: Wallet },
+              { id: 'equity', label: 'Equity & ETFs', icon: TrendingUp },
+              { id: 'swp', label: 'SWP', icon: MoveDown }
+            ].map((calc) => (
+              <button
+                key={calc.id}
+                className={`sidebar-btn ${activeSection === 'calculators' && activeCalculator === calc.id ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveCalculator(calc.id);
+                  setActiveSection('calculators');
+                }}
+              >
+                <calc.icon size={20} />
+                <span className="nav-label">{calc.label}</span>
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <div className="main-content-wrapper fade-in">
+          <header style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
               {saving && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Saving...</span>}
-              <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', background: 'var(--border)', padding: '2px 8px', borderRadius: '4px' }}>PWA v1.1</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', background: 'var(--border)', padding: '2px 8px', borderRadius: '4px' }}>PWA v1.2</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
                   <User size={16} /> {user?.email}
                 </span>
-                <button className="btn" onClick={handleLogout} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: '1px solid var(--border)' }}>
+                <button className="btn" onClick={handleLogout} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: '1px solid var(--border)' }}>
                   <LogOut size={16} /> Logout
                 </button>
               </div>
             </div>
-          </div>
+          </header>
 
-          {/* Primary Nav: Planning Modules */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', width: '100px' }}>Process</span>
-              <nav style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {[
-                  'Profile', 'Cash Flow', 'Assets', 'Goals', 'Insurance', 
-                  'Protection Gap', 'Contingency', 'Journey', 'Allocation', 'Growth', 'Roadmap', 'Overview'
-                ].map((name, idx) => (
-                  <div key={name} style={{ position: 'relative' }} className={name === 'Cash Flow' ? 'nav-dropdown-wrapper' : ''}>
-                      <button
-                        className={activeSection === 'modules' && currentStep === idx + 1 ? 'active-tab' : 'inactive-tab'}
-                        disabled={(name === 'Insurance' && insuranceMode === 'anyway') || (idx + 1 > maxStep)}
-                        onClick={() => {
-                          if (idx + 1 <= maxStep) {
-                            setCurrentStep(idx + 1);
-                            setActiveSection('modules');
-                            if (name === 'Cash Flow') setCashFlowSubStep(1);
-                          }
-                        }}
-                        style={{ 
-                          padding: '0.5rem 0.75rem', 
-                          fontSize: '0.85rem', 
-                          whiteSpace: 'nowrap',
-                          background: 'transparent',
-                          border: 'none',
-                          borderBottom: activeSection === 'modules' && currentStep === idx + 1 ? '2px solid var(--primary)' : '2px solid transparent',
-                          color: activeSection === 'modules' && currentStep === idx + 1 ? 'var(--primary)' : 'var(--text-muted)',
-                          fontWeight: activeSection === 'modules' && currentStep === idx + 1 ? '600' : '500',
-                          borderRadius: 0,
-                          opacity: (name === 'Insurance' && insuranceMode === 'anyway') || (idx + 1 > maxStep) ? 0.4 : 1,
-                          cursor: (name === 'Insurance' && insuranceMode === 'anyway') || (idx + 1 > maxStep) ? 'not-allowed' : 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        {idx + 1}. {name}
-                      </button>
-
-                      {name === 'Cash Flow' && (
-                          <div className="sub-nav-dropdown" style={{
-                              position: 'absolute',
-                              top: '100%',
-                              left: '0',
-                              marginTop: '0.25rem',
-                              background: 'var(--bg-card)',
-                              border: '1px solid var(--border)',
-                              borderRadius: '6px',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                              zIndex: 100,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              minWidth: '200px',
-                              overflow: 'hidden'
-                          }}>
-                              <button 
-                                disabled={idx + 1 > maxStep}
-                                onClick={() => {
-                                  if (idx + 1 <= maxStep) {
-                                    setCurrentStep(idx + 1);
-                                    setActiveSection('modules');
-                                    setCashFlowSubStep(1);
-                                  }
-                                }}
-                                style={{
-                                    padding: '0.6rem 1rem',
-                                    textAlign: 'left',
-                                    background: cashFlowSubStep === 1 && currentStep === 2 ? 'var(--bg-main)' : 'transparent',
-                                    border: 'none',
-                                    borderBottom: '1px solid var(--border)',
-                                    color: cashFlowSubStep === 1 && currentStep === 2 ? 'var(--primary)' : 'var(--text-main)',
-                                    fontSize: '0.8rem',
-                                    cursor: idx + 1 > maxStep ? 'not-allowed' : 'pointer',
-                                    opacity: idx + 1 > maxStep ? 0.5 : 1,
-                                    fontWeight: cashFlowSubStep === 1 && currentStep === 2 ? '600' : '400'
-                                }}
-                              >
-                                  2.1 Income & Ledger
-                              </button>
-                              <button 
-                                disabled={idx + 1 > maxStep}
-                                onClick={() => {
-                                  if (idx + 1 <= maxStep) {
-                                    setCurrentStep(idx + 1);
-                                    setActiveSection('modules');
-                                    setCashFlowSubStep(2);
-                                  }
-                                }}
-                                style={{
-                                    padding: '0.6rem 1rem',
-                                    textAlign: 'left',
-                                    background: cashFlowSubStep === 2 && currentStep === 2 ? 'var(--bg-main)' : 'transparent',
-                                    border: 'none',
-                                    color: cashFlowSubStep === 2 && currentStep === 2 ? 'var(--primary)' : 'var(--text-main)',
-                                    fontSize: '0.8rem',
-                                    cursor: idx + 1 > maxStep ? 'not-allowed' : 'pointer',
-                                    opacity: idx + 1 > maxStep ? 0.5 : 1,
-                                    fontWeight: cashFlowSubStep === 2 && currentStep === 2 ? '600' : '400'
-                                }}
-                              >
-                                  2.2 Commitments
-                              </button>
-                          </div>
-                      )}
-                  </div>
-                ))}
-              </nav>
-            </div>
-
-            {/* Secondary Nav: Calculators */}
-            <div style={{ display: 'flex', alignItems: 'center', borderTop: '1px dashed var(--border)', paddingTop: '0.75rem' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', width: '100px' }}>Calculators</span>
-              <nav style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {[
-                  { id: 'tax', label: 'Income Tax' },
-                  { id: 'sip', label: 'SIP' },
-                  { id: 'ppf', label: 'PPF' },
-                  { id: 'nps', label: 'NPS' },
-                  { id: 'fd', label: 'Fixed Deposit' },
-                  { id: 'rd', label: 'Recurring Deposit' },
-                  { id: 'per_loan', label: 'Personal Loan' },
-                  { id: 'home_loan', label: 'Home Loan' },
-                  { id: 'car_loan', label: 'Car Loan' },
-                  { id: 'two_wheeler_loan', label: 'Two-Wheeler Loan' },
-                  { id: 'edu_loan', label: 'Education Loan' },
-                  { id: 'lumpsum', label: 'Lumpsum' },
-                  { id: 'equity', label: 'Equity & ETFs' },
-                  { id: 'swp', label: 'SWP' }
-                ].map((calc) => (
-                  <button
-                    key={calc.id}
-                    className={`btn ${activeSection === 'calculators' && activeCalculator === calc.id ? 'btn-primary' : ''}`}
-                    onClick={() => {
-                      setActiveCalculator(calc.id);
-                      setActiveSection('calculators');
-                    }}
-                    style={{ 
-                      padding: '0.4rem 0.8rem', 
-                      fontSize: '0.8rem', 
-                      whiteSpace: 'nowrap',
-                      background: activeSection === 'calculators' && activeCalculator === calc.id ? 'var(--primary)' : 'var(--bg-card)',
-                      border: '1px solid var(--border)'
-                    }}
-                  >
-                    {calc.label}
-                  </button>
-                ))}
-              </nav>
-            </div>
-          </div>
-        </header>
-
-        {/* Main Content Area */}
-        <main>
+          <main>
           {activeSection === 'modules' ? (
             <>
               {currentStep === 1 && (
@@ -1159,6 +1074,7 @@ function App() {
         }}>
           © 2026 FinPlan - Comprehensive Financial Planning Report
         </footer>
+        </div>
       </div>
       </ProtectedRoute>
     </RoleBasedRouting>

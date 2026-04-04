@@ -10,65 +10,64 @@ const CashFlowOutput = ({ results }) => {
         <div className="card fade-in" style={{ marginTop: '2rem' }}>
             <h2>Cash Flow Summary</h2>
 
-            <div className="grid">
-                <div className="stat-card" style={{ background: 'var(--bg-main)', border: '2px solid var(--primary)', borderLeft: '8px solid var(--primary)' }}>
-                    <label>Disposable surplus</label>
-                    <p style={{
-                        fontSize: '1.8rem',
-                        fontWeight: 700,
-                        color: results.disposableIncome >= 0 ? 'var(--accent)' : '#ef4444'
-                    }}>
+            {/* Top KPI Cards */}
+            <div className="kpi-grid" style={{ marginBottom: '2rem' }}>
+                <div className="card" style={{ padding: '1.5rem', marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderTop: results.disposableIncome >= 0 ? '4px solid var(--accent)' : '4px solid #ef4444' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Disposable Surplus</div>
+                    <div style={{ fontSize: '2rem', fontWeight: 800, color: results.disposableIncome >= 0 ? 'var(--accent)' : '#ef4444', marginTop: '0.5rem' }}>
                         {formatCurrency(results.disposableIncome)}
-                    </p>
+                    </div>
                 </div>
 
-                <div className="stat-card">
-                    <label>Current monthly savings</label>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
+                <div className="card" style={{ padding: '1.5rem', marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderTop: '4px solid var(--primary)' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Current Monthly Savings</div>
+                    <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem' }}>
                         {formatCurrency(results.totalSavings)}
-                    </p>
+                    </div>
                 </div>
 
-                <div className="stat-card">
-                    <label>Disp. Income Rate</label>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 700, color: results.disposableIncomeRate >= 0 ? 'var(--accent)' : '#ef4444' }}>
+                <div className="card" style={{ padding: '1.5rem', marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderTop: '4px solid #8b5cf6' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Disp. Income Rate</div>
+                    <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem' }}>
                         {results.disposableIncomeRate.toFixed(1)}%
-                    </p>
+                    </div>
                 </div>
             </div>
 
-            <div className="calculation-breakdown card" style={{ background: 'var(--bg-main)', marginTop: '2rem', padding: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Complete Calculation Breakdown</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>(+) Total Monthly Income</span>
-                        <strong>{formatCurrency(results.totalIncome)}</strong>
+            <div className="card" style={{ marginBottom: '2rem', padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', background: 'var(--bg-main)' }}>
+                    <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--text-main)' }}>Calculation Breakdown</h3>
+                </div>
+                <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
+                        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(+) Total Monthly Income</span>
+                        <strong style={{ color: 'var(--text-main)', fontSize: '1.1rem' }}>{formatCurrency(results.totalIncome)}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>(-) Household & Lifestyle Expenses (A)</span>
-                        <strong style={{ color: '#ef4444' }}>{formatCurrency(results.categorySums.household)}</strong>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
+                        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(-) Household & Lifestyle Expenses</span>
+                        <strong style={{ color: '#ef4444', fontSize: '1.1rem' }}>{formatCurrency(results.categorySums.household)}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>(-) EMIs (B1)</span>
-                        <strong style={{ color: '#ef4444' }}>{formatCurrency(results.categorySums.emi)}</strong>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
+                        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(-) EMIs</span>
+                        <strong style={{ color: '#ef4444', fontSize: '1.1rem' }}>{formatCurrency(results.categorySums.emi)}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>(-) Insurance Premiums (B2)</span>
-                        <strong style={{ color: '#ef4444' }}>{formatCurrency(results.categorySums.insurance)}</strong>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
+                        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(-) Insurance Premiums</span>
+                        <strong style={{ color: '#ef4444', fontSize: '1.1rem' }}>{formatCurrency(results.categorySums.insurance)}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--border)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
-                        <span style={{ fontWeight: 600 }}>(=) Monthly Surplus</span>
-                        <strong style={{ fontSize: '1.25rem', color: results.surplus >= 0 ? 'var(--accent)' : '#ef4444' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--border)', paddingTop: '1rem', marginTop: '0.5rem', fontSize: '1.1rem' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>(=) Monthly Surplus</span>
+                        <strong style={{ color: results.surplus >= 0 ? 'var(--accent)' : '#ef4444', fontSize: '1.25rem' }}>
                             {formatCurrency(results.surplus)}
                         </strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
-                        <span>(-) Current Monthly Savings (C)</span>
-                        <strong style={{ color: 'var(--primary)' }}>{formatCurrency(results.totalSavings)}</strong>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
+                        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(-) Current Monthly Savings</span>
+                        <strong style={{ color: 'var(--primary)', fontSize: '1.1rem' }}>{formatCurrency(results.totalSavings)}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px dashed var(--border)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
-                        <span style={{ fontWeight: 600 }}>(=) Monthly Disposable Surplus Available</span>
-                        <strong style={{ fontSize: '1.25rem', color: results.disposableIncome >= 0 ? 'var(--accent)' : '#ef4444' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-main)', padding: '1.25rem', borderRadius: '8px', marginTop: '0.5rem', borderLeft: results.disposableIncome >= 0 ? '4px solid var(--accent)' : '4px solid #ef4444' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '1.1rem' }}>(=) Disposable Surplus Available</span>
+                        <strong style={{ fontSize: '1.5rem', color: results.disposableIncome >= 0 ? 'var(--accent)' : '#ef4444' }}>
                             {formatCurrency(results.disposableIncome)}
                         </strong>
                     </div>
