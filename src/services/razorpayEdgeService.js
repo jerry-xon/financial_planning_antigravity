@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 
 const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/razorpay-checkout`;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 const invokeRazorpayFunction = async (payload) => {
   const {
@@ -18,6 +19,7 @@ const invokeRazorpayFunction = async (payload) => {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.access_token}`,
+        ...(supabaseAnonKey ? { apikey: supabaseAnonKey } : {}),
       },
       body: JSON.stringify(payload),
     });

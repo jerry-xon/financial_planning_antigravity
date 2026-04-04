@@ -16,8 +16,16 @@ Set these in your Supabase project:
 
 ## Deploy
 
+`supabase/config.toml` sets `verify_jwt = false` for this function so the Edge API gateway does not reject **ES256** access tokens (a known limitation at the gateway; the function still authenticates with `getUser()`).
+
 ```bash
 supabase functions deploy razorpay-checkout
+```
+
+If you deploy without this repo’s `config.toml`, use:
+
+```bash
+supabase functions deploy razorpay-checkout --no-verify-jwt
 ```
 
 ## Set secrets
