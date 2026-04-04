@@ -49,21 +49,94 @@ const ReportView = ({
 
     return (
         <div className="report-view fade-in">
-            <div className="report-header card" style={{ padding: '3rem', textAlign: 'center', background: 'var(--bg-main)', borderBottom: '4px solid var(--primary)' }}>
-                <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Financial Overview</h1>
-                <p className="text-muted">Generated for {familyMembers[0]?.name || 'Valued Client'} • {new Date().toLocaleDateString('en-IN')}</p>
-
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
-                    <button className="btn btn-secondary" onClick={onBack}>
-                        Back to Roadmap
+            {/* New Premium Dashboard Header Area */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                    <h1 style={{ fontSize: '2.5rem', marginBottom: '0.25rem' }}>Welcome Back, {familyMembers[0]?.name?.split(' ')[0] || 'Client'}!</h1>
+                    <p className="text-muted" style={{ fontSize: '1rem' }}>{new Date().toLocaleDateString('en-IN', { month: 'long', day: 'numeric', year: 'numeric'})}</p>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button className="btn btn-secondary" onClick={onBack} style={{ background: '#fff', border: '1px solid var(--border)', color: 'var(--text-main)' }}>
+                        Overview Mode
                     </button>
-                    <button className="btn btn-primary" onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Printer size={18} /> Print Plan / Save as PDF
+                    <button className="btn btn-primary" onClick={handlePrint}>
+                        <Printer size={18} style={{ marginRight: '8px' }} /> Export Report
                     </button>
                 </div>
             </div>
 
-            <div className="report-sections" style={{ marginTop: '2rem' }}>
+            {/* Top KPI Cards (from the mockup) */}
+            <div className="kpi-grid" style={{ marginBottom: '2rem' }}>
+                <div className="card" style={{ padding: '1.5rem', marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div style={{ color: 'var(--primary)', marginBottom: '0.5rem', background: 'var(--primary-light)', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><TrendingUp size={20} /></div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>Total Assets / Investments</div>
+                    <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{formatCurrency(assetResults.totalAssets)}</div>
+                </div>
+                <div className="card" style={{ padding: '1.5rem', marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div style={{ color: 'var(--accent)', marginBottom: '0.5rem', background: 'var(--accent-light)', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><TrendingUp size={20} /></div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>Savings Rate</div>
+                    <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{cashFlowResults.savingsRatio.toFixed(1)}%</div>
+                </div>
+                <div className="card" style={{ padding: '1.5rem', marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div style={{ color: '#8b5cf6', marginBottom: '0.5rem', background: '#ede9fe', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><strong style={{fontSize: '18px'}}>₹</strong></div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>Monthly Income</div>
+                    <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{formatCurrency(cashFlowResults.totalIncome)}</div>
+                </div>
+                <div className="card" style={{ padding: '1.5rem', marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div style={{ color: '#f59e0b', marginBottom: '0.5rem', background: '#fef3c7', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Shield size={20} /></div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>Emergency Fund</div>
+                    <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{formatCurrency(contingencyFund || 0)}</div>
+                </div>
+            </div>
+
+            {/* Middle Dashboard Section (Net Worth + Goals from the mockup) */}
+            <div className="dashboard-layout" style={{ marginBottom: '2rem' }}>
+                <div className="card" style={{ marginBottom: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                        <div>
+                            <h3 style={{ margin: 0, color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 600 }}>Total Net Worth</h3>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 800, marginTop: '0.25rem', color: 'var(--text-main)' }}>
+                                {formatCurrency(assetResults.netWorth)}
+                            </div>
+                        </div>
+                    </div>
+                    {/* Visual representation of the line chart */}
+                    <div style={{ height: '200px', background: 'linear-gradient(180deg, rgba(37, 99, 235, 0.08) 0%, rgba(37, 99, 235, 0) 100%)', borderTop: '2.5px solid var(--primary)', position: 'relative', marginTop: '2rem', borderRadius: '4px' }}>
+                       <div style={{ position: 'absolute', right: '0', top: '-6px', width: '12px', height: '12px', borderRadius: '50%', background: '#fff', border: '3px solid var(--primary)', boxShadow: '0 0 0 4px rgba(37,99,235,0.1)' }}></div>
+                       <div style={{ position: 'absolute', left: '0', top: '-6px', width: '8px', height: '8px', borderRadius: '50%', background: '#fff', border: '2px solid rgba(37,99,235,0.5)' }}></div>
+                       <div style={{ position: 'absolute', left: '0', right: '0', bottom: '-20px', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                           <span>Previous</span>
+                           <span>Current</span>
+                       </div>
+                    </div>
+                </div>
+                
+                <div className="card" style={{ marginBottom: 0 }}>
+                    <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>Goals Progress</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        {validGoals.slice(0, 4).map((g, i) => {
+                            const mappingDict = goalMappings[g.id] || {};
+                            const totalAssigned = Object.values(mappingDict).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+                            const percent = Math.min(100, (totalAssigned / (g.futureCost || 1)) * 100);
+                            return (
+                                <div key={i}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-main)' }}>
+                                        <span>{g.name}</span>
+                                        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{percent.toFixed(0)}% complete</span>
+                                    </div>
+                                    <div style={{ width: '100%', height: '8px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
+                                        <div style={{ width: `${percent}%`, height: '100%', background: 'var(--primary)', borderRadius: '4px', transition: 'width 1s ease-in-out' }}></div>
+                                    </div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 500 }}>Target: {formatCurrency(g.futureCost)}</div>
+                                </div>
+                            );
+                        })}
+                        {validGoals.length === 0 && <p className="text-muted">No active goals to track.</p>}
+                    </div>
+                </div>
+            </div>
+
+            <div className="report-sections" style={{ marginTop: '3rem' }}>
                 {/* 1. Profile Summary */}
                 <section className="report-section card">
                     <h3>1. Family Profile</h3>
@@ -592,24 +665,35 @@ const ReportView = ({
           border-collapse: collapse;
           margin-top: 1rem;
         }
+        .report-table tr {
+          transition: background-color 0.2s ease;
+        }
+        .report-table tbody tr:hover {
+          background-color: var(--bg-main);
+        }
         .report-table th {
           text-align: left;
-          padding: 12px;
-          background: var(--bg-main);
+          padding: 16px 12px;
           color: var(--text-muted);
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           text-transform: uppercase;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+          border-bottom: 2px solid var(--border);
         }
         .report-table td {
-          padding: 12px;
+          padding: 16px 12px;
           border-bottom: 1px solid var(--border);
           font-size: 0.95rem;
+          color: var(--text-main);
         }
         .summary-box {
           padding: 1.5rem;
           border: 1px solid var(--border);
-          border-radius: 12px;
+          border-radius: var(--radius-md);
+          background: var(--bg-card);
           text-align: center;
+          transition: transform 0.2s;
         }
         .summary-box label {
           display: block;

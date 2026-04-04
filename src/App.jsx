@@ -706,7 +706,7 @@ function App() {
                 ].map((name, idx) => (
                   <div key={name} style={{ position: 'relative' }} className={name === 'Cash Flow' ? 'nav-dropdown-wrapper' : ''}>
                       <button
-                        className={`btn ${activeSection === 'modules' && currentStep === idx + 1 ? 'btn-primary' : ''}`}
+                        className={activeSection === 'modules' && currentStep === idx + 1 ? 'active-tab' : 'inactive-tab'}
                         disabled={(name === 'Insurance' && insuranceMode === 'anyway') || (idx + 1 > maxStep)}
                         onClick={() => {
                           if (idx + 1 <= maxStep) {
@@ -716,11 +716,18 @@ function App() {
                           }
                         }}
                         style={{ 
-                          padding: '0.4rem 0.8rem', 
-                          fontSize: '0.8rem', 
+                          padding: '0.5rem 0.75rem', 
+                          fontSize: '0.85rem', 
                           whiteSpace: 'nowrap',
-                          opacity: (name === 'Insurance' && insuranceMode === 'anyway') || (idx + 1 > maxStep) ? 0.5 : 1,
-                          cursor: (name === 'Insurance' && insuranceMode === 'anyway') || (idx + 1 > maxStep) ? 'not-allowed' : 'pointer'
+                          background: 'transparent',
+                          border: 'none',
+                          borderBottom: activeSection === 'modules' && currentStep === idx + 1 ? '2px solid var(--primary)' : '2px solid transparent',
+                          color: activeSection === 'modules' && currentStep === idx + 1 ? 'var(--primary)' : 'var(--text-muted)',
+                          fontWeight: activeSection === 'modules' && currentStep === idx + 1 ? '600' : '500',
+                          borderRadius: 0,
+                          opacity: (name === 'Insurance' && insuranceMode === 'anyway') || (idx + 1 > maxStep) ? 0.4 : 1,
+                          cursor: (name === 'Insurance' && insuranceMode === 'anyway') || (idx + 1 > maxStep) ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s ease'
                         }}
                       >
                         {idx + 1}. {name}
