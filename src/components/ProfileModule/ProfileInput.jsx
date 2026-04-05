@@ -55,20 +55,30 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
 
     return (
         <div className="profile-input-container">
-            {members.map((member, index) => (
-                <div key={index} className="card member-card fade-in" style={{ borderTop: `4px solid ${member.relation === 'Self' ? 'var(--primary)' : 'var(--accent)'}` }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                        <h3 style={{ margin: 0 }}>{member.relation} Details</h3>
+            {members.map((member, index) => {
+                const colors = member.relation === 'Self' 
+                    ? { border: 'var(--primary)' } 
+                    : member.relation === 'Spouse' 
+                        ? { border: 'var(--accent)' } 
+                        : { border: 'var(--tertiary)' };
+
+                return (
+                <div key={index} className="card member-card fade-in" style={{ border: `2px solid ${colors.border}` }}>
+                    <div className="profile-card-header">
+                        <h3>
+                            <span className="circle-badge" style={{ background: colors.border }}>{index + 1}</span>
+                            {member.relation} Details
+                        </h3>
                         {index !== 0 && (
-                            <button className="btn" onClick={() => removeMember(index)} style={{ color: '#ef4444', padding: '0.25rem' }}>
-                                <Trash2 size={18} />
+                            <button className="btn" onClick={() => removeMember(index)} style={{ color: 'var(--negative)', padding: '0.25rem', background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Trash2 size={16} /> Remove
                             </button>
                         )}
                     </div>
 
-                    <div className="grid">
+                    <div className="grid-cols-3">
                         <div className="input-group">
-                            <label><User size={14} /> Name</label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><User size={14} /> Name</label>
                             <input
                                 type="text"
                                 name="name"
@@ -79,7 +89,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                         </div>
 
                         <div className="input-group">
-                            <label><Calendar size={14} /> Date of Birth</label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Calendar size={14} /> Date of Birth</label>
                             <input
                                 type="date"
                                 name="dob"
@@ -95,7 +105,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
 
                         {(member.relation === 'Self' || member.relation === 'Spouse') && (
                             <div className="input-group">
-                                <label><Phone size={14} /> Mobile Number <span style={{ color: '#ef4444' }}>*</span></label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Phone size={14} /> Mobile Number <span style={{ color: '#ef4444' }}>*</span></label>
                                 <input
                                     type="tel"
                                     name="mobile"
@@ -110,7 +120,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                         )}
 
                         <div className="input-group">
-                            <label><Briefcase size={14} /> {member.relation === 'Child' ? 'Studying at' : 'Occupation'}</label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Briefcase size={14} /> {member.relation === 'Child' ? 'Studying at' : 'Occupation'}</label>
                             {member.relation === 'Child' ? (
                                 <select
                                     name="occupation"
@@ -137,7 +147,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                         {(member.relation === 'Self' || member.relation === 'Spouse') && (
                             <>
                                 <div className="input-group">
-                                    <label><Briefcase size={14} /> Nature of Business / Profession</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Briefcase size={14} /> Nature of Business / Profession</label>
                                     <input
                                         type="text"
                                         name="natureOfBusiness"
@@ -147,7 +157,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                     />
                                 </div>
                                 <div className="input-group">
-                                    <label><Briefcase size={14} /> Name of Business / Organization</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Briefcase size={14} /> Name of Business / Organization</label>
                                     <input
                                         type="text"
                                         name="organizationName"
@@ -157,7 +167,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                     />
                                 </div>
                                 <div className="input-group">
-                                    <label><GraduationCap size={14} /> Educational Qualification</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><GraduationCap size={14} /> Educational Qualification</label>
                                     <input
                                         type="text"
                                         name="educationalQualification"
@@ -167,7 +177,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                     />
                                 </div>
                                 <div className="input-group">
-                                    <label><Calendar size={14} /> Retirement Age</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Calendar size={14} /> Retirement Age</label>
                                     <input
                                         type="number"
                                         name="retirementAge"
@@ -176,7 +186,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                     />
                                 </div>
                                 <div className="input-group">
-                                    <label><Target size={14} /> Retirement Year</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Target size={14} /> Retirement Year</label>
                                     <input
                                         type="text"
                                         value={calculateRetirementYear(member.dob, member.retirementAge) || '-'}
@@ -191,7 +201,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                         {member.relation === 'Child' && member.occupation === 'School' && (
                             <>
                                 <div className="input-group">
-                                    <label><GraduationCap size={14} /> Studying in Standard</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><GraduationCap size={14} /> Studying in Standard</label>
                                     <select
                                         name="standard"
                                         value={member.standard || ''}
@@ -204,7 +214,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                     </select>
                                 </div>
                                 <div className="input-group">
-                                    <label><GraduationCap size={14} /> Annual School fee (₹)</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><GraduationCap size={14} /> Annual School fee (₹)</label>
                                     <input
                                         type="number"
                                         name="annualSchoolFee"
@@ -222,7 +232,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                         {member.relation === 'Child' && member.occupation === 'College' && (
                             <>
                                 <div className="input-group">
-                                    <label><GraduationCap size={14} /> Name of course</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><GraduationCap size={14} /> Name of course</label>
                                     <input
                                         type="text"
                                         name="courseName"
@@ -232,7 +242,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                     />
                                 </div>
                                 <div className="input-group">
-                                    <label><Calendar size={14} /> Duration of the course (Years)</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Calendar size={14} /> Duration of the course (Years)</label>
                                     <input
                                         type="number"
                                         name="courseDuration"
@@ -242,7 +252,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                     />
                                 </div>
                                 <div className="input-group">
-                                    <label><Calendar size={14} /> Current Semester / Year</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Calendar size={14} /> Current Semester / Year</label>
                                     <input
                                         type="text"
                                         name="currentSemYear"
@@ -252,7 +262,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                     />
                                 </div>
                                 <div className="input-group">
-                                    <label><Calendar size={14} /> Remaining Time to Complete (Years)</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Calendar size={14} /> Remaining Time to Complete (Years)</label>
                                     <input
                                         type="number"
                                         name="remainingTime"
@@ -262,7 +272,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                     />
                                 </div>
                                 <div className="input-group">
-                                    <label><Target size={14} /> Cost of Complete Course (₹)</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Target size={14} /> Cost of Complete Course (₹)</label>
                                     <input
                                         type="number"
                                         name="costOfCompleteCourse"
@@ -272,7 +282,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                     />
                                 </div>
                                 <div className="input-group">
-                                    <label><Briefcase size={14} /> Is {member.currentSemYear || 'current year'} fee paid?</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Briefcase size={14} /> Is {member.currentSemYear || 'current year'} fee paid?</label>
                                     <select
                                         name="isFeePaid"
                                         value={member.isFeePaid || ''}
@@ -287,8 +297,8 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                         )}
                     </div>
                 </div>
-            ))}
-
+                );
+            })}
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
                 <button className="btn" onClick={() => addMember('Spouse')} style={{ border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
                     <Plus size={18} style={{ marginRight: '0.5rem' }} /> Add Spouse

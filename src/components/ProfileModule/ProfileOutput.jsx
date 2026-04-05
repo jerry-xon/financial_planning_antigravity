@@ -6,12 +6,26 @@ const ProfileOutput = ({ familyResults }) => {
         <div className="family-output">
             <h2 style={{ marginBottom: '2rem' }}>Family Profile Analysis</h2>
 
-            <div className="grid">
-                {familyResults.map((result, index) => (
-                    <div key={index} className="card fade-in" style={{ borderLeft: '4px solid var(--accent)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                            <User size={20} color="var(--primary)" />
-                            <h3 style={{ margin: 0 }}>{result.name || result.relation} ({result.relation})</h3>
+            <div className="grid-cols-3">
+                {familyResults.map((result, index) => {
+                    const styleConfig = result.relation === 'Self' 
+                        ? { border: 'var(--primary-light)', bg: 'linear-gradient(to bottom right, var(--primary-light), #fff)', iconBg: 'var(--primary)', subtitle: 'Primary Member' }
+                        : result.relation === 'Spouse'
+                            ? { border: 'var(--accent-light)', bg: 'linear-gradient(to bottom right, var(--accent-light), #fff)', iconBg: 'var(--accent)', subtitle: 'Family Member' }
+                            : { border: 'var(--tertiary-light)', bg: 'linear-gradient(to bottom right, var(--tertiary-light), #fff)', iconBg: 'var(--tertiary)', subtitle: 'Dependent' };
+                    
+                    const initial = (result.name || result.relation).charAt(0).toUpperCase();
+
+                    return (
+                    <div key={index} className="card fade-in" style={{ border: `2px solid ${styleConfig.border}`, background: styleConfig.bg, padding: '1.5rem', borderRadius: '12px', boxShadow: 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                            <div style={{ width: '3rem', height: '3rem', borderRadius: '50%', background: styleConfig.iconBg, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 'bold', flexShrink: 0 }}>
+                                {initial}
+                            </div>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>{result.name || result.relation} ({result.relation})</h3>
+                                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>{styleConfig.subtitle}</p>
+                            </div>
                         </div>
 
                         <div className="member-stats">
@@ -84,7 +98,8 @@ const ProfileOutput = ({ familyResults }) => {
                             </div>
                         )}
                     </div>
-                ))}
+                    );
+                })}
             </div>
 
             <style jsx>{`

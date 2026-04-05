@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import ProfileInput from './ProfileInput';
 import ProfileOutput from './ProfileOutput';
 import { calculateFamilyProfile } from './ProfileLogic';
@@ -40,9 +41,10 @@ const ProfileModule = ({ members, setMembers, onNext }) => {
                                     onNext();
                                 }
                             }} 
-                            style={{ padding: '1rem 3rem', fontSize: '1.1rem' }}
+                            style={{ padding: '1rem 3rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-lg)' }}
                         >
                             Proceed to Cash Flow
+                            <ChevronRight size={20} />
                         </button>
                     </div>
                 </div>
