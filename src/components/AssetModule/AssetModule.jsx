@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 import AssetInput from './AssetInput';
 import AssetOutput from './AssetOutput';
 import { calculateNetWorth } from './AssetLogic';
@@ -28,22 +29,24 @@ const AssetModule = ({ assetCategories, setAssetCategories, liabilityCategories,
                 />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
-                <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.8rem 2rem' }}>
-                    Back to Cash Flow
-                </button>
-            </div>
-
             {results && (
                 <div className="fade-in">
                     <AssetOutput results={results} />
-                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem', marginBottom: '4rem' }}>
-                        <button className="btn btn-primary" onClick={onNext} style={{ padding: '1rem 3rem', fontSize: '1.1rem' }}>
-                            Proceed to Life Goals
-                        </button>
-                    </div>
                 </div>
             )}
+
+            <div className="sticky-action-bar">
+                <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <ChevronLeft size={20} />
+                    Back to Cash Flow
+                </button>
+                {results && (
+                    <button className="btn btn-primary" onClick={onNext} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-md)' }}>
+                        Proceed to Life Goals
+                        <ChevronRight size={20} />
+                    </button>
+                )}
+            </div>
         </div>
     );
 };

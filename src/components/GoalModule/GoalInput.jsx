@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trash2, Plus } from 'lucide-react';
+import CurrencyInput from '../common/CurrencyInput';
 
 const GoalInput = ({ goals, setGoals, onCalculate }) => {
 
@@ -83,17 +84,17 @@ const GoalInput = ({ goals, setGoals, onCalculate }) => {
                                                                 className="input-minimal"
                                                                 style={{ fontSize: '0.8rem', width: '120px' }}
                                                             />
-                                                            <input
-                                                                type="number"
+                                                            <CurrencyInput
+                                                                name="totalCourseCost"
                                                                 value={goal.totalCourseCost || ''}
                                                                 onChange={(e) => {
                                                                     const val = e.target.value;
                                                                     handleGoalChange(goal.id, 'totalCourseCost', val);
                                                                     handleGoalChange(goal.id, 'presentValue', val); // Auto-fill PV
                                                                 }}
-                                                                placeholder="Total Cost (₹)"
+                                                                placeholder="Total Cost"
                                                                 className="input-minimal"
-                                                                style={{ fontSize: '0.8rem' }}
+                                                                style={{ fontSize: '0.8rem', paddingLeft: '1.5rem' }}
                                                             />
                                                         </div>
                                                     </div>
@@ -130,14 +131,14 @@ const GoalInput = ({ goals, setGoals, onCalculate }) => {
                                         />
                                     </td>
                                     <td style={{ padding: '0.75rem' }}>
-                                        <input
-                                            type="number"
+                                        <CurrencyInput
+                                            name="presentValue"
                                             value={goal.presentValue || ''}
                                             onChange={(e) => handleGoalChange(goal.id, 'presentValue', e.target.value)}
-                                            placeholder="₹ 0"
+                                            placeholder="0"
                                             className="input-minimal"
                                             readOnly={isEducation}
-                                            style={isEducation ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
+                                            style={isEducation ? { background: 'var(--bg-main)', cursor: 'not-allowed', paddingLeft: '1.5rem' } : { paddingLeft: '1.5rem' }}
                                         />
                                     </td>
                                     <td style={{ padding: '0.75rem' }}>

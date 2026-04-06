@@ -1,6 +1,7 @@
 import { User, Calendar, Target, Briefcase, Plus, Trash2, GraduationCap, Phone } from 'lucide-react';
 import { calculateRetirementYear, calculateAge } from './ProfileLogic';
 import { EDUCATION_STANDARDS } from '../JourneyModule/ProjectionLogic';
+import CurrencyInput from '../common/CurrencyInput';
 
 const ProfileInput = ({ members, setMembers, onCalculate }) => {
     const handleMemberChange = (index, e) => {
@@ -215,8 +216,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                 </div>
                                 <div className="input-group">
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><GraduationCap size={14} /> Annual School fee (₹)</label>
-                                    <input
-                                        type="number"
+                                    <CurrencyInput
                                         name="annualSchoolFee"
                                         value={member.annualSchoolFee || ''}
                                         onChange={(e) => handleMemberChange(index, e)}
@@ -273,8 +273,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                                 </div>
                                 <div className="input-group">
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Target size={14} /> Cost of Complete Course (₹)</label>
-                                    <input
-                                        type="number"
+                                    <CurrencyInput
                                         name="costOfCompleteCourse"
                                         value={member.costOfCompleteCourse || ''}
                                         onChange={(e) => handleMemberChange(index, e)}

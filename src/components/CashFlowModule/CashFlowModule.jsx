@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 import CashFlowInput from './CashFlowInput';
 import CashFlowOutput from './CashFlowOutput';
 import { calculateCashFlow } from './CashFlowLogic';
@@ -43,23 +44,27 @@ const CashFlowModule = ({ familyMembers, income, setIncome, expenseCategories, s
             </div>
 
             {cashFlowSubStep === 1 && (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem', marginBottom: '4rem' }}>
-                    <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.8rem 2rem' }}>
+                <div className="sticky-action-bar">
+                    <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <ChevronLeft size={20} />
                         Back to Profile
                     </button>
-                    <button className="btn btn-primary" onClick={handleNextSubStep} style={{ padding: '0.8rem 2rem' }}>
+                    <button className="btn btn-primary" onClick={handleNextSubStep} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-md)' }}>
                         Next: Review Commitments & Savings
+                        <ChevronRight size={20} />
                     </button>
                 </div>
             )}
 
             {cashFlowSubStep === 2 && !results && (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem', marginBottom: '4rem' }}>
-                    <button className="btn btn-secondary" onClick={handleBackSubStep} style={{ padding: '0.8rem 2rem' }}>
+                <div className="sticky-action-bar">
+                    <button className="btn btn-secondary" onClick={handleBackSubStep} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <ChevronLeft size={20} />
                         Back to Income & Lifestyle
                     </button>
-                    <button className="btn btn-primary" onClick={handleCalculate} style={{ padding: '0.8rem 2rem' }}>
+                    <button className="btn btn-primary" onClick={handleCalculate} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-md)' }}>
                         Calculate Cash Flow & Proceed
+                        <ChevronRight size={20} />
                     </button>
                 </div>
             )}
@@ -67,12 +72,14 @@ const CashFlowModule = ({ familyMembers, income, setIncome, expenseCategories, s
             {cashFlowSubStep === 2 && results && (
                 <div className="fade-in">
                     <CashFlowOutput results={results} />
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem', marginBottom: '4rem' }}>
-                        <button className="btn btn-secondary" onClick={handleBackSubStep} style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
+                    <div className="sticky-action-bar">
+                        <button className="btn btn-secondary" onClick={handleBackSubStep} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <ChevronLeft size={20} />
                             Back to Edits
                         </button>
-                        <button className="btn btn-primary" onClick={onNext} style={{ padding: '1rem 3rem', fontSize: '1.1rem' }}>
+                        <button className="btn btn-primary" onClick={onNext} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-md)' }}>
                             Proceed to Assets
+                            <ChevronRight size={20} />
                         </button>
                     </div>
                 </div>

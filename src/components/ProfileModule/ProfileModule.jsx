@@ -27,8 +27,9 @@ const ProfileModule = ({ members, setMembers, onNext }) => {
             {results && (
                 <div className="fade-in">
                     <ProfileOutput familyResults={results} />
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '2rem', marginBottom: '4rem' }}>
-                        {error && <div style={{ color: '#ef4444', marginBottom: '1rem', fontWeight: 600 }}>{error}</div>}
+                    {error && <div style={{ color: 'var(--negative)', marginBottom: '1rem', fontWeight: 600, textAlign: 'center' }}>{error}</div>}
+                    <div className="sticky-action-bar">
+                        <div></div> {/* Placeholder for Back button if any */}
                         <button 
                             className="btn btn-primary" 
                             onClick={() => {
@@ -41,7 +42,7 @@ const ProfileModule = ({ members, setMembers, onNext }) => {
                                     onNext();
                                 }
                             }} 
-                            style={{ padding: '1rem 3rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-lg)' }}
+                            style={{ padding: '0.75rem 2rem', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-md)' }}
                         >
                             Proceed to Cash Flow
                             <ChevronRight size={20} />

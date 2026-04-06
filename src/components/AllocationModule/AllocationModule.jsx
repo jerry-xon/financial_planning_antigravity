@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { PieChart, Plus, Trash2, ArrowRight, Wallet, Target, TrendingUp, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
-
+import { PieChart, Plus, Trash2, ArrowRight, Wallet, Target, TrendingUp, ChevronDown, ChevronUp, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import CurrencyInput from '../common/CurrencyInput';
 const AllocationModule = ({ 
     familyMembers = [],
     expenseCategories = {},
@@ -358,8 +358,8 @@ const AllocationModule = ({
                                             )}
                                             <div className="input-group" style={{ marginBottom: 0 }}>
                                                 <label>{item.type === 'Life Insurance' ? 'Premium Amount' : (recurring ? 'Monthly Amount' : 'Amount')}</label>
-                                                <input 
-                                                    type="number" 
+                                                <CurrencyInput 
+                                                    name="allocationAmount"
                                                     value={item.type === 'Life Insurance' ? (Math.round(item.amount) || '') : (recurring ? (Math.round(item.amount / 12) || '') : Math.round(item.amount))} 
                                                     onChange={(e) => {
                                                         let val = Math.round(parseFloat(e.target.value)) || 0;
@@ -595,8 +595,9 @@ const AllocationModule = ({
                 </div>
             )}
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
-                <button className="btn btn-secondary" onClick={onBack}>
+            <div className="sticky-action-bar">
+                <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <ChevronLeft size={20} />
                     Back to Journey
                 </button>
                 <button 
@@ -605,10 +606,16 @@ const AllocationModule = ({
                     disabled={!!deficitInfo}
                     style={{ 
                         opacity: deficitInfo ? 0.5 : 1, 
-                        cursor: deficitInfo ? 'not-allowed' : 'pointer' 
+                        cursor: deficitInfo ? 'not-allowed' : 'pointer',
+                        padding: '0.75rem 2rem', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem', 
+                        boxShadow: 'var(--shadow-md)'
                     }}
                 >
                     Proceed to Portfolio Growth
+                    <ChevronRight size={20} />
                 </button>
             </div>
         </div>

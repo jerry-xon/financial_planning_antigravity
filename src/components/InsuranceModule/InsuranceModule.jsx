@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { PieChart, Plus, Target, Info, TrendingUp } from 'lucide-react';
+import { PieChart, Plus, Target, Info, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import InsuranceInput from './InsuranceInput';
 import InsuranceOutput from './InsuranceOutput';
 import { calculateYearlyInsuranceSummary, getInsuredNamesList } from './InsuranceLogic';
@@ -410,29 +410,28 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                 
                 <SharedDocumentVault />
 
-                {/* Unified Generate Report Button */}
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
-                    <button className="btn btn-primary" onClick={handleCalculate} style={{ padding: '1rem 3rem', fontSize: '1.1rem' }}>
-                        Generate Insurance Report
-                    </button>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
-                    <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.8rem 2rem' }}>
-                        Back to Life Goals
-                    </button>
-                </div>
-
                 {results && (
                     <div className="fade-in">
                         <InsuranceOutput summary={results} policies={policies} />
-                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '3rem', marginBottom: '5rem' }}>
-                            <button className="btn btn-primary" onClick={handleProceed} style={{ padding: '1.25rem 4rem', fontSize: '1.2rem', fontWeight: 600 }}>
-                                Proceed to Protection Gap Analysis
-                            </button>
-                        </div>
                     </div>
                 )}
+
+                <div className="sticky-action-bar">
+                    <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <ChevronLeft size={20} />
+                        Back to Life Goals
+                    </button>
+                    {!results ? (
+                        <button className="btn btn-primary" onClick={handleCalculate} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-md)' }}>
+                            Generate Insurance Report
+                        </button>
+                    ) : (
+                        <button className="btn btn-primary" onClick={handleProceed} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-md)' }}>
+                            Proceed to Protection Gap Analysis
+                            <ChevronRight size={20} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Premium Mismatch Modal */}

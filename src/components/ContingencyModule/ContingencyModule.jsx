@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 import ContingencyOutput from './ContingencyOutput';
 import { calculateContingencyFund } from './ContingencyLogic';
+import CurrencyInput from '../common/CurrencyInput';
 
 const ContingencyModule = ({ expenseCategories, contingencyFund, setContingencyFund, onNext, onBack }) => {
     const [results, setResults] = useState(null);
@@ -22,8 +24,8 @@ const ContingencyModule = ({ expenseCategories, contingencyFund, setContingencyF
                     <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
                         Total Funds Currently Available for Emergency (₹)
                     </label>
-                    <input
-                        type="number"
+                    <CurrencyInput
+                        name="contingencyFund"
                         placeholder="e.g. 5,00,000"
                         value={contingencyFund}
                         onChange={(e) => setContingencyFund(e.target.value)}
@@ -34,7 +36,8 @@ const ContingencyModule = ({ expenseCategories, contingencyFund, setContingencyF
                             border: '2px solid var(--border)',
                             background: 'transparent',
                             fontSize: '1.1rem',
-                            color: 'var(--text-main)'
+                            color: 'var(--text-main)',
+                            paddingLeft: '2.5rem' // Adjust for icon
                         }}
                     />
                 </div>
@@ -42,12 +45,14 @@ const ContingencyModule = ({ expenseCategories, contingencyFund, setContingencyF
 
             <ContingencyOutput results={results} />
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '3rem', marginBottom: '5rem' }}>
-                <button className="btn btn-secondary" onClick={onBack} style={{ padding: '1rem 3rem' }}>
+            <div className="sticky-action-bar">
+                <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <ChevronLeft size={20} />
                     Back to Gap Analysis
                 </button>
-                <button className="btn btn-primary" onClick={onNext} style={{ padding: '1rem 3rem' }}>
+                <button className="btn btn-primary" onClick={onNext} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-md)' }}>
                     Generate Financial Overview
+                    <ChevronRight size={20} />
                 </button>
             </div>
         </div>

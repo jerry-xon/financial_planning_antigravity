@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 import ProtectionGapOutput from './ProtectionGapOutput';
 import FinancialPyramid from './FinancialPyramid';
 import { calculateProtectionGap } from './ProtectionGapLogic';
@@ -50,12 +51,14 @@ const ProtectionGapModule = ({
 
             <ProtectionGapOutput results={results} />
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '3rem', marginBottom: '5rem' }}>
-                <button className="btn btn-secondary" onClick={onBack} style={{ padding: '1rem 3rem' }}>
+            <div className="sticky-action-bar">
+                <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <ChevronLeft size={20} />
                     Back to Insurance
                 </button>
-                <button className="btn btn-primary" onClick={onNext} style={{ padding: '1rem 3rem' }}>
+                <button className="btn btn-primary" onClick={onNext} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-md)' }}>
                     Proceed to Contingency Planning
+                    <ChevronRight size={20} />
                 </button>
             </div>
         </div>

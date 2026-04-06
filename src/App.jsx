@@ -2,7 +2,7 @@ import {
   LogOut, User, Users, ArrowRightLeft, Wallet, Target, Shield, 
   Umbrella, LifeBuoy, Map, PieChart, TrendingUp, ListChecks, 
   LayoutDashboard, Calculator, Percent, Landmark, Car, 
-  GraduationCap, LineChart, MoveDown, PiggyBank, Home 
+  GraduationCap, LineChart, MoveDown, PiggyBank, Home, CheckCircle2 
 } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import AssetModule from './components/AssetModule/AssetModule';
@@ -686,24 +686,35 @@ function App() {
               { name: 'Growth', icon: TrendingUp },
               { name: 'Roadmap', icon: ListChecks },
               { name: 'Overview', icon: LayoutDashboard }
-            ].map((mod, idx) => (
-              <div key={mod.name} style={{ position: 'relative' }}>
-                <button
-                  className={`sidebar-btn ${activeSection === 'modules' && currentStep === idx + 1 ? 'active' : ''}`}
-                  disabled={(mod.name === 'Insurance' && insuranceMode === 'anyway') || (idx + 1 > maxStep)}
-                  onClick={() => {
-                    if (idx + 1 <= maxStep) {
-                      setCurrentStep(idx + 1);
-                      setActiveSection('modules');
-                      if (mod.name === 'Cash Flow') setCashFlowSubStep(1);
-                    }
-                  }}
-                >
-                  <mod.icon size={20} />
-                  <span className="nav-label">{idx + 1}. {mod.name}</span>
-                </button>
-              </div>
-            ))}
+            ].map((mod, idx) => {
+              const isCompleted = idx + 1 < maxStep;
+              const isActive = activeSection === 'modules' && currentStep === idx + 1;
+              const isLocked = idx + 1 > maxStep || (mod.name === 'Insurance' && insuranceMode === 'anyway');
+              
+              return (
+                <div key={mod.name} style={{ position: 'relative' }}>
+                  <button
+                    className={`sidebar-btn ${isActive ? 'active' : ''}`}
+                    disabled={isLocked}
+                    onClick={() => {
+                      if (!isLocked) {
+                        setCurrentStep(idx + 1);
+                        setActiveSection('modules');
+                        if (mod.name === 'Cash Flow') setCashFlowSubStep(1);
+                      }
+                    }}
+                    style={{ opacity: isLocked ? 0.4 : 1 }}
+                  >
+                    {isCompleted && !isActive ? (
+                      <CheckCircle2 size={20} color="var(--emerald-500)" />
+                    ) : (
+                      <mod.icon size={20} />
+                    )}
+                    <span className="nav-label">{idx + 1}. {mod.name}</span>
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </aside>
 
@@ -762,7 +773,7 @@ function App() {
             </div>
           </header>
 
-          <main>
+          <main style={{ maxWidth: '64rem', margin: '0 auto', width: '100%' }}>
           {activeSection === 'modules' ? (
             <>
               {currentStep === 1 && (

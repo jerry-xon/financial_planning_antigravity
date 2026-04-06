@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { TrendingUp, PieChart, GraduationCap, Map, Plus, Trash2, Calendar, Banknote, AlertTriangle } from 'lucide-react';
+import { TrendingUp, PieChart, GraduationCap, Map, Plus, Trash2, Calendar, Banknote, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { generateProjections } from './ProjectionLogic';
 import JourneyTable from './JourneyTable';
 
@@ -463,8 +463,9 @@ const JourneyModule = ({
                 </div>
             )}
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
-                <button className="btn btn-secondary" onClick={onBack}>
+            <div className="sticky-action-bar">
+                <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <ChevronLeft size={20} />
                     Back to Contingency Fund
                 </button>
                 <button 
@@ -473,10 +474,16 @@ const JourneyModule = ({
                     disabled={!!deficitInfo}
                     style={{ 
                         opacity: deficitInfo ? 0.5 : 1, 
-                        cursor: deficitInfo ? 'not-allowed' : 'pointer' 
+                        cursor: deficitInfo ? 'not-allowed' : 'pointer',
+                        padding: '0.75rem 2rem', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem', 
+                        boxShadow: 'var(--shadow-md)'
                     }}
                 >
                     Proceed to Investment Allocation
+                    <ChevronRight size={20} />
                 </button>
             </div>
         </div>

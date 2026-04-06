@@ -4,6 +4,7 @@ import { convertToMonthly } from './CashFlowLogic';
 import LoanDetailsModal from './LoanDetailsModal';
 import InvestmentDetailsModal from './InvestmentDetailsModal';
 import DocumentUploadButton from '../common/DocumentUploadButton';
+import CurrencyInput from '../common/CurrencyInput';
 
 const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, currentYearLedger, setCurrentYearLedger, subStep }) => {
     const [activeModal, setActiveModal] = useState(null);
@@ -146,19 +147,19 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                             <div className="input-grid-mini">
                                 <div className="input-group">
                                     <label>Monthly Salary / Earnings</label>
-                                    <input type="number" name="self" value={income.self} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                    <CurrencyInput name="self" value={income.self} onChange={handleIncomeChange} placeholder="0" />
                                 </div>
                                 <div className="input-group">
                                     <label>Bonuses, Incentives, Irregular</label>
-                                    <input type="number" name="selfBonus" value={income.selfBonus} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                    <CurrencyInput name="selfBonus" value={income.selfBonus} onChange={handleIncomeChange} placeholder="0" />
                                 </div>
                                 <div className="input-group">
                                     <label>Rental, Dividends, Passive</label>
-                                    <input type="number" name="selfPassive" value={income.selfPassive} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                    <CurrencyInput name="selfPassive" value={income.selfPassive} onChange={handleIncomeChange} placeholder="0" />
                                 </div>
                                 <div className="input-group">
                                     <label>Other Sources</label>
-                                    <input type="number" name="selfOther" value={income.selfOther} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                    <CurrencyInput name="selfOther" value={income.selfOther} onChange={handleIncomeChange} placeholder="0" />
                                 </div>
                             </div>
                         </div>
@@ -170,19 +171,19 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                 <div className="input-grid-mini">
                                     <div className="input-group">
                                         <label>Monthly Salary / Earnings</label>
-                                        <input type="number" name="spouse" value={income.spouse} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                        <CurrencyInput name="spouse" value={income.spouse} onChange={handleIncomeChange} placeholder="0" />
                                     </div>
                                     <div className="input-group">
                                         <label>Bonuses, Incentives, Irregular</label>
-                                        <input type="number" name="spouseBonus" value={income.spouseBonus} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                        <CurrencyInput name="spouseBonus" value={income.spouseBonus} onChange={handleIncomeChange} placeholder="0" />
                                     </div>
                                     <div className="input-group">
                                         <label>Rental, Dividends, Passive</label>
-                                        <input type="number" name="spousePassive" value={income.spousePassive} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                        <CurrencyInput name="spousePassive" value={income.spousePassive} onChange={handleIncomeChange} placeholder="0" />
                                     </div>
                                     <div className="input-group">
                                         <label>Other Sources</label>
-                                        <input type="number" name="spouseOther" value={income.spouseOther} onChange={handleIncomeChange} onWheel={(e) => e.target.blur()} placeholder="0" />
+                                        <CurrencyInput name="spouseOther" value={income.spouseOther} onChange={handleIncomeChange} placeholder="0" />
                                     </div>
                                 </div>
                             </div>
@@ -232,19 +233,18 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                     <div className="input-grid-mini">
                         <div className="input-group">
                             <label>Household (Grocery, LPG, Fuel etc.)</label>
-                            <input type="number" value={expenseCategories.household.grocery} onChange={(e) => handleExpenseChange('household', 'grocery', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                            <CurrencyInput value={expenseCategories.household.grocery} onChange={(e) => handleExpenseChange('household', 'grocery', e.target.value)} placeholder="0" />
                         </div>
                         <div className="input-group">
                             <label>House Rent</label>
-                            <input type="number" value={expenseCategories.household.rent} onChange={(e) => handleExpenseChange('household', 'rent', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                            <CurrencyInput value={expenseCategories.household.rent} onChange={(e) => handleExpenseChange('household', 'rent', e.target.value)} placeholder="0" />
                         </div>
                         <div className="input-group">
                             <label>Children Education</label>
-                            <input 
-                                type="number" 
+                            <CurrencyInput 
                                 value={expenseCategories.household.education} 
                                 readOnly
-                                onWheel={(e) => e.target.blur()} 
+                                
                                 placeholder="Auto-calculated from Profile"
                                 style={{ background: 'var(--bg-card)', fontWeight: 600, color: 'var(--primary)', cursor: 'not-allowed' }}
                             />
@@ -254,15 +254,15 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                         </div>
                         <div className="input-group">
                             <label>Lifestyle (Shopping, Movies, Dinner etc.)</label>
-                            <input type="number" value={expenseCategories.household.lifestyle} onChange={(e) => handleExpenseChange('household', 'lifestyle', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                            <CurrencyInput value={expenseCategories.household.lifestyle} onChange={(e) => handleExpenseChange('household', 'lifestyle', e.target.value)} placeholder="0" />
                         </div>
                         <div className="input-group">
                             <label>Medical Expenses</label>
-                            <input type="number" value={expenseCategories.household.medical} onChange={(e) => handleExpenseChange('household', 'medical', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                            <CurrencyInput value={expenseCategories.household.medical} onChange={(e) => handleExpenseChange('household', 'medical', e.target.value)} placeholder="0" />
                         </div>
                         <div className="input-group">
                             <label>Travel</label>
-                            <input type="number" value={expenseCategories.household.travel} onChange={(e) => handleExpenseChange('household', 'travel', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                            <CurrencyInput value={expenseCategories.household.travel} onChange={(e) => handleExpenseChange('household', 'travel', e.target.value)} placeholder="0" />
                         </div>
                     </div>
                 </div>
@@ -298,8 +298,7 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                         const isLocked = idx !== new Date().getMonth();
                                         return (
                                             <td key={`inc-${idx}`} style={{ padding: '0.5rem', background: isLocked ? 'var(--bg-main)' : 'transparent' }}>
-                                                <input 
-                                                    type="number" 
+                                                <CurrencyInput 
                                                     value={val || ''}
                                                     readOnly={isLocked}
                                                     onChange={(e) => {
@@ -335,8 +334,7 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                         const isLocked = idx !== new Date().getMonth();
                                         return (
                                             <td key={`hh-${idx}`} style={{ padding: '0.5rem', background: isLocked ? 'var(--bg-main)' : 'transparent' }}>
-                                                <input 
-                                                    type="number" 
+                                                <CurrencyInput 
                                                     value={val || ''}
                                                     readOnly={isLocked}
                                                     onChange={(e) => {
@@ -406,12 +404,11 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                             {isConfigured ? '✓ Configured' : '⚙️ Configure Details'}
                                         </button>
                                     </div>
-                                    <input 
-                                        type="number" 
+                                    <CurrencyInput 
                                         value={displayValue} 
                                         readOnly={true}
                                         onChange={(e) => handleExpenseChange('emi', loanKey, e.target.value)} 
-                                        onWheel={(e) => e.target.blur()} 
+                                        
                                         placeholder="0" 
                                         style={{ background: 'var(--bg-card)', color: isConfigured ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'not-allowed' }}
                                     />
@@ -420,7 +417,7 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                         })}
                         <div className="input-group">
                             <label>Any other EMIs</label>
-                            <input type="number" value={expenseCategories.emi.otherEmi} onChange={(e) => handleExpenseChange('emi', 'otherEmi', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                            <CurrencyInput value={expenseCategories.emi.otherEmi} onChange={(e) => handleExpenseChange('emi', 'otherEmi', e.target.value)} placeholder="0" />
                         </div>
                     </div>
                 </div>
@@ -456,11 +453,10 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                 <div className="insurance-input-row" style={{ display: 'grid', gridTemplateColumns: ['health', 'car', 'bike'].includes(ins.key) ? 'minmax(200px, 1fr) auto 120px 140px' : '1fr 140px 140px', gap: '1rem', alignItems: 'end', marginBottom: '0.5rem' }}>
                                     <div className="input-group" style={{ marginBottom: 0 }}>
                                         <label>{ins.label}</label>
-                                        <input 
-                                            type="number" 
+                                        <CurrencyInput 
                                             value={expenseCategories.insurance[ins.key].value} 
                                             onChange={(e) => handleInsuranceChange(ins.key, 'value', e.target.value)} 
-                                            onWheel={(e) => e.target.blur()} 
+                                            
                                             placeholder="0" 
                                         />
                                     </div>
@@ -530,11 +526,10 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                             <div key={member.name || member.relation} className="insurance-input-row" style={{ display: 'grid', gridTemplateColumns: '1fr 140px 140px', gap: '1rem', marginBottom: '1rem', alignItems: 'end' }}>
                                 <div className="input-group" style={{ marginBottom: 0 }}>
                                     <label>Life Insurance Premium ({member.name || member.relation})</label>
-                                    <input 
-                                        type="number" 
+                                    <CurrencyInput 
                                         value={expenseCategories.insurance.life[member.name || member.relation]?.value || ''} 
                                         onChange={(e) => handleLifeInsuranceChange(member.name || member.relation, 'value', e.target.value)} 
-                                        onWheel={(e) => e.target.blur()} 
+                                        
                                         placeholder="0" 
                                     />
                                 </div>
@@ -617,12 +612,11 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                             )}
                                         </div>
                                     </div>
-                                    <input 
-                                        type="number" 
+                                    <CurrencyInput 
                                         value={displayValue} 
                                         readOnly={true}
                                         onChange={(e) => handleExpenseChange('savings', invKey, e.target.value)} 
-                                        onWheel={(e) => e.target.blur()} 
+                                        
                                         placeholder="0" 
                                         style={{ background: 'var(--bg-card)', color: isConfigured ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'not-allowed' }}
                                     />
@@ -690,8 +684,7 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                                             </button>
                                                         </div>
                                                     </div>
-                                                    <input 
-                                                        type="number" 
+                                                    <CurrencyInput 
                                                         value={displayValue || ''} 
                                                         readOnly={true}
                                                         onChange={(e) => {
@@ -699,7 +692,7 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                                             newRds[rdIndex] = e.target.value;
                                                             handleExpenseChange('savings', 'rd', newRds);
                                                         }} 
-                                                        onWheel={(e) => e.target.blur()} 
+                                                        
                                                         placeholder="0" 
                                                         style={{ background: 'var(--bg-main)', color: isConfigured ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'not-allowed' }}
                                                     />
@@ -713,11 +706,11 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                         })()}
                         <div className="input-group">
                             <label>SIPs</label>
-                            <input type="number" value={expenseCategories.savings.sip || ''} onChange={(e) => handleExpenseChange('savings', 'sip', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                            <CurrencyInput value={expenseCategories.savings.sip || ''} onChange={(e) => handleExpenseChange('savings', 'sip', e.target.value)} placeholder="0" />
                         </div>
                         <div className="input-group">
                             <label>Any other Saving</label>
-                            <input type="number" value={expenseCategories.savings.otherSaving || ''} onChange={(e) => handleExpenseChange('savings', 'otherSaving', e.target.value)} onWheel={(e) => e.target.blur()} placeholder="0" />
+                            <CurrencyInput value={expenseCategories.savings.otherSaving || ''} onChange={(e) => handleExpenseChange('savings', 'otherSaving', e.target.value)} placeholder="0" />
                         </div>
                     </div>
                 </div>

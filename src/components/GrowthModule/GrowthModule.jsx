@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { BarChart3, TrendingUp, Info } from 'lucide-react';
+import { BarChart3, TrendingUp, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { computeSIPData } from '../Calculators/SIPCalculator';
 import { computeLumpsumData } from '../Calculators/LumpsumCalculator';
@@ -322,12 +322,14 @@ const GrowthModule = ({
             </div>
 
             {!isReadOnlyMode && (
-                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem', marginBottom: '4rem' }}>
-                    <button className="btn btn-secondary" onClick={onBack}>
+                <div className="sticky-action-bar">
+                    <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <ChevronLeft size={20} />
                         Back to Allocation
                     </button>
-                    <button className="btn btn-primary" onClick={onNext}>
+                    <button className="btn btn-primary" onClick={onNext} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-md)' }}>
                         Proceed to Goal Roadmap
+                        <ChevronRight size={20} />
                     </button>
                 </div>
             )}

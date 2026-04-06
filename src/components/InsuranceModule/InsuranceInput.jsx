@@ -1,6 +1,7 @@
 import React from 'react';
 import { Trash2, Plus, User } from 'lucide-react';
 import { calculatePolicyEndDate } from './InsuranceLogic';
+import CurrencyInput from '../common/CurrencyInput';
 
 const InsuranceInput = ({ familyMembers, policies, setPolicies, isProposed = false, investmentAllocations = [] }) => {
 
@@ -103,13 +104,12 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, isProposed = fal
                                             </div>
                                             <div className="input-group">
                                                 <label>Premium Amount</label>
-                                                <input 
-                                                    type="number" 
-                                                    placeholder="₹" 
+                                                <CurrencyInput 
+                                                    name="premium"
+                                                    placeholder="0" 
                                                     value={p.premium} 
                                                     readOnly={isProposed}
                                                     className={isProposed ? "input-field read-only" : "input-field"}
-                                                    onWheel={(e) => e.target.blur()} 
                                                     onChange={e => updatePolicy(p.id, 'premium', e.target.value)} 
                                                 />
                                             </div>
@@ -149,11 +149,11 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, isProposed = fal
                                             </div>
                                             <div className="input-group">
                                                 <label>Sum Assured (Coverage)</label>
-                                                <input type="number" placeholder="₹" value={p.sumAssured} onWheel={(e) => e.target.blur()} onChange={e => updatePolicy(p.id, 'sumAssured', e.target.value)} className="input-field" />
+                                                <CurrencyInput name="sumAssured" placeholder="0" value={p.sumAssured} onChange={e => updatePolicy(p.id, 'sumAssured', e.target.value)} className="input-field" />
                                             </div>
                                             <div className="input-group">
                                                 <label>Maturity Amount</label>
-                                                <input type="number" placeholder="₹" value={p.maturityAmount} onWheel={(e) => e.target.blur()} onChange={e => updatePolicy(p.id, 'maturityAmount', e.target.value)} className="input-field" />
+                                                <CurrencyInput name="maturityAmount" placeholder="0" value={p.maturityAmount} onChange={e => updatePolicy(p.id, 'maturityAmount', e.target.value)} className="input-field" />
                                             </div>
                                         </div>
                                     </div>

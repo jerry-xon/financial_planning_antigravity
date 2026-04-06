@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 import GoalInput from './GoalInput';
 import GoalOutput from './GoalOutput';
 import { categorizeGoals, getPredefinedGoals } from './GoalLogic';
@@ -77,22 +78,24 @@ const GoalModule = ({ familyMembers, goals, setGoals, onNext, onBack }) => {
                 />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
-                <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.8rem 2rem' }}>
-                    Back to Assets
-                </button>
-            </div>
-
             {results && (
                 <div className="fade-in">
                     <GoalOutput categorizedGoals={results} />
-                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '3rem', marginBottom: '5rem' }}>
-                        <button className="btn btn-primary" onClick={onNext} style={{ padding: '1.25rem 4rem', fontSize: '1.2rem', fontWeight: 600 }}>
-                            Generate Final Financial Roadmap
-                        </button>
-                    </div>
                 </div>
             )}
+
+            <div className="sticky-action-bar">
+                <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <ChevronLeft size={20} />
+                    Back to Assets
+                </button>
+                {results && (
+                    <button className="btn btn-primary" onClick={onNext} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-md)' }}>
+                        Proceed to Insurance
+                        <ChevronRight size={20} />
+                    </button>
+                )}
+            </div>
         </div>
     );
 };
