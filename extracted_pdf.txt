@@ -1,0 +1,396 @@
+FinPlan UI Enhancement - Detailed Implementation Plan 
+ 
+Issues Identified (Priority Fixes) 
+# 
+Issue Location 
+Problem 
+1 
+Left/Right Drawer 
+Symbol and text overlapping 
+2 
+Module 2 
+Cash Flow Summary UI not up to the mark 
+3 
+Module 3 
+Net Worth Analysis UI not up to the mark 
+4 
+Module 5 
+Insurance Form UI requires correction 
+5 
+Module 5 
+Generate Insurance Report section UI not up to the 
+mark 
+ 
+Phase 1: Foundation (Global Changes) 
+1.1 Color System 
+Token 
+Current 
+New Value 
+Usage 
+--primary 
+Generic blue 
+#0D9488 (Deep Teal) 
+Primary actions, links, active states 
+--success 
+- 
+#10B981 (Emerald) 
+Positive values, completion, gains 
+--warning 
+- 
+#F59E0B (Amber) 
+Alerts, coverage gaps, attention 
+--destructive - 
+#F43F5E (Rose) 
+Deficits, errors, urgent items 
+--background - 
+#F8FAFC (Slate 50) 
+Page background 
+--card 
+- 
+#FFFFFF 
+Card backgrounds 
+--muted 
+- 
+#F1F5F9 (Slate 100) 
+Muted backgrounds, alt rows 
+ 
+1.2 Typography Scale 
+Element Size 
+Weight 
+Line 
+Height 
+Class 
+H1 
+2.25rem (36px) 
+700 
+1.2 
+text-4xl font-bold 
+H2 
+1.5rem (24px) 
+600 
+1.3 
+text-2xl font-semibold 
+H3 
+1.25rem (20px) 
+600 
+1.4 
+text-xl font-semibold 
+
+Element Size 
+Weight 
+Line 
+Height 
+Class 
+H4 
+1.125rem (18px) 
+500 
+1.4 
+text-lg font-medium 
+Body 
+1rem (16px) 
+400 
+1.5 
+text-base 
+Small 0.875rem (14px) 
+400 
+1.5 
+text-sm 
+Caption 0.75rem (12px) 
+500 
+1.4 
+text-xs font-medium 
+ 
+1.3 Spacing System 
+Context 
+Value 
+Tailwind Class 
+Section gap 
+32px 
+py-8 
+Card padding 
+24px 
+p-6 
+Card gap (grid) 
+24px 
+gap-6 
+Form field gap 
+16px 
+space-y-4 
+Inline element gap 8-12px 
+gap-2 or gap-3 
+Button padding 
+12px 24px px-6 py-3 
+ 
+1.4 Component Standards 
+Component Border Radius Shadow 
+Border 
+Cards 
+rounded-xl 
+shadow-sm border border-border 
+Modals 
+rounded-xl 
+shadow-xl none 
+Buttons 
+rounded-lg 
+none 
+varies 
+Inputs 
+rounded-md 
+none 
+border border-input 
+Badges 
+rounded-full 
+none 
+none 
+Tables 
+rounded-lg 
+shadow-sm border 
+ 
+ 
+ 
+ 
+
+Phase 2: Navigation & Layout Fixes 
+2.1 Sidebar/Drawer Overlap Fix 
+Current Problem 
+Issue 
+Icon and text overlapping 
+Insufficient spacing 
+No smooth collapse transition 
+ 
+Solution 
+Property 
+Value 
+Expanded width 
+256px (w-64) 
+Collapsed width 
+64px (w-16) 
+Icon size 
+20px 
+Icon-text gap 
+12px (gap-3) 
+Menu item padding py-2.5 px-4 
+Transition 
+transition-all duration-300 
+ 
+States 
+State 
+Style 
+Default 
+text-muted-foreground 
+Hover 
+bg-muted/50 text-foreground 
+Active 
+bg-primary/10 text-primary border-l-2 border-primary 
+Collapsed Icons only with tooltips on hover 
+ 
+2.2 Header Improvements 
+Element 
+Implementation 
+Breadcrumb 
+Show current module path: Home / Module 2 / Cash Flow 
+
+Element 
+Implementation 
+Progress indicator Step pill: "3 of 12" with mini progress bar 
+User menu 
+Avatar dropdown with settings, logout 
+Mobile menu 
+Hamburger icon triggering slide-out drawer 
+ 
+ 
+Phase 3: Module-Specific Implementations 
+Module 12: Overview Dashboard 
+3.0.1 Welcome Header 
+Element 
+Implementation 
+Layout 
+Full-width card with gradient background 
+Content 
+User name, current date, key alert/notification 
+Quick stats 3-4 metric pills (Net Worth, Monthly Surplus, Goals Progress) 
+ 
+3.0.2 Stats Cards Grid 
+Current 
+New 
+Plain text values 
+Icon container (colored circle) + Large formatted value + Label + Trend badge 
+No visual hierarchy Card hover effect with subtle scale transform 
+ 
+Card Structure 
+Component 
+[Icon Circle] 
+Large Value (₹XX,XX,XXX) 
+Label text 
+↑ 5.2% vs last month (trend badge) 
+ 
+ 
+ 
+
+3.0.3 Goals Progress Section 
+Issue 
+Fix 
+Shows "NaN" 
+Display "Not Set" with CTA to set up 
+Text only progress 
+Circular progress ring per goal 
+No grouping 
+Tab filter: Short / Medium / Long term 
+ 
+3.0.4 Family Profile Table 
+Current 
+New 
+Dense table rows Card grid (3 columns on desktop) 
+No visual identity Avatar with initials (color-coded by role) 
+Plain text 
+Role badge, age progress bar 
+ 
+3.0.5 Financial Summary 
+Element 
+Implementation 
+Income vs Expense Horizontal stacked bar chart 
+Net Worth 
+Large card with trend line sparkline 
+Asset breakdown 
+Mini donut chart with legend 
+ 
+Module 1: Family Profile 
+3.1.1 Member Cards 
+Property 
+Value 
+Layout 
+Responsive grid: 1 col (mobile), 2 col (tablet), 3 col (desktop) 
+Card content Avatar, Name, Role badge, Age, Occupation 
+Avatar 
+Circular with initials, color by role (Self=teal, Spouse=purple, Child=amber) 
+Role badge 
+Pill badge with role label 
+Age display "35 years" with small progress bar to retirement 
+ 
+
+3.1.2 Add Member Flow 
+Step Content 
+1 
+Relationship selection (visual cards) 
+2 
+Basic details (name, DOB, gender) 
+3 
+Occupation details 
+4 
+Review & save 
+ 
+Module 2: Income & Lifestyle (Cash Flow Summary) [  ] 
+3.2.1 Summary Cards Row 
+Card 
+Icon 
+Color 
+Content 
+Total Income 
+Wallet 
+Emerald ₹X,XX,XXX/month 
+Total Expenses CreditCard Rose 
+₹X,XX,XXX/month 
+EMI Outflow 
+Building 
+Amber ₹X,XX,XXX/month 
+Net Surplus 
+PiggyBank Teal 
+₹X,XX,XXX/month 
+ 
+3.2.2 Income Section 
+Element 
+Implementation 
+Layout 
+Card per income source 
+Card content Source name, Amount, Frequency badge, Edit/Delete actions 
+Visual 
+Small pie chart showing income distribution 
+Add button Outline button with dashed border: "+ Add Income Source" 
+ 
+3.2.3 Expense Section 
+Category 
+Visual Treatment 
+Essential 
+Progress bar (% of income) - Teal 
+Lifestyle 
+Progress bar - Purple 
+Discretionary Progress bar - Amber 
+
+ 
+Per expense item 
+Item 
+Name + Monthly amount 
+Inline edit capability 
+Delete with confirmation 
+ 
+3.2.4 EMI Section 
+Element 
+Implementation 
+Layout 
+Card per loan/EMI 
+Card content Loan type icon, Name, EMI amount, Remaining tenure 
+Visual 
+Progress bar showing paid vs remaining 
+Maturity 
+Countdown badge: "24 months remaining" 
+ 
+3.2.5 Surplus Calculation 
+Element Implementation 
+Layout 
+Highlighted card with border-primary 
+Content Flow diagram: Income → Expenses → EMI → Surplus 
+Visual 
+Sankey-style flow or simple bar breakdown 
+Value 
+Large formatted surplus with monthly/yearly toggle 
+ 
+Module 3: Net Worth Analysis [  ] 
+3.3.1 Summary Header 
+Element 
+Implementation 
+Net Worth Value Extra large text (3xl), formatted currency 
+Comparison bar Assets (green) vs Liabilities (red) horizontal bar 
+Growth indicator ↑ X% from last year (if applicable) 
+
+Element 
+Implementation 
+ 
+ 
+ 
+3.3.2 Assets Section 
+Property Value 
+Layout 
+Card grid (2-3 columns) 
+Per card 
+Category icon, Category name, Total value, % of total assets 
+Categories Bank Accounts, Investments, Property, PPF/EPF, Others 
+Visual 
+Mini bar showing relative size 
+ 
+3.3.3 Liabilities Section 
+Element 
+Implementation 
+Per liability Name, Outstanding amount, Monthly EMI 
+Progress bar Paid (green) vs Remaining (gray) 
+Payoff date Badge showing expected payoff 
+ 
+3.3.4 Year-wise Table 
+Enhancement 
+Implementation 
+Sticky header 
+sticky top-0 on thead 
+Sticky first column sticky left-0 on Year column 
+Alternating rows 
+even:bg-muted/30 
+Current year 
+bg-primary/5 border-l-2 border-primary 
+Positive values 
+text-emerald-600 
+Negative values 
+text-rose-600 
+View toggle 
+"5 years 
+Collapse groups 
+Expandable decade sections 
+ 
+

@@ -1,25 +1,35 @@
 :root {
-  /* Premium Light Theme Palette (v0 Enhanced) */
+  /* Next Gen Color Palette from Mockup */
+  --color-1: #172D9D; /* Deep Navy */
+  --color-2: #00A9F2; /* Sky Blue */
+  --color-3: #787CFE; /* Soft Purple */
+  --color-4: #48BED9; /* Aqua */
+  --color-5: #00E2E0; /* Cyan */
+  
   --emerald-500: #10B981;
   --amber-500: #F59E0B;
   --rose-500: #F43F5E;
-  --teal-600: #0D9488;
-  --teal-500: #14b8a6;
   
-  --primary: var(--teal-600);
-  --primary-hover: var(--teal-500);
-  --primary-light: #f0fdfa;
+  --primary: var(--color-1);
+  --primary-hover: #1e3a8a;
+  --primary-light: #eff6ff;
+  
   --bg-main: #f8fafc;
   --bg-card: #ffffff;
+  
   --text-main: #0f172a;
   --text-muted: #64748b;
-  --accent: var(--emerald-500);
-  --accent-light: #ecfdf5;
+  
+  --accent: var(--color-2);
+  --accent-light: #e0f2fe;
+  
   --positive: var(--emerald-500);
   --negative: var(--rose-500);
   --warning: var(--amber-500);
-  --tertiary: #8b5cf6;
-  --tertiary-light: #ede9fe;
+  
+  --tertiary: var(--color-3);
+  --tertiary-light: #eef2ff;
+  
   --border: #e2e8f0;
   
   /* Modern Structural Tokens */
@@ -249,9 +259,34 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* Sidebar Specifics */
-.left-drawer { left: 0; border-right: 1px solid var(--border); }
-.right-drawer { right: 0; border-left: 1px solid var(--border); }
+.left-drawer { 
+  left: 0; 
+  border-right: none;
+  background: linear-gradient(180deg, var(--color-2) 0%, var(--primary) 100%);
+  color: white;
+}
 
+.left-drawer .sidebar-header {
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.left-drawer .sidebar-btn {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.left-drawer .sidebar-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.left-drawer .sidebar-btn.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border-left: 3px solid var(--color-5);
+}
+
+.right-drawer { right: 0; border-left: 1px solid var(--border); }
 /* Force standard inner width so flexbox doesn't shrink icons */
 .sidebar-header {
   padding: 1.5rem;

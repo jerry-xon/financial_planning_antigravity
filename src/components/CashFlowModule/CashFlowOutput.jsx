@@ -1,181 +1,311 @@
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, Info } from 'lucide-react';
+import { Wallet, CreditCard, PiggyBank } from 'lucide-react';
 import { formatCurrency } from './CashFlowLogic';
 
-const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-
 const CashFlowOutput = ({ results }) => {
+    // We categorize the granular expenseBreakdown into 3 buckets: 
+    // Needs (EMIs, Insurance, Rent, Grocery, Medical)
+    // Wants (Lifestyle, Travel)
+    // Savings (Savings + Disposable)
+    
+    let needsSum = 0;
+    let wantsSum = 0;
+    const needsItems = [];
+    const wantsItems = [];
+
+    results.expenseBreakdown.forEach(item => {
+        if (item.name.includes('Lifestyle') || item.name.includes('Travel')) {
+            wantsSum += item.value;
+            wantsItems.push(item);
+        } else if (item.category !== 'Savings & Investments') {
+            needsSum += item.value;
+            needsItems.push(item);
+        }
+    });
+
+    const savingsSum = results.totalSavings + results.disposableIncome; // total surplus essentially
+    
+    // Percentages
+    const income = results.totalIncome || 1;
+    const needsPct = (needsSum / income) * 100;
+    const wantsPct = (wantsSum / income) * 100;
+    const savingsPct = (savingsSum / income) * 100;
+
     return (
-        <div className="card fade-in" style={{ marginTop: '2rem' }}>
-            <h2>Cash Flow Summary</h2>
+        <div className="cash-flow-output fade-in" style={{ marginTop: '2rem' }}>
+            
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 600, color: 'var(--color-1)', marginBottom: '2rem', display: 'flex', alignItems: 'center' }}>
+                Cash Flow <span style={{ fontWeight: 400, color: 'var(--text-main)', marginLeft: '0.5rem' }}>Summary</span>
+            </h1>
 
-            {/* Top KPI Cards */}
-            <div className="kpi-grid" style={{ marginBottom: '2rem' }}>
-                <div className="card" style={{ padding: '1.5rem', marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderTop: results.disposableIncome >= 0 ? '4px solid var(--accent)' : '4px solid #ef4444' }}>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Disposable Surplus</div>
-                    <div style={{ fontSize: '2rem', fontWeight: 800, color: results.disposableIncome >= 0 ? 'var(--accent)' : '#ef4444', marginTop: '0.5rem' }}>
-                        {formatCurrency(results.disposableIncome)}
+            {/* Top Metrics Row */}
+            <div className="metrics-row">
+                <div className="metric-card card-income">
+                    <div className="metric-icon-box">
+                        <Wallet size={24} />
+                    </div>
+                    <div className="metric-data">
+                        <h3>Total Inflow</h3>
+                        <div className="amount">{formatCurrency(results.totalIncome)}</div>
                     </div>
                 </div>
 
-                <div className="card" style={{ padding: '1.5rem', marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderTop: '4px solid var(--primary)' }}>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Current Monthly Savings</div>
-                    <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem' }}>
-                        {formatCurrency(results.totalSavings)}
+                <div className="metric-card card-expense">
+                    <div className="metric-icon-box">
+                        <CreditCard size={24} />
+                    </div>
+                    <div className="metric-data">
+                        <h3>Total Outflow</h3>
+                        <div className="amount">{formatCurrency(results.totalExpenses)}</div>
                     </div>
                 </div>
 
-                <div className="card" style={{ padding: '1.5rem', marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderTop: '4px solid #8b5cf6' }}>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Disp. Income Rate</div>
-                    <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.5rem' }}>
-                        {results.disposableIncomeRate.toFixed(1)}%
+                <div className="metric-card card-surplus">
+                    <div className="metric-icon-box">
+                        <PiggyBank size={24} />
                     </div>
-                </div>
-            </div>
-
-            <div className="card" style={{ marginBottom: '2rem', padding: 0, overflow: 'hidden' }}>
-                <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', background: 'var(--bg-main)' }}>
-                    <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--text-main)' }}>Calculation Breakdown</h3>
-                </div>
-                <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
-                        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(+) Total Monthly Income</span>
-                        <strong style={{ color: 'var(--text-main)', fontSize: '1.1rem' }}>{formatCurrency(results.totalIncome)}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
-                        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(-) Household & Lifestyle Expenses</span>
-                        <strong style={{ color: '#ef4444', fontSize: '1.1rem' }}>{formatCurrency(results.categorySums.household)}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
-                        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(-) EMIs</span>
-                        <strong style={{ color: '#ef4444', fontSize: '1.1rem' }}>{formatCurrency(results.categorySums.emi)}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
-                        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(-) Insurance Premiums</span>
-                        <strong style={{ color: '#ef4444', fontSize: '1.1rem' }}>{formatCurrency(results.categorySums.insurance)}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--border)', paddingTop: '1rem', marginTop: '0.5rem', fontSize: '1.1rem' }}>
-                        <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>(=) Monthly Surplus</span>
-                        <strong style={{ color: results.surplus >= 0 ? 'var(--accent)' : '#ef4444', fontSize: '1.25rem' }}>
-                            {formatCurrency(results.surplus)}
-                        </strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
-                        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>(-) Current Monthly Savings</span>
-                        <strong style={{ color: 'var(--primary)', fontSize: '1.1rem' }}>{formatCurrency(results.totalSavings)}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-main)', padding: '1.25rem', borderRadius: '8px', marginTop: '0.5rem', borderLeft: results.disposableIncome >= 0 ? '4px solid var(--accent)' : '4px solid #ef4444' }}>
-                        <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '1.1rem' }}>(=) Disposable Surplus Available</span>
-                        <strong style={{ fontSize: '1.5rem', color: results.disposableIncome >= 0 ? 'var(--accent)' : '#ef4444' }}>
-                            {formatCurrency(results.disposableIncome)}
-                        </strong>
+                    <div className="metric-data">
+                        <h3 style={{ color: 'var(--color-1)' }}>Net Surplus</h3>
+                        <div className="amount">{formatCurrency(results.surplus)}</div>
                     </div>
                 </div>
             </div>
 
-            <div className="content-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
-                <div style={{ height: '350px' }}>
-                    <h4>Expense & Savings Distribution</h4>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={results.expenseBreakdown}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                            >
-                                {results.expenseBreakdown.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip formatter={(value) => formatCurrency(value)} />
-                            <Legend />
-                        </PieChart>
-                    </ResponsiveContainer>
+            {/* Expense Breakdown */}
+            <div className="breakdown-card">
+                <div className="breakdown-header">
+                    <h2>Allocation Breakdown</h2>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                        Target: 50/30/20 Rule
+                    </div>
                 </div>
 
-                <div className="insights-section">
-                    <h4>Key Insights & Ratios</h4>
-                    <div style={{ marginTop: '1rem' }}>
-                        <div className="stat-mini">
-                            <span>Household & Lifestyle Ratio:</span>
-                            <strong>{results.householdRatio.toFixed(1)}%</strong>
-                        </div>
-                        <div className="stat-mini">
-                            <span>EMIs Ratio:</span>
-                            <strong>{results.emiRatio.toFixed(1)}%</strong>
-                        </div>
-                        <div className="stat-mini">
-                            <span>Insurance Ratio:</span>
-                            <strong>{results.insuranceRatio.toFixed(1)}%</strong>
-                        </div>
-                        <div className="stat-mini">
-                            <span>Savings & Investments Ratio:</span>
-                            <strong>{results.savingsRatio.toFixed(1)}%</strong>
-                        </div>
+                {/* Horizontal Stacked Bar */}
+                <div className="master-bar">
+                    <div className="segment-essential" style={{ width: \`\${needsPct}%\` }}></div>
+                    <div className="segment-lifestyle" style={{ width: \`\${wantsPct}%\` }}></div>
+                    <div className="segment-surplus" style={{ width: \`\${savingsPct}%\` }}></div>
+                </div>
 
-                        <hr style={{ margin: '1rem 0', borderColor: 'var(--border)' }} />
-
-                        {results.disposableIncome > 0 ? (
-                            <div className="insight-card healthy">
-                                <TrendingUp size={20} color="#10b981" />
-                                <div>
-                                    <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Investment Opportunity!</p>
-                                    <p>You have a surplus of <strong>{formatCurrency(results.disposableIncome)}</strong>. We suggest allocating these funds into diversified investment avenues to build wealth and reach your goals faster.</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="insight-card critical">
-                                <TrendingDown size={20} color="#ef4444" />
-                                <div>
-                                    <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Action Required!</p>
-                                    <p>Your current savings exceed your monthly surplus. We suggest reviewing and controlling your lifestyle expenses or consolidating high-interest loans to increase your investable cash flow.</p>
-                                </div>
-                            </div>
-                        )}
-
-                        <hr style={{ margin: '1rem 0', borderColor: 'var(--border)' }} />
-
-                        {results.isHealthy && (
-                            <div className="insight-card healthy" style={{ opacity: 0.8 }}>
-                                <Info size={20} color="#10b981" />
-                                <p>Your surplus rate is healthy ({results.surplusRate.toFixed(1)}%). You have sufficient room for growth.</p>
-                            </div>
-                        )}
-                        {!results.isHealthy && !results.isCritical && (
-                            <div className="insight-card warn">
-                                <Info size={20} color="#f59e0b" />
-                                <p>A surplus rate below 20% indicates tight cash flow. Review discretionary spending.</p>
-                            </div>
-                        )}
+                <div className="segment-grid">
+                    
+                    {/* Needs */}
+                    <div className="segment-detail detail-essential">
+                        <div className="segment-top">
+                            <span className="segment-title" style={{ color: 'var(--color-2)' }}>Needs / Essential</span>
+                            <span className="segment-percent" style={{ color: 'var(--color-2)' }}>{needsPct.toFixed(1)}%</span>
+                        </div>
+                        <div className="segment-amount">{formatCurrency(needsSum)}</div>
+                        <div className="item-list">
+                            <div className="item-row"><span>Household & Living</span> <span>{formatCurrency(results.categorySums.household - wantsSum)}</span></div>
+                            <div className="item-row"><span>EMIs</span> <span>{formatCurrency(results.categorySums.emi)}</span></div>
+                            <div className="item-row"><span>Insurance</span> <span>{formatCurrency(results.categorySums.insurance)}</span></div>
+                        </div>
                     </div>
+
+                    {/* Wants */}
+                    <div className="segment-detail detail-lifestyle">
+                        <div className="segment-top">
+                            <span className="segment-title" style={{ color: 'var(--color-3)' }}>Wants / Lifestyle</span>
+                            <span className="segment-percent" style={{ color: 'var(--color-3)' }}>{wantsPct.toFixed(1)}%</span>
+                        </div>
+                        <div className="segment-amount">{formatCurrency(wantsSum)}</div>
+                        <div className="item-list">
+                            {wantsItems.length > 0 ? wantsItems.map((item, idx) => (
+                                <div className="item-row" key={idx}>
+                                    <span title={item.name} style={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{item.name.split('(')[0]}</span> 
+                                    <span>{formatCurrency(item.value)}</span>
+                                </div>
+                            )) : (
+                                <div className="item-row"><span>No lifestyle expenses logged.</span></div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Savings */}
+                    <div className="segment-detail detail-surplus">
+                        <div className="segment-top">
+                            <span className="segment-title" style={{ color: 'var(--color-5)' }}>Savings / Surplus</span>
+                            <span className="segment-percent" style={{ color: 'var(--color-5)' }}>{Math.max(0, savingsPct).toFixed(1)}%</span>
+                        </div>
+                        <div className="segment-amount">{formatCurrency(Math.max(0, savingsSum))}</div>
+                        <div className="item-list">
+                            <div className="item-row"><span>Active Investments</span> <span>{formatCurrency(results.totalSavings)}</span></div>
+                            <div className="item-row">
+                                <span style={{ color: results.disposableIncome < 0 ? '#ef4444' : 'inherit' }}>Unallocated Surplus</span> 
+                                <span style={{ color: results.disposableIncome < 0 ? '#ef4444' : 'var(--text-main)' }}>{formatCurrency(results.disposableIncome)}</span>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
             <style>{`
-        .stat-mini {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 0.5rem;
-          font-size: 0.9375rem;
-        }
-        .insight-card {
-          display: flex;
-          gap: 1rem;
-          padding: 1rem;
-          border-radius: 8px;
-          margin-bottom: 1rem;
-          align-items: flex-start;
-          font-size: 0.875rem;
-        }
-        .healthy { background: #ecfdf5; border: 1px solid #10b981; color: #065f46; }
-        .warn { background: #fffbeb; border: 1px solid #f59e0b; color: #92400e; }
-        .critical { background: #fef2f2; border: 1px solid #ef4444; color: #991b1b; }
-      `}</style>
+                .metrics-row {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: 1.5rem;
+                    margin-bottom: 2rem;
+                }
+
+                .metric-card {
+                    background: var(--bg-card);
+                    border-radius: var(--radius-lg);
+                    padding: 1.5rem;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+                    border: 1px solid var(--border);
+                    display: flex;
+                    align-items: center;
+                    gap: 1.5rem;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .metric-icon-box {
+                    width: 56px;
+                    height: 56px;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+
+                .card-income .metric-icon-box { background: rgba(0, 169, 242, 0.1); color: var(--color-2); }
+                .card-expense .metric-icon-box { background: rgba(23, 45, 157, 0.1); color: var(--color-1); }
+                .card-surplus .metric-icon-box { background: rgba(120, 124, 254, 0.1); color: var(--color-3); }
+                
+                .card-surplus {
+                    background: linear-gradient(135deg, white 0%, #eef2ff 100%);
+                    border: 1px solid #c7d2fe;
+                }
+
+                .metric-data h3 {
+                    font-size: 0.9rem;
+                    color: var(--text-muted);
+                    font-weight: 500;
+                    margin-bottom: 0.25rem;
+                }
+
+                .metric-data .amount {
+                    font-size: 1.75rem;
+                    font-weight: 700;
+                    color: var(--text-main);
+                }
+
+                .breakdown-card {
+                    background: var(--bg-card);
+                    border-radius: var(--radius-lg);
+                    padding: 2rem;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+                    border: 1px solid var(--border);
+                }
+
+                .breakdown-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 2rem;
+                }
+
+                .breakdown-header h2 {
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                }
+
+                .master-bar {
+                    height: 24px;
+                    width: 100%;
+                    border-radius: 12px;
+                    background: var(--border);
+                    display: flex;
+                    overflow: hidden;
+                    margin-bottom: 2rem;
+                }
+
+                .segment-essential { background: var(--color-2); transition: width 0.5s ease-out; }
+                .segment-lifestyle { background: var(--color-3); transition: width 0.5s ease-out; }
+                .segment-surplus { background: var(--color-5); transition: width 0.5s ease-out; }
+
+                .segment-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                    gap: 2rem;
+                }
+
+                .segment-detail {
+                    padding: 1.5rem;
+                    border-radius: 12px;
+                    border: 1px solid var(--border);
+                    position: relative;
+                }
+
+                .segment-detail::before {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: 0;
+                    width: 100%; height: 4px;
+                    border-radius: 12px 12px 0 0;
+                }
+
+                .detail-essential::before { background: var(--color-2); }
+                .detail-lifestyle::before { background: var(--color-3); }
+                .detail-surplus::before { background: var(--color-5); }
+                
+                .detail-essential { background: rgba(0, 169, 242, 0.03); }
+                .detail-lifestyle { background: rgba(120, 124, 254, 0.03); }
+                .detail-surplus { background: rgba(0, 226, 224, 0.03); }
+
+                .segment-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1rem;
+                }
+                
+                .segment-title {
+                    font-weight: 600;
+                    font-size: 1.1rem;
+                }
+
+                .segment-percent {
+                    font-size: 0.9rem;
+                    font-weight: 700;
+                    padding: 2px 8px;
+                    border-radius: 12px;
+                    background: white;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .segment-amount {
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    margin-bottom: 1rem;
+                }
+
+                .item-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.75rem;
+                }
+
+                .item-row {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 0.85rem;
+                    color: var(--text-muted);
+                    border-bottom: 1px dashed var(--border);
+                    padding-bottom: 0.5rem;
+                    gap: 1rem;
+                }
+                
+                .item-row span:last-child {
+                    font-weight: 600;
+                    color: var(--text-main);
+                    flex-shrink: 0;
+                }
+            `}</style>
         </div>
     );
 };
