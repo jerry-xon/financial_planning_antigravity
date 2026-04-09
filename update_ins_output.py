@@ -1,4 +1,11 @@
-import React from 'react';
+import re
+
+file_path = r'c:\financial_planning_antigravity\src\components\InsuranceModule\InsuranceOutput.jsx'
+
+with open(file_path, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+replacement = """import React from 'react';
 import { formatCurrency } from '../CashFlowModule/CashFlowLogic';
 import { getInsuredNamesList } from './InsuranceLogic';
 
@@ -176,3 +183,9 @@ const InsuranceOutput = ({ summary, policies }) => {
 };
 
 export default InsuranceOutput;
+"""
+
+with open(file_path, 'w', encoding='utf-8') as f:
+    f.write(replacement)
+
+print("Successfully replaced InsuranceOutput.jsx")

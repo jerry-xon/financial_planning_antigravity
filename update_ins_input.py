@@ -1,4 +1,11 @@
-import React from 'react';
+import re
+
+file_path = r'c:\financial_planning_antigravity\src\components\InsuranceModule\InsuranceInput.jsx'
+
+with open(file_path, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+replacement = """import React from 'react';
 import { Plus, User, Trash2 } from 'lucide-react';
 import { calculatePolicyEndDate } from './InsuranceLogic';
 import CurrencyInput from '../common/CurrencyInput';
@@ -206,3 +213,9 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, isProposed = fal
 };
 
 export default InsuranceInput;
+"""
+
+with open(file_path, 'w', encoding='utf-8') as f:
+    f.write(replacement)
+
+print("Successfully replaced InsuranceInput.jsx")

@@ -82,9 +82,9 @@ const CashFlowOutput = ({ results }) => {
 
                 {/* Horizontal Stacked Bar */}
                 <div className="master-bar">
-                    <div className="segment-essential" style={{ width: \`\${needsPct}%\` }}></div>
-                    <div className="segment-lifestyle" style={{ width: \`\${wantsPct}%\` }}></div>
-                    <div className="segment-surplus" style={{ width: \`\${savingsPct}%\` }}></div>
+                    <div className="segment-essential" style={{ width: `${needsPct}%` }}></div>
+                    <div className="segment-lifestyle" style={{ width: `${wantsPct}%` }}></div>
+                    <div className="segment-surplus" style={{ width: `${savingsPct}%` }}></div>
                 </div>
 
                 <div className="segment-grid">
