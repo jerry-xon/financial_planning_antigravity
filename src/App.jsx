@@ -57,6 +57,7 @@ function App() {
   const [planId, setPlanId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
 
   // State for tracking the current navigation step (1-12)
   const [currentStep, setCurrentStep] = useState(1);
@@ -635,6 +636,7 @@ function App() {
     const timeoutId = setTimeout(async () => {
       await savePlanData();
       setSaving(false);
+      setLastSaved(new Date());
     }, 1000); // Debounce for 1 second
 
     return () => clearTimeout(timeoutId);
@@ -674,44 +676,78 @@ function App() {
           
           <div style={{ flex: 1, padding: '1rem 0' }}>
             {[
-              { name: 'Profile', icon: Users },
-              { name: 'Cash Flow', icon: ArrowRightLeft },
-              { name: 'Assets', icon: Wallet },
-              { name: 'Goals', icon: Target },
-              { name: 'Insurance', icon: Shield },
-              { name: 'Protection Gap', icon: Umbrella },
-              { name: 'Contingency', icon: LifeBuoy },
-              { name: 'Journey', icon: Map },
-              { name: 'Allocation', icon: PieChart },
-              { name: 'Growth', icon: TrendingUp },
-              { name: 'Roadmap', icon: ListChecks },
-              { name: 'Overview', icon: LayoutDashboard }
-            ].map((mod, idx) => {
-              const isCompleted = idx + 1 < maxStep;
-              const isActive = activeSection === 'modules' && currentStep === idx + 1;
-              const isLocked = idx + 1 > maxStep || (mod.name === 'Insurance' && insuranceMode === 'anyway');
+              {
+                phase: 'Foundation',
+                items: [
+                  { step: 1, name: 'Profile', icon: Users },
+                  { step: 2, name: 'Cash Flow', icon: ArrowRightLeft },
+                  { step: 3, name: 'Assets', icon: Wallet },
+                  { step: 4, name: 'Goals', icon: Target }
+                ]
+              },
+              {
+                phase: 'Protection',
+                items: [
+                  { step: 5, name: 'Insurance', icon: Shield },
+                  { step: 6, name: 'Protection Gap', icon: Umbrella },
+                  { step: 7, name: 'Contingency', icon: LifeBuoy }
+                ]
+              },
+              {
+                phase: 'Trajectory',
+                items: [
+                  { step: 8, name: 'Journey', icon: Map },
+                  { step: 9, name: 'Allocation', icon: PieChart },
+                  { step: 10, name: 'Growth', icon: TrendingUp }
+                ]
+              },
+              {
+                phase: 'Execution',
+                items: [
+                  { step: 11, name: 'Roadmap', icon: ListChecks },
+                  { step: 12, name: 'Overview', icon: LayoutDashboard }
+                ]
+              }
+            ].map((phaseGroup, pIdx) => {
+              const phaseUnlocked = phaseGroup.items.some(item => maxStep >= item.step);
               
               return (
-                <div key={mod.name} style={{ position: 'relative' }}>
-                  <button
-                    className={`sidebar-btn ${isActive ? 'active' : ''}`}
-                    disabled={isLocked}
-                    onClick={() => {
-                      if (!isLocked) {
-                        setCurrentStep(idx + 1);
-                        setActiveSection('modules');
-                        if (mod.name === 'Cash Flow') setCashFlowSubStep(1);
-                      }
-                    }}
-                    style={{ opacity: isLocked ? 0.4 : 1 }}
-                  >
-                    {isCompleted && !isActive ? (
-                      <CheckCircle2 size={20} color="var(--emerald-500)" />
-                    ) : (
-                      <mod.icon size={20} />
-                    )}
-                    <span className="nav-label">{idx + 1}. {mod.name}</span>
-                  </button>
+                <div key={phaseGroup.phase} className={`phase-group ${phaseUnlocked ? 'unlocked' : 'locked'}`} style={{ marginBottom: pIdx < 3 ? '1rem' : '0' }}>
+                  <div className="phase-header" style={{ padding: '0.25rem 1.4rem', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', marginBottom: '0.25rem' }}>
+                     <span className="nav-label">Phase {pIdx + 1}: {phaseGroup.phase}</span>
+                     {phaseGroup.items.every(item => item.step < maxStep) && (
+                       <CheckCircle2 size={14} color="var(--emerald-500)" style={{ marginLeft: 'auto', marginRight: '1rem' }} className="nav-label" />
+                     )}
+                  </div>
+                  {phaseGroup.items.map((mod) => {
+                    const isCompleted = mod.step < maxStep;
+                    const isActive = activeSection === 'modules' && currentStep === mod.step;
+                    const isLocked = mod.step > maxStep || (mod.name === 'Insurance' && insuranceMode === 'anyway');
+                    
+                    return (
+                      <div key={mod.name} style={{ position: 'relative' }}>
+                        <button
+                          className={`sidebar-btn ${isActive ? 'active' : ''}`}
+                          disabled={isLocked}
+                          onClick={() => {
+                            if (!isLocked) {
+                              setCurrentStep(mod.step);
+                              setActiveSection('modules');
+                              if (mod.name === 'Cash Flow') setCashFlowSubStep(1);
+                            }
+                          }}
+                          style={{ opacity: isLocked ? 0.4 : 1 }}
+                        >
+                          {isCompleted && !isActive ? (
+                            <CheckCircle2 size={20} color="var(--emerald-500)" />
+                          ) : (
+                            <mod.icon size={20} />
+                          )}
+                          <span className="nav-label">{mod.step}. {mod.name}</span>
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}
@@ -760,7 +796,17 @@ function App() {
         <div className="main-content-wrapper fade-in">
           <header style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              {saving && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Saving...</span>}
+              {saving ? (
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                  Saving...
+                </span>
+              ) : lastSaved ? (
+                <span style={{ fontSize: '0.75rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  Saved at {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              ) : null}
               <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', background: 'var(--border)', padding: '2px 8px', borderRadius: '4px' }}>PWA v1.2</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>

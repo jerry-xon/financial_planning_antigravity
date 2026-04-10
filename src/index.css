@@ -380,3 +380,86 @@ input:focus, select:focus, textarea:focus {
   z-index: 50;
   box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.05);
 }
+
+/* --- Global Tooltips --- */
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+
+.tooltip-wrapper::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: var(--text-main);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.2s ease;
+  z-index: 1000;
+  box-shadow: var(--shadow-hover);
+}
+
+.tooltip-wrapper:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-6px);
+}
+
+/* --- Global Right Drawer (Calculators) --- */
+.calculator-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.calculator-drawer-overlay.closing {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.calculator-drawer {
+  width: 100%;
+  max-width: 800px;
+  background: var(--bg-main);
+  height: 100%;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+  transform: translateX(0);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.calculator-drawer-overlay.closing .calculator-drawer {
+  transform: translateX(100%);
+}
+
+.drawer-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-card);
+}
+
+.drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+}

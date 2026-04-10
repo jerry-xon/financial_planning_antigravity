@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { PieChart, Plus, Trash2, ArrowRight, Wallet, Target, TrendingUp, ChevronDown, ChevronUp, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PieChart, Plus, Trash2, ArrowRight, Wallet, Target, TrendingUp, ChevronDown, ChevronUp, AlertTriangle, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import CurrencyInput from '../common/CurrencyInput';
 const AllocationModule = ({ 
     familyMembers = [],
@@ -16,6 +16,7 @@ const AllocationModule = ({
     const currentMonth = new Date().getMonth() + 1;
     const [collapsedIds, setCollapsedIds] = useState(new Set());
     const [hasAcknowledgedDeficit, setHasAcknowledgedDeficit] = useState(false);
+    const [viewMode, setViewMode] = useState('10');
 
     useEffect(() => {
         if (!projections.some(p => p.yearHasDeficit)) {
@@ -514,30 +515,43 @@ const AllocationModule = ({
                         </div>
                     </div>
                 )}
+            </div>
 
-                {/* Timeline Table */}
-                <div style={{ marginBottom: '2.5rem' }}>
-                    <h3 style={{ marginBottom: '1rem' }}>Yearly Allocation Timeline</h3>
-                    <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '8px' }}>
-                        <table className="summary-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                            <thead style={{ background: 'var(--bg-main)' }}>
+            {/* Timeline Table */}
+            <div style={{ marginBottom: '2.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+                        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>Yearly Allocation Timeline</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '4px' }}>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', paddingLeft: '8px' }}>
+                                <Filter size={14} /> View
+                            </span>
+                            <button onClick={() => setViewMode('5')} style={{ padding: '6px 12px', borderRadius: '4px', border: 'none', background: viewMode === '5' ? 'var(--primary)' : 'transparent', color: viewMode === '5' ? 'white' : 'var(--text-main)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>5 Yrs</button>
+                            <button onClick={() => setViewMode('10')} style={{ padding: '6px 12px', borderRadius: '4px', border: 'none', background: viewMode === '10' ? 'var(--primary)' : 'transparent', color: viewMode === '10' ? 'white' : 'var(--text-main)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>10 Yrs</button>
+                            <button onClick={() => setViewMode('all')} style={{ padding: '6px 12px', borderRadius: '4px', border: 'none', background: viewMode === 'all' ? 'var(--primary)' : 'transparent', color: viewMode === 'all' ? 'white' : 'var(--text-main)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>All</button>
+                        </div>
+                    </div>
+                    
+                    <div className="table-scroll-container card" style={{ padding: 0, overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+                        <table className="modern-data-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                            <thead style={{ background: 'var(--bg-main)', borderBottom: '2px solid var(--border)' }}>
                                 <tr>
-                                    <th rowSpan="2" style={{ border: '1px solid var(--border)', padding: '0.75rem' }}>Year</th>
-                                    <th colSpan="2" style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'center' }}>Investible Surplus</th>
-                                    {dynamicColumns.map(col => (
-                                        <th key={col} rowSpan="2" style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'center' }}>{col}</th>
-                                    ))}
-                                    <th colSpan="2" style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'center' }}>Unallocated Surplus</th>
+                                    <th rowSpan="2" style={{ padding: '0.75rem', position: 'sticky', left: 0, background: 'var(--bg-main)', zIndex: 10, textAlign: 'center' }}>Year</th>
+                                    <th colSpan="2" style={{ borderLeft: '1px solid var(--border)', padding: '0.75rem', textAlign: 'center', color: 'var(--text-main)' }}>Investible Surplus</th>
+                                    {dynamicColumns.length > 0 && <th colSpan={dynamicColumns.length} style={{ borderLeft: '1px solid var(--border)', padding: '0.75rem', textAlign: 'center', color: 'var(--text-main)' }}>Allocations</th>}
+                                    <th colSpan="2" style={{ borderLeft: '1px solid var(--border)', padding: '0.75rem', textAlign: 'center', color: 'var(--text-main)' }}>Unallocated Surplus</th>
                                 </tr>
                                 <tr>
-                                    <th style={{ border: '1px solid var(--border)', padding: '0.5rem', textAlign: 'right' }}>Yearly</th>
-                                    <th style={{ border: '1px solid var(--border)', padding: '0.5rem', textAlign: 'right' }}>Monthly</th>
-                                    <th style={{ border: '1px solid var(--border)', padding: '0.5rem', textAlign: 'right' }}>Yearly</th>
-                                    <th style={{ border: '1px solid var(--border)', padding: '0.5rem', textAlign: 'right' }}>Monthly</th>
+                                    <th style={{ borderLeft: '1px solid var(--border)', padding: '0.5rem', textAlign: 'right' }}>Yearly</th>
+                                    <th style={{ padding: '0.5rem', textAlign: 'right' }}>Monthly</th>
+                                    {dynamicColumns.map(col => (
+                                        <th key={col} style={{ borderLeft: '1px solid var(--border)', padding: '0.5rem', textAlign: 'right' }}>{col}</th>
+                                    ))}
+                                    <th style={{ borderLeft: '1px solid var(--border)', padding: '0.5rem', textAlign: 'right' }}>Yearly</th>
+                                    <th style={{ padding: '0.5rem', textAlign: 'right' }}>Monthly</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {projections.map((row) => {
+                                {(viewMode === 'all' ? projections : projections.slice(0, parseInt(viewMode, 10))).map((row, idx) => {
                                     const allocationsByType = {};
                                     dynamicColumns.forEach(type => {
                                         allocationsByType[type] = row.activeAllocations
@@ -546,19 +560,23 @@ const AllocationModule = ({
                                     });
 
                                     return (
-                                        <tr key={row.year}>
-                                            <td style={{ border: '1px solid var(--border)', padding: '0.75rem', fontWeight: 600 }}>{row.year}</td>
-                                            <td style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'right' }}>{formatCurrency(row.netInvestibleSurplus)}</td>
-                                            <td style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'right', color: 'var(--text-muted)' }}>{formatCurrency(row.netInvestibleSurplus / 12)}</td>
+                                        <tr key={row.year} style={{ background: idx % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-main)', borderBottom: '1px solid var(--border)' }} className="zebra-row">
+                                            <td style={{ position: 'sticky', left: 0, background: idx % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-main)', fontWeight: 700, padding: '0.75rem', textAlign: 'center', boxShadow: '1px 0 0 var(--border)', zIndex: 5 }}>
+                                                {row.year}
+                                            </td>
+                                            <td style={{ borderLeft: '1px dashed var(--border)', padding: '0.75rem', textAlign: 'right', fontWeight: 600 }}>{formatCurrency(row.netInvestibleSurplus)}</td>
+                                            <td style={{ padding: '0.75rem', textAlign: 'right', color: 'var(--text-muted)' }}>{formatCurrency(row.netInvestibleSurplus / 12)}</td>
+                                            
                                             {dynamicColumns.map(type => (
-                                                <td key={type} style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'right', color: allocationsByType[type] > 0 ? 'var(--primary)' : 'inherit' }}>
+                                                <td key={type} style={{ borderLeft: '1px dashed var(--border)', padding: '0.75rem', textAlign: 'right', color: allocationsByType[type] > 0 ? 'var(--primary)' : 'var(--text-muted)', fontWeight: allocationsByType[type] > 0 ? 600 : 400 }}>
                                                     {allocationsByType[type] > 0 ? formatCurrency(allocationsByType[type]) : '-'}
                                                 </td>
                                             ))}
-                                            <td style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'right', fontWeight: 700, color: row.unallocatedSurplus < 0 ? '#ef4444' : 'var(--success)' }}>
+                                            
+                                            <td style={{ borderLeft: '1px solid var(--border)', padding: '0.75rem', textAlign: 'right', fontWeight: 800, color: row.unallocatedSurplus < 0 ? '#ef4444' : 'var(--success)', background: row.unallocatedSurplus < 0 ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.05)' }}>
                                                 {formatCurrency(row.unallocatedSurplus)}
                                             </td>
-                                            <td style={{ border: '1px solid var(--border)', padding: '0.75rem', textAlign: 'right', color: row.unallocatedSurplus < 0 ? '#ef4444' : 'var(--text-muted)' }}>
+                                            <td style={{ padding: '0.75rem', textAlign: 'right', color: row.unallocatedSurplus < 0 ? '#ef4444' : 'var(--success)', background: row.unallocatedSurplus < 0 ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.05)' }}>
                                                 {formatCurrency(row.unallocatedSurplus / 12)}
                                             </td>
                                         </tr>
@@ -568,8 +586,6 @@ const AllocationModule = ({
                         </table>
                     </div>
                 </div>
-            </div>
-
             {deficitInfo && hasAcknowledgedDeficit && (
                 <div style={{
                     background: 'rgba(239, 68, 68, 0.1)',

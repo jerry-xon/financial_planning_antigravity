@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, HelpCircle } from 'lucide-react';
 import CurrencyInput from '../common/CurrencyInput';
 
 const GoalInput = ({ goals, setGoals, onCalculate }) => {
@@ -51,7 +51,14 @@ const GoalInput = ({ goals, setGoals, onCalculate }) => {
                             <th style={{ padding: '1rem' }}>Years remaining to goal</th>
                             <th style={{ padding: '1rem' }}>Year</th>
                             <th style={{ padding: '1rem' }}>Present Value (₹)</th>
-                            <th style={{ padding: '1rem' }}>Inflation (%)</th>
+                            <th style={{ padding: '1rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    Inflation (%)
+                                    <span className="tooltip-wrapper" data-tooltip="The expected annual rate at which the objective's cost will grow.">
+                                        <HelpCircle size={14} />
+                                    </span>
+                                </div>
+                            </th>
                             <th style={{ padding: '1rem', width: '50px' }}></th>
                         </tr>
                     </thead>

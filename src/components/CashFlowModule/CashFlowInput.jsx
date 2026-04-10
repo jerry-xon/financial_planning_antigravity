@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, HelpCircle } from 'lucide-react';
 import { convertToMonthly } from './CashFlowLogic';
 import LoanDetailsModal from './LoanDetailsModal';
 import InvestmentDetailsModal from './InvestmentDetailsModal';
@@ -374,7 +374,12 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
             <div className="expense-categories">
                 {/* Category B1: EMIs */}
                 <div className="card" style={{ marginBottom: '1.5rem', background: 'var(--bg-main)' }}>
-                    <h4 style={{ color: 'var(--primary)', marginBottom: '1.25rem', fontSize: '1.1rem' }}>B1. EMIs (Monthly)</h4>
+                    <h4 style={{ color: 'var(--primary)', marginBottom: '1.25rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        B1. EMIs (Monthly)
+                        <span className="tooltip-wrapper" data-tooltip="Equated Monthly Installments. Exclude any upcoming pre-payments.">
+                            <HelpCircle size={16} color="var(--text-muted)" />
+                        </span>
+                    </h4>
                     <div className="input-grid-mini">
                         {['personalLoan', 'homeLoan', 'educationLoan', 'carLoan', 'twoWheelerLoan'].map((loanKey) => {
                             const rawValue = expenseCategories.emi[loanKey];
@@ -573,7 +578,12 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
 
                 {/* Category C: Savings & Investments */}
                 <div className="card" style={{ marginBottom: '1.5rem', background: 'var(--bg-main)' }}>
-                    <h4 style={{ color: 'var(--primary)', marginBottom: '1.25rem', fontSize: '1.1rem' }}>C. Savings & Investments</h4>
+                    <h4 style={{ color: 'var(--primary)', marginBottom: '1.25rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        C. Savings & Investments
+                        <span className="tooltip-wrapper" data-tooltip="Recurring monthly cash flows deployed into growth vehicles.">
+                            <HelpCircle size={16} color="var(--text-muted)" />
+                        </span>
+                    </h4>
                     <div className="input-grid-mini">
                         {['ppf', 'nps'].map((invKey) => {
                             const rawValue = expenseCategories.savings[invKey] || '';

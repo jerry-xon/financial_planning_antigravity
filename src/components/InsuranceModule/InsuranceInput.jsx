@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, User, Trash2 } from 'lucide-react';
+import { Plus, User, Trash2, HelpCircle } from 'lucide-react';
 import { calculatePolicyEndDate } from './InsuranceLogic';
 import CurrencyInput from '../common/CurrencyInput';
 
@@ -124,7 +124,12 @@ const InsuranceInput = ({ familyMembers, policies, setPolicies, isProposed = fal
                                             </div>
 
                                             <div className="input-group">
-                                                <label>Sum Assured (₹)</label>
+                                                <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    Sum Assured (₹)
+                                                    <span className="tooltip-wrapper" data-tooltip="The total guaranteed payout available to your beneficiaries upon covered events.">
+                                                        <HelpCircle size={14} color="var(--text-muted)" />
+                                                    </span>
+                                                </label>
                                                 <CurrencyInput name="sumAssured" placeholder="0" value={p.sumAssured} onChange={e => updatePolicy(p.id, 'sumAssured', e.target.value)} className="input-field" />
                                             </div>
                                             <div className="input-group">

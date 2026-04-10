@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ShieldAlert, HelpCircle } from 'lucide-react';
 import ContingencyOutput from './ContingencyOutput';
 import { calculateContingencyFund } from './ContingencyLogic';
 import CurrencyInput from '../common/CurrencyInput';
@@ -14,15 +14,23 @@ const ContingencyModule = ({ expenseCategories, contingencyFund, setContingencyF
 
     return (
         <div className="fade-in" style={{ marginTop: '2rem' }}>
-            <div className="card">
-                <h1>Contingency Fund Planning (Module 7)</h1>
-                <p className="text-muted" style={{ marginBottom: '2rem' }}>
+            <div className="card" style={{ marginBottom: '2rem', borderTop: '4px solid #38bdf8' }}>
+                <h1 style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '10px', borderRadius: '12px', color: '#38bdf8', display: 'flex' }}>
+                        <ShieldAlert size={28} />
+                    </div>
+                    Contingency Fund Planning (Module 7)
+                </h1>
+                <p className="text-muted" style={{ marginBottom: '2rem', fontSize: '1.05rem' }}>
                     A financial cushion to protect your family from unforeseen circumstances. We recommend maintaining at least 6 months of expenses + EMIs.
                 </p>
 
                 <div className="input-group">
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.5rem', fontWeight: 500 }}>
                         Total Funds Currently Available for Emergency (₹)
+                        <span className="tooltip-wrapper" data-tooltip="Highly liquid cash available precisely for sudden emergencies (e.g., Savings, short FDs).">
+                            <HelpCircle size={16} color="var(--text-muted)" />
+                        </span>
                     </label>
                     <CurrencyInput
                         name="contingencyFund"

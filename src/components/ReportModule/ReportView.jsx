@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { calculateFamilyProfile } from '../ProfileModule/ProfileLogic';
 import { calculateCashFlow, formatCurrency } from '../CashFlowModule/CashFlowLogic';
 import { calculateNetWorth } from '../AssetModule/AssetLogic';
@@ -29,6 +29,9 @@ const ReportView = ({
     calculatorInputs = {},
     onBack
 }) => {
+    const [isDashboardMode, setIsDashboardMode] = useState(true);
+    const [activeGoalTab, setActiveGoalTab] = useState('short'); // For goal tabs
+
     const profileResults = calculateFamilyProfile(familyMembers);
     const cashFlowResults = calculateCashFlow(income, expenseCategories);
     const assetResults = calculateNetWorth(assetCategories, liabilityCategories);
@@ -49,6 +52,8 @@ const ReportView = ({
 
     return (
         <div className="report-view fade-in">
+            {isDashboardMode ? (
+                <>
                         {/* New Premium Dashboard Header Area (Module 12) */}
             <div className="welcome-hero" style={{ marginBottom: '2rem' }}>
                 <div className="hero-top">
@@ -81,13 +86,23 @@ const ReportView = ({
                 </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2rem', gap: '1rem' }}>
-                <button className="btn btn-secondary" onClick={onBack} style={{ background: '#fff', border: '1px solid var(--border)', color: 'var(--text-main)', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}>
-                    Overview Mode
-                </button>
-                <button className="btn btn-primary" onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', background: 'var(--primary)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}>
-                    <Printer size={18} style={{ marginRight: '8px' }} /> Export Report
-                </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-card)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <button onClick={() => setIsDashboardMode(true)} style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: isDashboardMode ? 'var(--primary)' : 'transparent', color: isDashboardMode ? 'white' : 'var(--text-main)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+                        Overview Dashboard
+                    </button>
+                    <button onClick={() => setIsDashboardMode(false)} style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: !isDashboardMode ? 'var(--primary)' : 'transparent', color: !isDashboardMode ? 'white' : 'var(--text-main)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+                        Detailed Report
+                    </button>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button className="btn btn-secondary" onClick={onBack} style={{ background: '#fff', border: '1px solid var(--border)', color: 'var(--text-main)', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}>
+                        Back
+                    </button>
+                    <button className="btn btn-primary" onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', background: 'var(--primary)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}>
+                        <Printer size={18} style={{ marginRight: '8px' }} /> Export PDF
+                    </button>
+                </div>
             </div>
 
             {/* Stats Cards Grid */}
@@ -97,28 +112,32 @@ const ReportView = ({
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                     </div>
                     <div className="stat-val">{formatCurrency(cashFlowResults.totalIncome)}</div>
-                    <div className="stat-label">Total Monthly Income</div>
+                    <div className="stat-label" style={{ marginBottom: 'auto' }}>Total Monthly Income</div>
+                    <div className="trend-badge up" style={{ fontSize: '0.8rem', alignSelf: 'flex-start', marginTop: '1rem' }}>On Track</div>
                 </div>
                 <div className="card hoverable">
                     <div className="stat-icon" style={{background: '#fee2e2', color: 'var(--destructive)'}}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
                     </div>
                     <div className="stat-val" style={{color: 'var(--destructive)'}}>{formatCurrency(cashFlowResults.totalExpenses)}</div>
-                    <div className="stat-label">Total Outflows</div>
+                    <div className="stat-label" style={{ marginBottom: 'auto' }}>Total Outflows</div>
+                    <div className="trend-badge down" style={{ fontSize: '0.8rem', alignSelf: 'flex-start', marginTop: '1rem' }}>Review Recommended</div>
                 </div>
                 <div className="card hoverable">
                     <div className="stat-icon" style={{background: '#fef3c7', color: 'var(--warning)'}}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 3v12"/><path d="M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M15 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
                     </div>
                     <div className="stat-val">{validGoals.length}</div>
-                    <div className="stat-label">Active Goals</div>
+                    <div className="stat-label" style={{ marginBottom: 'auto' }}>Active Goals</div>
+                    <div className="trend-badge up" style={{ background: '#f1f5f9', color: 'var(--text-muted)', fontSize: '0.8rem', alignSelf: 'flex-start', marginTop: '1rem' }}>Target Set</div>
                 </div>
                 <div className="card hoverable">
                     <div className="stat-icon" style={{background: '#ede9fe', color: 'var(--color-3)'}}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     </div>
                     <div className="stat-val">{policies.some(p => p.type?.toLowerCase().includes('term')) ? 'Yes' : 'No'}</div>
-                    <div className="stat-label">Term Life Cover Valid</div>
+                    <div className="stat-label" style={{ marginBottom: 'auto' }}>Term Life Cover Valid</div>
+                    <div className="trend-badge up" style={{ background: '#dcfce7', color: 'var(--success)', fontSize: '0.8rem', alignSelf: 'flex-start', marginTop: '1rem', display: 'flex', alignItems: 'center' }}><CheckCircle size={12} style={{marginRight:'4px'}}/> Secured</div>
                 </div>
             </div>
 
@@ -202,10 +221,12 @@ const ReportView = ({
                 <div className="card" style={{ height: 'max-content' }}>
                     <div className="section-header" style={{ marginBottom: '1.5rem' }}>Goals Progress Tracker</div>
                     <div className="tabs">
-                        <div className="tab active">Active Goals</div>
+                        <div className={`tab ${activeGoalTab === 'short' ? 'active' : ''}`} onClick={() => setActiveGoalTab('short')}>Short Term</div>
+                        <div className={`tab ${activeGoalTab === 'medium' ? 'active' : ''}`} onClick={() => setActiveGoalTab('medium')}>Medium Term</div>
+                        <div className={`tab ${activeGoalTab === 'long' ? 'active' : ''}`} onClick={() => setActiveGoalTab('long')}>Long Term</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        {validGoals.slice(0, 4).map((g, i) => {
+                        {(goalResults[activeGoalTab] || []).slice(0, 4).map((g, i) => {
                             const mappingDict = goalMappings[g.id] || {};
                             const totalAssigned = Object.values(mappingDict).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
                             const percent = Math.min(100, Math.round((totalAssigned / (g.futureCost || 1)) * 100));
@@ -225,15 +246,14 @@ const ReportView = ({
                                 </div>
                             );
                         })}
-                        {validGoals.length === 0 && <p className="text-muted">No active goals to track.</p>}
+                        {(!goalResults[activeGoalTab] || goalResults[activeGoalTab].length === 0) && <p className="text-muted" style={{ padding: '2rem', textAlign: 'center', border: '1px dashed var(--border)', borderRadius: '8px' }}>No active goals in this bucket.</p>}
                     </div>
                 </div>
             </div>
 
-            <div className="report-sections">
-                {/* 1. Family Profile Grid */}
-                <section className="report-section">
-                    <h2 className="section-header" style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>1. Family Overview</h2>
+                {/* Family Profile Grid */}
+                <div>
+                    <h2 className="section-header" style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>Family Overview</h2>
                     <div className="grid-3" style={{ marginBottom: '3rem' }}>
                         {profileResults.map((m, i) => {
                             const initials = m.name?.split(' ').map(n=>n[0]).join('').substring(0,2) || 'FM';
@@ -263,7 +283,10 @@ const ReportView = ({
                             );
                         })}
                     </div>
-                </section>
+                </div>
+                </>
+            ) : (
+                <div className="report-sections">
                 {/* 2. Cash Flow Summary */}
                 <section className="report-section card" style={{ marginTop: '1.5rem' }}>
                     <h3>2. Income - Expenses - Surplus Analysis</h3>
@@ -725,6 +748,7 @@ const ReportView = ({
                 </section>
 
             </div>
+            )}
 
             <style>{`
         .report-view {

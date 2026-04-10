@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Target, Link, ChevronRight, ChevronLeft, CheckCircle2, AlertCircle, Info, Calculator, Landmark, ShieldCheck } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Target, ChevronRight, ChevronLeft, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, Zap, Sparkles } from 'lucide-react';
 import { computeSIPData } from '../Calculators/SIPCalculator';
 import { computeLumpsumData } from '../Calculators/LumpsumCalculator';
 import { computeEquityData } from '../Calculators/EquityCalculator';
@@ -18,7 +18,12 @@ const FulfillmentModule = ({
     onNext, 
     onBack 
 }) => {
-    
+    const [expandedGroups, setExpandedGroups] = useState({});
+
+    const toggleGroup = (groupName) => {
+        setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
+    };
+
     // 1. Filter and sort goals to only those with assigned values, arranged chronologically
     const activeGoals = useMemo(() => {
         return goals
@@ -30,10 +35,27 @@ const FulfillmentModule = ({
             });
     }, [goals]);
 
+    // Grouping Logic
+    const groupedGoals = useMemo(() => {
+        const groups = {};
+        activeGoals.forEach(goal => {
+            // Attempt to strip out trailing "Year X" or "(Year X)" to find a base group name
+            const baseName = (goal.name || goal.placeholder || "Unnamed Goal")
+                .replace(/\s*\(?Year\s*\d+\)?/gi, '')
+                .replace(/\s*-\s*\d+$/g, '') 
+                .trim();
+
+            if (!groups[baseName]) {
+                groups[baseName] = [];
+            }
+            groups[baseName].push(goal);
+        });
+        return groups;
+    }, [activeGoals]);
+
     // 2. Compute calculator data once
     const currentYear = new Date().getFullYear();
     const sipExpectedReturns = calculatorInputs.sip?.rate ?? 12;
-    const sipTenureYears = calculatorInputs.sip?.tenure ?? 10;
     const sipEvents = calculatorInputs.sip?.events || calculatorInputs.sip?.increments || [];
     const sipProposed = allocations.filter(a => a.type === 'SIP');
     
@@ -49,37 +71,18 @@ const FulfillmentModule = ({
     const equityDataInput = calculatorInputs.equity ?? {};
     const eqProposed = allocations.filter(a => a.type === 'Direct Equity & ETFs');
 
-    // Natively compute without the goalMappings loop-back (to get "Baseline Available")
-    // Note: To avoid circular dependency during assignment, we pass empty mappings or exclude them here 
-    // to strictly fetch what the balance WOULD BE before these specific assignments.
     const defaultSIP = parseFloat(expenseCategories?.savings?.sip?.amount !== undefined ? expenseCategories.savings.sip.amount : expenseCategories?.savings?.sip) || 0;
     const defaultCorpus = parseFloat(assetCategories?.investments?.mutualFunds) || parseFloat(assetCategories?.equity?.mfEquity) || parseFloat(assetCategories?.equity?.stocks) || 0;
 
-    const baseSIPAmount = defaultSIP; // Strictly lock to live CashFlow baseline
-    const baseCurrentVal = defaultCorpus; // Strictly lock to live Assets baseline
+    const baseSIPAmount = defaultSIP; 
+    const baseCurrentVal = defaultCorpus; 
 
     const baselineSipData = useMemo(() => computeSIPData(
-        currentYear, 
-        baseSIPAmount, 
-        sipExpectedReturns, 
-        50, 
-        baseCurrentVal, 
-        sipEvents, 
-        sipProposed, 
-        goalMappings, 
-        goals
+        currentYear, baseSIPAmount, sipExpectedReturns, 50, baseCurrentVal, sipEvents, sipProposed, goalMappings, goals
     ), [currentYear, baseSIPAmount, sipExpectedReturns, baseCurrentVal, sipEvents, sipProposed, goalMappings, goals]);
 
     const baselineLumpsumData = useMemo(() => computeLumpsumData(
-        parseFloat(lumpsumDataInput.amount) || 0,
-        parseFloat(lumpsumDataInput.rate) || 12,
-        50,
-        new Date().getMonth() + 1,
-        currentYear,
-        lumpsumDataInput.events || [],
-        lsProposed,
-        goalMappings, 
-        goals
+        parseFloat(lumpsumDataInput.amount) || 0, parseFloat(lumpsumDataInput.rate) || 12, 50, new Date().getMonth() + 1, currentYear, lumpsumDataInput.events || [], lsProposed, goalMappings, goals
     ), [currentYear, lumpsumDataInput, lsProposed, goalMappings, goals]);
 
     const baselineFdData = useMemo(() => computeFDData(
@@ -90,18 +93,9 @@ const FulfillmentModule = ({
         rdProposed, parseFloat(rdDataInput.rate) || 7
     ).schedule || [], [rdDataInput, rdProposed]);
 
-    // 3. Compute Dynamic Equity timeline natively
     const baseEquityVal = parseFloat(assetCategories?.investments?.equity) || parseFloat(assetCategories?.equity?.stocks) || 0;
     const baselineEquityData = useMemo(() => computeEquityData(
-        baseEquityVal,
-        parseFloat(equityDataInput.rate) || 15,
-        50,
-        new Date().getMonth() + 1,
-        currentYear,
-        equityDataInput.events || [],
-        eqProposed,
-        goalMappings,
-        goals
+        baseEquityVal, parseFloat(equityDataInput.rate) || 15, 50, new Date().getMonth() + 1, currentYear, equityDataInput.events || [], eqProposed, goalMappings, goals
     ), [currentYear, baseEquityVal, equityDataInput, eqProposed, goalMappings, goals]);
 
     const availableSources = useMemo(() => {
@@ -116,7 +110,6 @@ const FulfillmentModule = ({
         ];
     }, []);
 
-    // 4. Handle amount updates for mappings (Structure: { goalId: { sourceId: amount } })
     const handleAmountChange = (goalId, sourceId, amount, maxAllowed) => {
         const currentGoalMap = goalMappings[goalId] || {};
         let val = parseFloat(amount);
@@ -126,206 +119,268 @@ const FulfillmentModule = ({
         }
         
         let newGoalMap = { ...currentGoalMap };
-        
         if (isNaN(val) || val <= 0) {
             delete newGoalMap[sourceId];
         } else {
             newGoalMap[sourceId] = val;
         }
-
-        setGoalMappings({
-            ...goalMappings,
-            [goalId]: newGoalMap
-        });
+        setGoalMappings({ ...goalMappings, [goalId]: newGoalMap });
     };
 
-    const formatCurrency = (val) => {
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: 'INR',
-            maximumFractionDigits: 0
-        }).format(val || 0);
+    const handleQuickAllocate = (goalId, shortfall, availableDataBySource) => {
+        if (shortfall <= 0) return;
+        
+        let remainingNeed = shortfall;
+        const currentGoalMap = { ...(goalMappings[goalId] || {}) };
+
+        for (const source of availableSources) {
+            if (remainingNeed <= 0) break;
+            
+            const ceiling = availableDataBySource[source.id];
+            if (ceiling === 0) continue;
+
+            const maxCanTake = ceiling === null ? remainingNeed : ceiling;
+            const toTake = Math.min(remainingNeed, maxCanTake);
+
+            if (toTake > 0) {
+                const currentAssigned = parseFloat(currentGoalMap[source.id]) || 0;
+                currentGoalMap[source.id] = currentAssigned + toTake;
+                remainingNeed -= toTake;
+            }
+        }
+        setGoalMappings({ ...goalMappings, [goalId]: currentGoalMap });
     };
+
+    const formatCurrency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val || 0);
 
     return (
         <div className="fulfillment-module fade-in">
-            <div className="card" style={{ marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
-                    <Target size={24} className="text-primary" />
-                    <h2 style={{ margin: 0 }}>Step 11: Goal Fulfillment Roadmap</h2>
+            <div className="card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: 'white', borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '10px', borderRadius: '12px' }}>
+                        <Target size={28} className="text-primary" style={{ color: '#38bdf8' }} />
+                    </div>
+                    <div>
+                        <h2 style={{ margin: '0 0 0.25rem' }}>Step 11: Goal Fulfillment Roadmap</h2>
+                        <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.95rem' }}>Automate and assign portfolio values to fully fund your targets.</p>
+                    </div>
                 </div>
-                
-                <p className="text-muted" style={{ marginBottom: '2rem' }}>
-                    Assign values from your projected investment portfolios to guarantee your life goals are fully funded.
-                </p>
+            </div>
 
-                {activeGoals.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        {activeGoals.map((goal) => {
-                            const goalYear = currentYear + Math.round(parseFloat(goal.yearsToGoal) || 0);
-                            const futureValue = goal.futureValue || (parseFloat(goal.presentValue) * Math.pow(1 + (parseFloat(goal.inflationRate) || 6) / 100, parseFloat(goal.yearsToGoal) || 0));
-                            
-                            const currentGoalMap = goalMappings[goal.id] || {};
-                            const totalAssigned = Object.values(currentGoalMap).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-                            const shortfall = futureValue - totalAssigned;
-                            
-                            const isFullyFunded = Math.round(shortfall) <= 0;
-                            const hasAssignments = totalAssigned > 0;
+            {Object.keys(groupedGoals).length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {Object.entries(groupedGoals).map(([groupName, groupGoals]) => {
+                        const isExpanded = expandedGroups[groupName] || Object.keys(groupedGoals).length === 1; // Default open if only 1 group
+                        
+                        // Calculate aggregate group stats
+                        let groupTarget = 0;
+                        let groupAssigned = 0;
+                        groupGoals.forEach(g => {
+                            const fValue = g.futureValue || (parseFloat(g.presentValue) * Math.pow(1 + (parseFloat(g.inflationRate) || 6)/100, parseFloat(g.yearsToGoal)||0));
+                            groupTarget += fValue;
+                            const map = goalMappings[g.id] || {};
+                            groupAssigned += Object.values(map).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+                        });
+                        const groupProgress = Math.min(100, (groupAssigned / groupTarget) * 100) || 0;
+                        const isGroupFullyFunded = groupTarget > 0 && Math.round(groupTarget - groupAssigned) <= 0;
 
-                            const eRow = baselineEquityData.find(r => r.year === goalYear);
-                            const remainingEquity = eRow ? eRow.valueAfterWithdrawal : 0;
-
-                            // Helpers for Available Values for this specific year
-                            const sRow = baselineSipData.find(r => r.year === goalYear);
-                            const lRow = baselineLumpsumData.find(r => r.year === goalYear);
-                            const fRow = baselineFdData.find(r => r.year === goalYear);
-                            const rRow = baselineRdData.find(r => r.year === goalYear);
-
-                            const availableData = {
-                                'sip': sRow ? sRow.valueAfterWithdrawal : 0,
-                                'lumpsum': lRow ? lRow.valueAfterWithdrawal : 0,
-                                'equity': remainingEquity,
-                                'fd': fRow ? (fRow.maturityValue || 0) : 0,
-                                'rd': rRow ? (rRow.maturityValue || 0) : 0,
-                                'realEstate': parseFloat(assetCategories?.realEstate?.landPlot) || 0,
-                                'loan': null // infinite
-                            };
-
-                            return (
-                                <div key={goal.id} className="goal-fulfillment-card" style={{ 
-                                    background: 'var(--bg-main)', 
-                                    borderRadius: '16px', 
-                                    border: `2px solid ${isFullyFunded ? 'var(--success)' : 'var(--border)'}`,
-                                    overflow: 'hidden'
-                                }}>
-                                    {/* Header Row */}
-                                    <div style={{ 
-                                        padding: '1.5rem', 
+                        return (
+                            <div key={groupName} className="goal-group-card" style={{ 
+                                background: 'var(--bg-card)', 
+                                borderRadius: '16px', 
+                                border: `1px solid ${isGroupFullyFunded ? 'var(--success)' : 'var(--border)'}`,
+                                boxShadow: isGroupFullyFunded ? '0 0 15px rgba(16, 185, 129, 0.1)' : '0 4px 15px rgba(0,0,0,0.03)',
+                                overflow: 'hidden',
+                                transition: 'all 0.3s ease'
+                            }}>
+                                {/* Accordion Header */}
+                                <div 
+                                    onClick={() => toggleGroup(groupName)}
+                                    style={{ 
+                                        padding: '1.25rem 1.5rem', 
                                         display: 'flex', 
                                         justifyContent: 'space-between', 
                                         alignItems: 'center',
-                                        borderBottom: '1px solid var(--border)',
-                                        background: isFullyFunded ? 'rgba(52, 211, 153, 0.05)' : 'transparent'
-                                    }}>
-                                        <div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                                {isFullyFunded ? <CheckCircle2 size={18} className="text-success" /> : <AlertCircle size={18} style={{ color: '#ef4444' }} />}
-                                                <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{goal.name || goal.placeholder}</h3>
-                                            </div>
-                                            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                                                Target Year: <strong style={{ color: 'var(--text-main)' }}>{goalYear}</strong> | 
-                                                Target Cost: <strong style={{ color: 'var(--text-main)' }}>{formatCurrency(futureValue)}</strong>
-                                            </div>
+                                        cursor: 'pointer',
+                                        background: isGroupFullyFunded ? 'rgba(16, 185, 129, 0.05)' : 'transparent',
+                                        userSelect: 'none'
+                                    }}
+                                >
+                                    <div style={{ flex: '1 1 auto', marginRight: '2rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                                            {isGroupFullyFunded ? <CheckCircle2 size={20} className="text-success" /> : <Target size={20} className="text-primary" />}
+                                            <h3 style={{ margin: 0, fontSize: '1.15rem', color: 'var(--text-main)' }}>{groupName}</h3>
+                                            <span style={{ fontSize: '0.75rem', background: 'var(--bg-main)', padding: '2px 8px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                                                {groupGoals.length} {groupGoals.length === 1 ? 'Phase' : 'Phases'}
+                                            </span>
                                         </div>
-                                        <div style={{ textAlign: 'right', display: 'flex', gap: '1.5rem', background: 'var(--bg-card)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'left' }}>
-                                                <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                                                    Assigned
-                                                </div>
-                                                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                                                    {formatCurrency(totalAssigned)}
-                                                </div>
+                                        {/* Group Progress Bar */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '10px' }}>
+                                            <div style={{ flex: 1, height: '8px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
+                                                <div style={{ 
+                                                    height: '100%', 
+                                                    width: `${groupProgress}%`, 
+                                                    background: isGroupFullyFunded ? 'var(--success)' : 'var(--primary)',
+                                                    transition: 'width 0.5s ease'
+                                                }} />
                                             </div>
-                                            <div style={{ width: '1px', background: 'var(--border)' }}></div>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', textAlign: 'right' }}>
-                                                <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                                                    Pending Needed
-                                                </div>
-                                                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: isFullyFunded ? 'var(--success)' : '#ef4444' }}>
-                                                    {isFullyFunded ? 'Fully Funded' : formatCurrency(shortfall)}
-                                                </div>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', minWidth: '60px', textAlign: 'right' }}>
+                                                {formatCurrency(groupAssigned)} / {formatCurrency(groupTarget)}
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Sources Assignments */}
-                                    <div style={{ padding: '1.5rem' }}>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-                                            {availableSources.map((source) => {
-                                                const assignedAmt = currentGoalMap[source.id] || '';
-                                                const assignedVal = parseFloat(assignedAmt) || 0;
-                                                const isAssigned = assignedVal > 0;
-                                                
-                                                // Rules: FD and RD only visible if year matches maturity year natively (i.e. availableData > 0)
-                                                if ((source.id === 'fd' || source.id === 'rd') && (availableData[source.id] <= 0 && !isAssigned)) {
-                                                    return null;
-                                                }
-
-                                                // Calculate remaining natively available balance after roadmap execution
-                                                const ceiling = availableData[source.id] !== null ? availableData[source.id] : null;
-                                                
-                                                // Calculate the mathematical Upper Bound the user can assign right now
-                                                const maxNeeded = shortfall > 0 ? shortfall + assignedVal : assignedVal;
-                                                const absoluteMax = ceiling !== null ? Math.min(maxNeeded, ceiling) : maxNeeded;
-                                                const roundedMax = Math.round(absoluteMax);
-
-                                                return (
-                                                    <div
-                                                        key={source.id}
-                                                        style={{
-                                                            padding: '1rem',
-                                                            borderRadius: '8px',
-                                                            background: isAssigned ? 'rgba(37, 99, 235, 0.05)' : 'var(--bg-card)',
-                                                            border: isAssigned ? '1px solid var(--primary)' : '1px solid var(--border)',
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            gap: '0.75rem'
-                                                        }}
-                                                    >
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>{source.name}</div>
-                                                            {ceiling !== null && (
-                                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                                                    Avail: <span style={{ fontWeight: 800, color: 'var(--success)', fontSize: '1.05rem', marginLeft: '4px' }}>{formatCurrency(ceiling)}</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="input-group" style={{ marginBottom: 0 }}>
-                                                            <div style={{ position: 'relative' }}>
-                                                                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>₹</span>
-                                                                <input 
-                                                                    type="number" 
-                                                                    value={assignedAmt} 
-                                                                    onChange={(e) => handleAmountChange(goal.id, source.id, e.target.value, Math.max(0, roundedMax))}
-                                                                    placeholder="0"
-                                                                    style={{ 
-                                                                        paddingLeft: '28px', 
-                                                                        borderColor: isAssigned ? 'var(--primary)' : 'var(--border)' 
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
+                                    <div>
+                                        {isExpanded ? <ChevronUp size={24} color="var(--text-muted)" /> : <ChevronDown size={24} color="var(--text-muted)" />}
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
-                ) : (
-                    <div style={{ 
-                        textAlign: 'center', 
-                        padding: '3rem', 
-                        border: '2px dashed var(--border)', 
-                        borderRadius: '12px',
-                        color: 'var(--text-muted)'
-                    }}>
-                        <Target size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                        <p>No actionable goals found. Please ensure your goals in the Goals Module have a valid Target Cost assigned.</p>
-                    </div>
-                )}
-            </div>
+
+                                {/* Accordion Body */}
+                                {isExpanded && (
+                                    <div style={{ borderTop: '1px solid var(--border)', padding: '1.5rem', background: 'var(--bg-main)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                        {groupGoals.map(goal => {
+                                            const goalYear = currentYear + Math.round(parseFloat(goal.yearsToGoal) || 0);
+                                            const futureValue = goal.futureValue || (parseFloat(goal.presentValue) * Math.pow(1 + (parseFloat(goal.inflationRate) || 6) / 100, parseFloat(goal.yearsToGoal) || 0));
+                                            
+                                            const currentGoalMap = goalMappings[goal.id] || {};
+                                            const totalAssigned = Object.values(currentGoalMap).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+                                            const shortfall = futureValue - totalAssigned;
+                                            
+                                            const isFullyFunded = Math.round(shortfall) <= 0;
+
+                                            const eRow = baselineEquityData.find(r => r.year === goalYear);
+                                            const remainingEquity = eRow ? eRow.valueAfterWithdrawal : 0;
+
+                                            const sRow = baselineSipData.find(r => r.year === goalYear);
+                                            const lRow = baselineLumpsumData.find(r => r.year === goalYear);
+                                            const fRow = baselineFdData.find(r => r.year === goalYear);
+                                            const rRow = baselineRdData.find(r => r.year === goalYear);
+
+                                            const availableData = {
+                                                'sip': sRow ? sRow.valueAfterWithdrawal : 0,
+                                                'lumpsum': lRow ? lRow.valueAfterWithdrawal : 0,
+                                                'equity': remainingEquity,
+                                                'fd': fRow ? (fRow.maturityValue || 0) : 0,
+                                                'rd': rRow ? (rRow.maturityValue || 0) : 0,
+                                                'realEstate': parseFloat(assetCategories?.realEstate?.landPlot) || 0,
+                                                'loan': null 
+                                            };
+
+                                            return (
+                                                <div key={goal.id} style={{ 
+                                                    background: 'var(--bg-card)', 
+                                                    borderRadius: '12px', 
+                                                    border: isFullyFunded ? '1px solid var(--success)' : '1px solid var(--border)',
+                                                    padding: '1.25rem',
+                                                    position: 'relative',
+                                                    overflow: 'hidden'
+                                                }}>
+                                                    {isFullyFunded && (
+                                                        <div style={{ position: 'absolute', top: '-10px', right: '-10px', background: 'rgba(16, 185, 129, 0.1)', width: '100px', height: '100px', borderRadius: '50%', zIndex: 0 }} />
+                                                    )}
+                                                    
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
+                                                        <div>
+                                                            <div style={{ fontWeight: 600, fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                {goal.name} {isFullyFunded && <Sparkles size={16} className="text-success" />}
+                                                            </div>
+                                                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>Target Year: {goalYear} | Target: <strong style={{ color: 'var(--text-main)' }}>{formatCurrency(futureValue)}</strong></div>
+                                                        </div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                            <div style={{ textAlign: 'right' }}>
+                                                                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>{isFullyFunded ? 'Overfunded by' : 'Shortfall'}</div>
+                                                                <div style={{ fontWeight: 800, fontSize: '1.1rem', color: isFullyFunded ? 'var(--success)' : '#ef4444' }}>
+                                                                    {isFullyFunded ? formatCurrency(Math.abs(shortfall)) : formatCurrency(shortfall)}
+                                                                </div>
+                                                            </div>
+                                                            {!isFullyFunded && (
+                                                                <button 
+                                                                    onClick={() => handleQuickAllocate(goal.id, shortfall, availableData)}
+                                                                    style={{ 
+                                                                        background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 12px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' 
+                                                                    }}
+                                                                >
+                                                                    <Zap size={14} /> Auto-Fill
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px', position: 'relative', zIndex: 1 }}>
+                                                        {availableSources.map(source => {
+                                                            const assignedVal = parseFloat(currentGoalMap[source.id]) || 0;
+                                                            const isAssigned = assignedVal > 0;
+                                                            
+                                                            // Hide FD/RD if nothing is natively available and none is assigned
+                                                            if ((source.id === 'fd' || source.id === 'rd') && (availableData[source.id] <= 0 && !isAssigned)) {
+                                                                return null;
+                                                            }
+
+                                                            const ceiling = availableData[source.id] !== null ? availableData[source.id] : null;
+                                                            const maxNeeded = shortfall > 0 ? shortfall + assignedVal : assignedVal;
+                                                            const absoluteMax = ceiling !== null ? Math.min(maxNeeded, ceiling) : maxNeeded;
+                                                            const roundedMax = Math.round(absoluteMax);
+
+                                                            return (
+                                                                <div key={source.id} style={{ 
+                                                                    background: isAssigned ? 'rgba(37, 99, 235, 0.05)' : 'var(--bg-main)',
+                                                                    border: isAssigned ? '1px solid rgba(37, 99, 235, 0.4)' : '1px solid var(--border)',
+                                                                    borderRadius: '8px',
+                                                                    padding: '12px',
+                                                                    transition: 'all 0.2s ease',
+                                                                }}>
+                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.8rem' }}>
+                                                                        <span style={{ fontWeight: 600, color: isAssigned ? 'var(--primary)' : 'var(--text-main)' }}>{source.name}</span>
+                                                                        {ceiling !== null && <span style={{ color: 'var(--success)' }}>Avail: {formatCurrency(ceiling)}</span>}
+                                                                    </div>
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                        <button 
+                                                                            onClick={() => handleAmountChange(goal.id, source.id, roundedMax, roundedMax)}
+                                                                            style={{ 
+                                                                                padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                                                                                background: isAssigned ? 'var(--primary)' : 'var(--border)', 
+                                                                                color: isAssigned ? 'white' : 'var(--text-main)', 
+                                                                                border: 'none'
+                                                                            }}
+                                                                        >
+                                                                            {isAssigned ? 'MAX' : 'Assign'}
+                                                                        </button>
+                                                                        <input 
+                                                                            type="number"
+                                                                            value={currentGoalMap[source.id] || ''}
+                                                                            onChange={(e) => handleAmountChange(goal.id, source.id, e.target.value, Math.max(0, roundedMax))}
+                                                                            placeholder="₹ 0"
+                                                                            style={{ 
+                                                                                flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-card)', fontSize: '0.9rem', outline: 'none' 
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div style={{ textAlign: 'center', padding: '4rem', background: 'var(--bg-card)', borderRadius: '16px', border: '1px dashed var(--border)', color: 'var(--text-muted)' }}>
+                    <Target size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+                    <h3>No Actionable Goals Available</h3>
+                    <p>Assign targets in your Goals module to begin distribution.</p>
+                </div>
+            )}
 
             <div className="sticky-action-bar">
                 <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <ChevronLeft size={20} />
-                    Back to Growth Tracker
+                    <ChevronLeft size={20} /> Back to Growth Tracker
                 </button>
                 <button className="btn btn-primary" onClick={onNext} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-md)' }}>
-                    Proceed to Final Overview
-                    <ChevronRight size={20} />
+                    Proceed to Final Overview <ChevronRight size={20} />
                 </button>
             </div>
         </div>
