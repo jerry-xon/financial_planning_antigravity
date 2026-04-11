@@ -231,10 +231,19 @@ const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, 
 
                                         return (
                                             <div className="input-group relative-group" key={`fd-${fdIndex}`} style={{ marginBottom: fdIndex < fdArray.length - 1 ? '1rem' : '0' }}>
-                                                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
-                                                    <span>FD #{fdIndex + 1}</span>
-                                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                        {isConfigured && <span style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 700, background: '#d1fae5', padding: '2px 6px', borderRadius: '4px' }}>Timeline Configured</span>}
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                    <label style={{ marginBottom: 0, fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>FD #{fdIndex + 1}</label>
+                                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                                        <button 
+                                                            onClick={() => setActiveModal({ category: 'investments', item: 'fixedDeposit', title: 'Fixed Deposit (FD)', index: fdIndex })}
+                                                            style={{ 
+                                                                background: 'transparent', border: 'none', 
+                                                                color: isConfigured ? 'var(--success)' : 'var(--primary)', 
+                                                                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', padding: 0
+                                                            }}
+                                                        >
+                                                            {isConfigured ? '✓ Configured' : '⚙️ Configure'}
+                                                        </button>
                                                         <button
                                                             onClick={() => {
                                                                 const newFds = fdArray.filter((_, i) => i !== fdIndex);
@@ -243,34 +252,24 @@ const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, 
                                                             style={{ 
                                                                 background: 'transparent', border: 'none', 
                                                                 color: 'var(--danger)', 
-                                                                fontSize: '0.75rem', cursor: 'pointer', padding: 0
+                                                                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', padding: 0
                                                             }}
                                                         >
-                                                            <Trash2 size={14} />
+                                                            <Trash2 size={14} style={{ display: 'inline', verticalAlign: 'text-bottom' }} /> Remove
                                                         </button>
                                                     </div>
-                                                </label>
-                                                <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
-                                                    <CurrencyInput 
-                                                        readOnly={isConfigured}
-                                                        value={displayValue || ''} 
-                                                        onChange={(e) => {
-                                                            const newFds = [...fdArray];
-                                                            newFds[fdIndex] = e.target.value;
-                                                            handleAssetChange('investments', 'fixedDeposit', newFds);
-                                                        }} 
-                                                        placeholder="0" 
-                                                        style={{ flex: 1, background: isConfigured ? 'var(--bg-main)' : 'var(--bg-card)' }}
-                                                    />
-                                                    <button 
-                                                        className="btn-outline btn-icon" 
-                                                        onClick={() => setActiveModal({ category: 'investments', item: 'fixedDeposit', title: 'Fixed Deposit (FD)', index: fdIndex })}
-                                                        style={{ padding: '0 0.75rem', borderColor: isConfigured ? 'var(--success)' : 'var(--border)' }}
-                                                        title="Configure FD Timeline Variables"
-                                                    >
-                                                        <Settings size={18} color={isConfigured ? 'var(--success)' : 'currentColor'} />
-                                                    </button>
                                                 </div>
+                                                <CurrencyInput 
+                                                    readOnly={isConfigured}
+                                                    value={displayValue || ''} 
+                                                    onChange={(e) => {
+                                                        const newFds = [...fdArray];
+                                                        newFds[fdIndex] = e.target.value;
+                                                        handleAssetChange('investments', 'fixedDeposit', newFds);
+                                                    }} 
+                                                    placeholder="0" 
+                                                    style={{ background: isConfigured ? 'var(--bg-main)' : 'var(--bg-card)', color: isConfigured ? 'var(--primary)' : 'var(--text-main)', cursor: isConfigured ? 'not-allowed' : 'text' }}
+                                                />
                                             </div>
                                         );
                                     })}

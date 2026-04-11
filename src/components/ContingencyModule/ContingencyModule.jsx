@@ -39,13 +39,12 @@ const ContingencyModule = ({ expenseCategories, contingencyFund, setContingencyF
                         onChange={(e) => setContingencyFund(e.target.value)}
                         style={{
                             width: '100%',
-                            padding: '1rem',
+                            padding: '1rem 1rem 1rem 2.8rem', // Top Right Bottom Left (left leaves room for ₹ icon)
                             borderRadius: '8px',
                             border: '2px solid var(--border)',
                             background: 'transparent',
                             fontSize: '1.1rem',
-                            color: 'var(--text-main)',
-                            paddingLeft: '2.5rem' // Adjust for icon
+                            color: 'var(--text-main)'
                         }}
                     />
                 </div>

@@ -31,6 +31,39 @@ const CashFlowModule = ({ familyMembers, income, setIncome, expenseCategories, s
                     Evaluate your family's savings potential by comparing various income streams and categorized expenses.
                 </p>
 
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)' }}>
+                    <button 
+                        onClick={() => { setCashFlowSubStep(1); setResults(null); window.scrollTo(0, 0); }}
+                        style={{ 
+                            padding: '0.75rem 1.5rem', 
+                            background: 'transparent',
+                            border: 'none',
+                            borderBottom: cashFlowSubStep === 1 ? '3px solid var(--primary)' : '3px solid transparent',
+                            color: cashFlowSubStep === 1 ? 'var(--primary)' : 'var(--text-muted)',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        Income & Lifestyle
+                    </button>
+                    <button 
+                        onClick={() => { setCashFlowSubStep(2); window.scrollTo(0, 0); }}
+                        style={{ 
+                            padding: '0.75rem 1.5rem', 
+                            background: 'transparent',
+                            border: 'none',
+                            borderBottom: cashFlowSubStep === 2 ? '3px solid var(--primary)' : '3px solid transparent',
+                            color: cashFlowSubStep === 2 ? 'var(--primary)' : 'var(--text-muted)',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        Commitments & Savings
+                    </button>
+                </div>
+
                 <CashFlowInput
                     familyMembers={familyMembers}
                     income={income}

@@ -9,13 +9,19 @@ export const calculateYearlyInsuranceSummary = (policies) => {
     const summary = {};
 
     policies.forEach(policy => {
-        const startDate = new Date(policy.startDate);
-        if (isNaN(startDate.getTime())) return;
+        let startDate = new Date(policy.startDate);
+        // If unconfigured or invalid, default to Jan 1st of current year so it appears in projections
+        if (isNaN(startDate.getTime())) {
+            startDate = new Date(new Date().getFullYear(), 0, 1);
+        }
 
         const startYear = startDate.getFullYear();
+        const startMonth = startDate.getMonth(); // 0-indexed (Jan = 0)
+
         const premium = parseFloat(policy.premium) || 0;
-        const paymentTerm = parseInt(policy.paymentTerm) || 0;
-        const policyTerm = parseInt(policy.policyTerm) || 0;
+        // Default to a 10-year term if premium exists but term is unconfigured
+        const paymentTerm = parseInt(policy.paymentTerm) || (premium > 0 ? 10 : 0);
+        const policyTerm = parseInt(policy.policyTerm) || paymentTerm;
         const freq = policy.frequency || 'Annually';
 
         // Frequency Multiplier and Interval
@@ -24,8 +30,6 @@ export const calculateYearlyInsuranceSummary = (policies) => {
         if (freq === 'Monthly') { intervalMonths = 1; multiplier = 12; }
         else if (freq === 'Quarterly') { intervalMonths = 3; multiplier = 4; }
         else if (freq === 'Half-Yearly') { intervalMonths = 6; multiplier = 2; }
-
-        const startMonth = startDate.getMonth(); // 0-indexed (Jan = 0)
         
         const policyId = policy.id;
         const insuredName = policy.insuredName || 'Unspecified';

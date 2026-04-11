@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { formatCurrency } from '../CashFlowModule/CashFlowLogic';
-import { AlertCircle, CheckCircle, Info, TrendingUp, DollarSign, Clock, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { AlertCircle, CheckCircle, Info, TrendingUp, IndianRupee, Clock, ShieldCheck, ShieldAlert } from 'lucide-react';
 
 const ContingencyOutput = ({ results }) => {
     const [animate, setAnimate] = useState(false);
@@ -20,7 +20,7 @@ const ContingencyOutput = ({ results }) => {
                 className="summary-hero" 
                 style={{ 
                     marginBottom: '2.5rem', 
-                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', 
+                    background: 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%)', 
                     color: 'white', 
                     borderRadius: '16px',
                     padding: '2rem',
@@ -34,31 +34,31 @@ const ContingencyOutput = ({ results }) => {
                 </div>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
-                    <div style={{ background: 'rgba(56, 189, 248, 0.2)', padding: '8px', borderRadius: '50%' }}>
-                        <Info size={24} color="#38bdf8" />
+                    <div style={{ background: 'rgba(96, 165, 250, 0.2)', padding: '8px', borderRadius: '50%' }}>
+                        <Info size={24} color="#60a5fa" />
                     </div>
-                    <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 600 }}>Contingency Fund Analysis</h2>
+                    <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 600, color: '#60a5fa' }}>Contingency Fund Analysis</h2>
                 </div>
 
                 <div className="grid" style={{ position: 'relative', zIndex: 1, gap: '1.5rem' }}>
-                    <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '1.5rem', borderRadius: '12px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#94a3b8' }}>
-                            <DollarSign size={16} />
-                            <label style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Monthly Needs (Exp + EMIs)</label>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '1.5rem', borderRadius: '12px', backdropFilter: 'blur(10px)', border: 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#ffffff' }}>
+                            <IndianRupee size={16} />
+                            <label style={{ color: '#ffffff', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Monthly Needs (Exp + EMIs)</label>
                         </div>
                         <strong style={{ display: 'block', fontSize: '1.5rem', fontWeight: 700 }}>{formatCurrency(results.monthlyTotal)}</strong>
                     </div>
-                    <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '1.5rem', borderRadius: '12px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#94a3b8' }}>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '1.5rem', borderRadius: '12px', backdropFilter: 'blur(10px)', border: 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#ffffff' }}>
                             <Clock size={16} />
-                            <label style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Buffer Period</label>
+                            <label style={{ color: '#ffffff', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Buffer Period</label>
                         </div>
                         <strong style={{ display: 'block', fontSize: '1.5rem', fontWeight: 700 }}>{results.contingencyPeriod} Months</strong>
                     </div>
-                    <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '1.5rem', borderRadius: '12px', backdropFilter: 'blur(10px)', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#38bdf8' }}>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '1.5rem', borderRadius: '12px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#93c5fd' }}>
                             <TrendingUp size={16} />
-                            <label style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Ideal Emergency Buffer</label>
+                            <label style={{ color: '#ffffff', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Ideal Emergency Buffer</label>
                         </div>
                         <strong style={{ display: 'block', fontSize: '1.6rem', fontWeight: 800, color: '#fff' }}>{formatCurrency(results.idealFundsRequired)}</strong>
                     </div>

@@ -5,15 +5,19 @@ import { getInsuredNamesList } from './InsuranceLogic';
 const InsuranceOutput = ({ summary, policies }) => {
     if (!summary || summary.length === 0) return null;
 
-    // Calculate Top Metrics
-    const firstYearSummary = summary.find(s => s.totalPremium > 0) || summary[0];
-    const totalYearlyPremium = firstYearSummary ? firstYearSummary.totalPremium : 0;
-    
-    // Coverage sum
-    const insuredNames = getInsuredNamesList(policies);
-    const totalCoverage = insuredNames.reduce((acc, name) => {
-        return acc + (firstYearSummary?.coverage[name] || 0);
+    // Calculate Top Metrics using active policies directly
+    const totalYearlyPremium = policies.reduce((sum, p) => {
+        const premium = parseFloat(p.premium) || 0;
+        const freq = p.frequency || 'Annually';
+        const multiplier = freq === 'Monthly' ? 12 : freq === 'Quarterly' ? 4 : freq === 'Half-Yearly' ? 2 : 1;
+        return sum + (premium * multiplier);
     }, 0);
+    
+    // Total coverage sum across all policies
+    const insuredNames = getInsuredNamesList(policies);
+    const totalCoverage = policies.reduce((sum, p) => sum + (parseFloat(p.sumAssured) || 0), 0);
+
+    const firstYearSummary = summary.find(s => s.totalPremium > 0) || summary[0];
 
     const upcomingMaturities = summary.reduce((count, s) => count + s.maturities.length, 0);
 
@@ -56,12 +60,18 @@ const InsuranceOutput = ({ summary, policies }) => {
                 <h3 className="section-title" style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--text-main)' }}>Coverage Status Overview</h3>
                 <div className="coverage-list">
                     {insuredNames.map((name, idx) => {
-                        const cov = firstYearSummary?.coverage[name] || 0;
+                        const cov = policies
+                            .filter(p => p.insuredName === name)
+                            .reduce((sum, p) => sum + (parseFloat(p.sumAssured) || 0), 0);
                         const initials = name.split(' ').map(n=>n[0]).join('').substring(0,2);
-                        // Simplified gap check: Assume 1cr is optimal, below 50L is gap (in real scenario this comes from protection gap, but visually we approximate for the dashboard or just show full bar if cov > 0)
+                        
+                        // Coverage gap evaluation
                         const isOptimal = cov >= 5000000;
                         const pct = Math.min(100, (cov / 10000000) * 100);
-                        const displayPct = pct < 10 && cov > 0 ? 10 : pct;
+                        const displayPct = pct < 5 && cov > 0 ? 5 : pct;
+                        
+                        const trackBg = isOptimal ? '#d1fae5' : '#fee2e2'; // Light green or light red background (shows gap)
+                        const fillBg = isOptimal ? '#10b981' : '#ef4444'; // Solid green or solid red 
 
                         return (
                             <div key={idx} className="cov-row">
@@ -69,8 +79,8 @@ const InsuranceOutput = ({ summary, policies }) => {
                                 <div className="cov-name">{name}</div>
                                 <div className="cov-amount" style={{ color: cov > 0 ? 'var(--color-1)' : 'var(--text-muted)' }}>{formatCurrency(cov)}</div>
                                 <div style={{ flex: 1 }}>
-                                    <div style={{ width: '100%', height: '8px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden', marginBottom: '4px' }}>
-                                        <div style={{ width: `${displayPct}%`, height: '100%', background: isOptimal ? 'var(--success)' : 'var(--warning)' }}></div>
+                                    <div style={{ width: '100%', height: '8px', background: trackBg, borderRadius: '4px', overflow: 'hidden', marginBottom: '4px' }}>
+                                        <div style={{ width: `${displayPct}%`, height: '100%', background: fillBg, transition: 'width 0.3s ease-in-out' }}></div>
                                     </div>
                                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'right' }}>
                                         {cov === 0 ? 'No Coverage' : (isOptimal ? 'Coverage looks healthy' : 'Potential gap detected')}
@@ -98,12 +108,15 @@ const InsuranceOutput = ({ summary, policies }) => {
                                     <div className="outflow-year">{s.year}</div>
                                     <div className="outflow-val">{formatCurrency(s.totalPremium)} <span style={{fontSize:'1rem', color:'var(--text-muted)'}}>/yr</span></div>
                                     <div className="outflow-breakdown">
-                                        {activePolicies.map(p => (
-                                            <div key={p.id} className="of-row">
-                                                <span style={{overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'120px'}} title={p.company || 'Policy'}>{p.company || 'Policy'}</span> 
-                                                <span style={{color:'var(--text-main)', fontWeight:600}}>{formatCurrency(s.policyPremiums[p.id])}</span>
-                                            </div>
-                                        ))}
+                                        {activePolicies.map(p => {
+                                            const policyDisplayName = p.company || p.planName || `${p.insuredName}'s Policy`;
+                                            return (
+                                                <div key={p.id} className="of-row">
+                                                    <span style={{overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'120px'}} title={policyDisplayName}>{policyDisplayName}</span> 
+                                                    <span style={{color:'var(--text-main)', fontWeight:600}}>{formatCurrency(s.policyPremiums[p.id])}</span>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             );

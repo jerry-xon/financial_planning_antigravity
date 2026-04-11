@@ -160,17 +160,17 @@ const ProtectionGapOutput = ({ results }) => {
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
                     <Info size={24} color="#60a5fa" />
-                    <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Household Protection Target</h2>
+                    <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600, color: '#60a5fa' }}>Household Protection Target</h2>
                 </div>
 
                 <div className="grid" style={{ position: 'relative', zIndex: 1 }}>
                     <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '1.25rem', borderRadius: '12px', backdropFilter: 'blur(10px)' }}>
-                        <label style={{ opacity: 0.8, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '8px' }}>Monthly Expenses</label>
+                        <label style={{ color: '#ffffff', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '8px' }}>Monthly Expenses</label>
                         <strong style={{ display: 'block', fontSize: '1.5rem', fontWeight: 700 }}>{formatCurrency(results.monthlyExpenditure)}</strong>
                         <div style={{ fontSize: '0.75rem', marginTop: '4px', opacity: 0.7 }}>Base for HLV calculation</div>
                     </div>
                     <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '1.25rem', borderRadius: '12px', backdropFilter: 'blur(10px)' }}>
-                        <label style={{ opacity: 0.8, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '8px' }}>HLV Multiplier</label>
+                        <label style={{ color: '#ffffff', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '8px' }}>HLV Multiplier</label>
                         <strong style={{ display: 'block', fontSize: '1.5rem', fontWeight: 700 }}>{results.multiplier}x</strong>
                         <div style={{ fontSize: '0.75rem', marginTop: '4px', opacity: 0.7 }}>Based on age & dependents</div>
                     </div>

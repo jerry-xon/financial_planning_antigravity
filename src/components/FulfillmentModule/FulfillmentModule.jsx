@@ -112,10 +112,10 @@ const FulfillmentModule = ({
 
     const handleAmountChange = (goalId, sourceId, amount, maxAllowed) => {
         const currentGoalMap = goalMappings[goalId] || {};
-        let val = parseFloat(amount);
+        let val = amount === '' ? NaN : Math.round(parseFloat(amount));
         
         if (!isNaN(val) && maxAllowed !== null && val > maxAllowed) {
-            val = maxAllowed;
+            val = Math.round(maxAllowed);
         }
         
         let newGoalMap = { ...currentGoalMap };
@@ -130,7 +130,7 @@ const FulfillmentModule = ({
     const handleQuickAllocate = (goalId, shortfall, availableDataBySource) => {
         if (shortfall <= 0) return;
         
-        let remainingNeed = shortfall;
+        let remainingNeed = Math.round(shortfall);
         const currentGoalMap = { ...(goalMappings[goalId] || {}) };
 
         for (const source of availableSources) {
@@ -139,12 +139,12 @@ const FulfillmentModule = ({
             const ceiling = availableDataBySource[source.id];
             if (ceiling === 0) continue;
 
-            const maxCanTake = ceiling === null ? remainingNeed : ceiling;
+            const maxCanTake = ceiling === null ? remainingNeed : Math.round(ceiling);
             const toTake = Math.min(remainingNeed, maxCanTake);
 
             if (toTake > 0) {
                 const currentAssigned = parseFloat(currentGoalMap[source.id]) || 0;
-                currentGoalMap[source.id] = currentAssigned + toTake;
+                currentGoalMap[source.id] = Math.round(currentAssigned + toTake);
                 remainingNeed -= toTake;
             }
         }
@@ -155,14 +155,14 @@ const FulfillmentModule = ({
 
     return (
         <div className="fulfillment-module fade-in">
-            <div className="card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: 'white', borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+            <div className="card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%)', color: 'white', borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
                     <div style={{ background: 'rgba(255,255,255,0.1)', padding: '10px', borderRadius: '12px' }}>
-                        <Target size={28} className="text-primary" style={{ color: '#38bdf8' }} />
+                        <Target size={28} style={{ color: '#60a5fa' }} />
                     </div>
                     <div>
-                        <h2 style={{ margin: '0 0 0.25rem' }}>Step 11: Goal Fulfillment Roadmap</h2>
-                        <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.95rem' }}>Automate and assign portfolio values to fully fund your targets.</p>
+                        <h2 style={{ margin: '0 0 0.25rem', color: '#ffffff' }}>Step 11: Goal Fulfillment Roadmap</h2>
+                        <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem' }}>Automate and assign portfolio values to fully fund your targets.</p>
                     </div>
                 </div>
             </div>
@@ -220,7 +220,7 @@ const FulfillmentModule = ({
                                                 <div style={{ 
                                                     height: '100%', 
                                                     width: `${groupProgress}%`, 
-                                                    background: isGroupFullyFunded ? 'var(--success)' : 'var(--primary)',
+                                                    background: isGroupFullyFunded ? '#10b981' : 'var(--primary)',
                                                     transition: 'width 0.5s ease'
                                                 }} />
                                             </div>
@@ -246,6 +246,8 @@ const FulfillmentModule = ({
                                             const shortfall = futureValue - totalAssigned;
                                             
                                             const isFullyFunded = Math.round(shortfall) <= 0;
+                                            const isOverfunded = Math.round(shortfall) < 0;
+                                            const isExactlyFunded = Math.round(shortfall) === 0;
 
                                             const eRow = baselineEquityData.find(r => r.year === goalYear);
                                             const remainingEquity = eRow ? eRow.valueAfterWithdrawal : 0;
@@ -256,12 +258,12 @@ const FulfillmentModule = ({
                                             const rRow = baselineRdData.find(r => r.year === goalYear);
 
                                             const availableData = {
-                                                'sip': sRow ? sRow.valueAfterWithdrawal : 0,
-                                                'lumpsum': lRow ? lRow.valueAfterWithdrawal : 0,
-                                                'equity': remainingEquity,
-                                                'fd': fRow ? (fRow.maturityValue || 0) : 0,
-                                                'rd': rRow ? (rRow.maturityValue || 0) : 0,
-                                                'realEstate': parseFloat(assetCategories?.realEstate?.landPlot) || 0,
+                                                'sip': sRow ? Math.round(sRow.valueAfterWithdrawal) : 0,
+                                                'lumpsum': lRow ? Math.round(lRow.valueAfterWithdrawal) : 0,
+                                                'equity': Math.round(remainingEquity),
+                                                'fd': fRow ? Math.round(fRow.maturityValue || 0) : 0,
+                                                'rd': rRow ? Math.round(rRow.maturityValue || 0) : 0,
+                                                'realEstate': Math.round(parseFloat(assetCategories?.realEstate?.landPlot) || 0),
                                                 'loan': null 
                                             };
 
@@ -269,7 +271,7 @@ const FulfillmentModule = ({
                                                 <div key={goal.id} style={{ 
                                                     background: 'var(--bg-card)', 
                                                     borderRadius: '12px', 
-                                                    border: isFullyFunded ? '1px solid var(--success)' : '1px solid var(--border)',
+                                                    border: isFullyFunded ? '1px solid #10b981' : '1px solid var(--border)',
                                                     padding: '1.25rem',
                                                     position: 'relative',
                                                     overflow: 'hidden'
@@ -281,15 +283,15 @@ const FulfillmentModule = ({
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
                                                         <div>
                                                             <div style={{ fontWeight: 600, fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                {goal.name} {isFullyFunded && <Sparkles size={16} className="text-success" />}
+                                                                {goal.name} {isFullyFunded && <Sparkles size={16} color="#10b981" />}
                                                             </div>
                                                             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>Target Year: {goalYear} | Target: <strong style={{ color: 'var(--text-main)' }}>{formatCurrency(futureValue)}</strong></div>
                                                         </div>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                             <div style={{ textAlign: 'right' }}>
-                                                                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>{isFullyFunded ? 'Overfunded by' : 'Shortfall'}</div>
-                                                                <div style={{ fontWeight: 800, fontSize: '1.1rem', color: isFullyFunded ? 'var(--success)' : '#ef4444' }}>
-                                                                    {isFullyFunded ? formatCurrency(Math.abs(shortfall)) : formatCurrency(shortfall)}
+                                                                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>{isOverfunded ? 'Overfunded by' : (isExactlyFunded ? 'Status' : 'Shortfall')}</div>
+                                                                <div style={{ fontWeight: 800, fontSize: '1.1rem', color: isFullyFunded ? '#10b981' : '#ef4444' }}>
+                                                                    {isOverfunded ? formatCurrency(Math.abs(shortfall)) : (isExactlyFunded ? 'Fully Funded' : formatCurrency(shortfall))}
                                                                 </div>
                                                             </div>
                                                             {!isFullyFunded && (

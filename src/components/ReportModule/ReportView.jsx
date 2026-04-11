@@ -36,7 +36,7 @@ const ReportView = ({
     const cashFlowResults = calculateCashFlow(income, expenseCategories);
     const assetResults = calculateNetWorth(assetCategories, liabilityCategories);
 
-    const validGoals = goals.filter(g => g.yearsToGoal && g.presentValue);
+    const validGoals = goals.filter(g => parseFloat(g.futureValue || g.presentValue || 0) > 0);
     const goalResults = categorizeGoals(validGoals);
     const insuranceSummary = calculateYearlyInsuranceSummary(policies);
     const policyColumns = getPolicyColumns(policies);
@@ -85,21 +85,21 @@ const ReportView = ({
                     </div>
                 </div>
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-card)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                    <button onClick={() => setIsDashboardMode(true)} style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: isDashboardMode ? 'var(--primary)' : 'transparent', color: isDashboardMode ? 'white' : 'var(--text-main)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+        <div className="report-view max-w-7xl mx-auto" style={{ padding: '0 2rem 2rem 2rem', animation: 'fadeIn 0.5s ease-out' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem', position: 'sticky', top: 0, zIndex: 9999, background: 'var(--bg-main)', padding: '1.5rem 0', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-card)', padding: '6px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                    <button onClick={() => setIsDashboardMode(true)} style={{ padding: '0.6rem 1.25rem', borderRadius: '6px', border: 'none', background: isDashboardMode ? 'var(--primary)' : 'transparent', color: isDashboardMode ? 'white' : 'var(--text-main)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem' }}>
                         Overview Dashboard
                     </button>
-                    <button onClick={() => setIsDashboardMode(false)} style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: !isDashboardMode ? 'var(--primary)' : 'transparent', color: !isDashboardMode ? 'white' : 'var(--text-main)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+                    <button onClick={() => setIsDashboardMode(false)} style={{ padding: '0.6rem 1.25rem', borderRadius: '6px', border: 'none', background: !isDashboardMode ? 'var(--primary)' : 'transparent', color: !isDashboardMode ? 'white' : 'var(--text-main)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem' }}>
                         Detailed Report
                     </button>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button className="btn btn-secondary" onClick={onBack} style={{ background: '#fff', border: '1px solid var(--border)', color: 'var(--text-main)', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}>
+                    <button className="btn btn-secondary" onClick={onBack} style={{ background: '#fff', border: '1px solid var(--border)', color: 'var(--text-main)', padding: '0.6rem 1.25rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
                         Back
                     </button>
-                    <button className="btn btn-primary" onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', background: 'var(--primary)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer' }}>
+                    <button className="btn btn-primary" onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', background: 'var(--primary)', color: 'white', border: 'none', padding: '0.6rem 1.25rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
                         <Printer size={18} style={{ marginRight: '8px' }} /> Export PDF
                     </button>
                 </div>
@@ -132,12 +132,18 @@ const ReportView = ({
                     <div className="trend-badge up" style={{ background: '#f1f5f9', color: 'var(--text-muted)', fontSize: '0.8rem', alignSelf: 'flex-start', marginTop: '1rem' }}>Target Set</div>
                 </div>
                 <div className="card hoverable">
-                    <div className="stat-icon" style={{background: '#ede9fe', color: 'var(--color-3)'}}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <div className="stat-icon" style={{background: '#fee2e2', color: 'var(--destructive)'}}>
+                        <Shield size={24} />
                     </div>
-                    <div className="stat-val">{policies.some(p => p.type?.toLowerCase().includes('term')) ? 'Yes' : 'No'}</div>
-                    <div className="stat-label" style={{ marginBottom: 'auto' }}>Term Life Cover Valid</div>
-                    <div className="trend-badge up" style={{ background: '#dcfce7', color: 'var(--success)', fontSize: '0.8rem', alignSelf: 'flex-start', marginTop: '1rem', display: 'flex', alignItems: 'center' }}><CheckCircle size={12} style={{marginRight:'4px'}}/> Secured</div>
+                    <div className="stat-val" style={{ color: (protectionGapResults.self?.gap > 0) ? 'var(--destructive)' : 'var(--success)', fontSize: '1.5rem' }}>
+                        {(protectionGapResults.self?.gap > 0) ? formatCurrency(protectionGapResults.self.gap) : '₹0'}
+                    </div>
+                    <div className="stat-label" style={{ marginBottom: 'auto' }}>Primary Cover Shortfall</div>
+                    {(protectionGapResults.self?.gap > 0) ? (
+                        <div className="trend-badge down" style={{ background: '#fef2f2', color: 'var(--destructive)', fontSize: '0.8rem', alignSelf: 'flex-start', marginTop: '1rem', display: 'flex', alignItems: 'center' }}><AlertCircle size={12} style={{marginRight:'4px'}}/> Action Required</div>
+                    ) : (
+                        <div className="trend-badge up" style={{ background: '#dcfce7', color: 'var(--success)', fontSize: '0.8rem', alignSelf: 'flex-start', marginTop: '1rem', display: 'flex', alignItems: 'center' }}><CheckCircle size={12} style={{marginRight:'4px'}}/> Fully Secured</div>
+                    )}
                 </div>
             </div>
 
@@ -154,13 +160,19 @@ const ReportView = ({
                                     <span style={{ color: 'var(--success)' }}><span className="leg-dot" style={{ background: 'var(--success)' }}></span>Surplus ({Math.max(0, Math.round((cashFlowResults.surplus / cashFlowResults.totalIncome) * 100))}%)</span>
                                 </div>
                                 <div className="h-bar-track">
-                                    <div className="h-bar-seg" style={{ width: `${Math.max(0, (cashFlowResults.surplus / cashFlowResults.totalIncome) * 100)}%`, background: 'var(--success)' }}></div>
-                                    <div className="h-bar-seg" style={{ width: `${(cashFlowResults.emiRatio || 0)}%`, background: 'var(--warning)' }}></div>
-                                    <div className="h-bar-seg" style={{ width: `${(cashFlowResults.householdRatio || 0)}%`, background: 'var(--destructive)' }}></div>
+                                    <div className="h-bar-seg" style={{ width: `${Math.max(0, (cashFlowResults.surplus / cashFlowResults.totalIncome) * 100)}%`, background: '#10b981' }}>
+                                        {Math.round((cashFlowResults.surplus / cashFlowResults.totalIncome) * 100) > 5 ? `${Math.round((cashFlowResults.surplus / cashFlowResults.totalIncome) * 100)}%` : ''}
+                                    </div>
+                                    <div className="h-bar-seg" style={{ width: `${(cashFlowResults.emiRatio || 0)}%`, background: '#f59e0b' }}>
+                                        {Math.round(cashFlowResults.emiRatio || 0) > 5 ? `${Math.round(cashFlowResults.emiRatio || 0)}%` : ''}
+                                    </div>
+                                    <div className="h-bar-seg" style={{ width: `${(cashFlowResults.householdRatio || 0)}%`, background: '#ef4444' }}>
+                                        {Math.round(cashFlowResults.householdRatio || 0) > 5 ? `${Math.round(cashFlowResults.householdRatio || 0)}%` : ''}
+                                    </div>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                                    <span><span className="leg-dot" style={{ background: 'var(--warning)' }}></span> EMI ({Math.round(cashFlowResults.emiRatio || 0)}%)</span>
-                                    <span><span className="leg-dot" style={{ background: 'var(--destructive)' }}></span> Household ({Math.round(cashFlowResults.householdRatio || 0)}%)</span>
+                                    <span><span className="leg-dot" style={{ background: '#f59e0b' }}></span> EMI ({Math.round(cashFlowResults.emiRatio || 0)}%)</span>
+                                    <span><span className="leg-dot" style={{ background: '#ef4444' }}></span> Household ({Math.round(cashFlowResults.householdRatio || 0)}%)</span>
                                 </div>
                             </div>
                         ) : (
@@ -181,35 +193,38 @@ const ReportView = ({
                         <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
                             <h3 className="section-header" style={{ fontSize: '1.05rem', marginBottom: '1.5rem' }}>Asset Allocation</h3>
                             {assetResults.totalAssets > 0 ? (() => {
-                                const equityTotal = (parseFloat(assetCategories.investments?.equity||0) + parseFloat(assetCategories.investments?.mutualFunds||0));
-                                const debtTotal = (parseFloat(assetCategories.investments?.fixedDeposit||0) + parseFloat(assetCategories.cash?.savings||0) + parseFloat(assetCategories.retirement?.epf||0) + parseFloat(assetCategories.retirement?.ppf||0));
                                 const realEstateTotal = parseFloat(assetCategories.realEstate?.residential||0) + parseFloat(assetCategories.realEstate?.secondProperty||0) + parseFloat(assetCategories.realEstate?.landPlot||0);
-                                const otherTotal = assetResults.totalAssets - equityTotal - debtTotal - realEstateTotal;
+                                const equityTotal = (parseFloat(assetCategories.investments?.equity||0) + parseFloat(assetCategories.investments?.mutualFunds||0) + parseFloat(assetCategories.equity?.stocks||0) + parseFloat(assetCategories.equity?.mfEquity||0));
+                                const goldTotal = parseFloat(assetCategories.physical?.gold||0) || parseFloat(assetCategories.commodities?.gold||0) || parseFloat(assetCategories.other?.gold||0) || 0;
+                                const otherTotal = Math.max(0, assetResults.totalAssets - realEstateTotal - equityTotal - goldTotal);
                                 
-                                const equityPct = Math.round((equityTotal / assetResults.totalAssets) * 100);
-                                const debtPct = Math.round((debtTotal / assetResults.totalAssets) * 100);
                                 const rePct = Math.round((realEstateTotal / assetResults.totalAssets) * 100);
+                                const equityPct = Math.round((equityTotal / assetResults.totalAssets) * 100);
+                                const goldPct = Math.round((goldTotal / assetResults.totalAssets) * 100);
+                                const otherPct = Math.round((otherTotal / assetResults.totalAssets) * 100);
                                 
                                 return (
                                     <>
-                                        <div className="donut-mini" style={{background: `conic-gradient(var(--color-2) 0% ${equityPct}%, var(--warning) ${equityPct}% ${equityPct + debtPct}%, var(--color-3) ${equityPct + debtPct}% 100%)`}}>
-                                            <div className="donut-hole"><span style={{fontSize:'1.1rem', fontWeight:800, color:'var(--text-main)'}}>{equityPct}%</span><span style={{fontSize:'0.65rem', color:'var(--text-muted)', textTransform:'uppercase'}}>Equity</span></div>
+                                        <div className="donut-mini" style={{background: `conic-gradient(#6366f1 0% ${rePct}%, #8b5cf6 ${rePct}% ${rePct + equityPct}%, #f59e0b ${rePct + equityPct}% ${rePct + equityPct + goldPct}%, #94a3b8 ${rePct + equityPct + goldPct}% 100%)`}}>
+                                            <div className="donut-hole"><span style={{fontSize:'1.1rem', fontWeight:800, color:'var(--text-main)'}}>{rePct}%</span><span style={{fontSize:'0.65rem', color:'var(--text-muted)', textTransform:'uppercase'}}>Real Est</span></div>
                                         </div>
                                         <div className="legend-mini">
                                             <div className="leg-row">
-                                                <span className="text-muted"><span className="leg-dot" style={{ background: 'var(--color-2)' }}></span> Equity</span>
+                                                <span className="text-muted"><span className="leg-dot" style={{ background: '#6366f1' }}></span> Real Estate</span>
+                                                <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{rePct}%</span>
+                                            </div>
+                                            <div className="leg-row">
+                                                <span className="text-muted"><span className="leg-dot" style={{ background: '#8b5cf6' }}></span> Equity</span>
                                                 <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{equityPct}%</span>
                                             </div>
                                             <div className="leg-row">
-                                                <span className="text-muted"><span className="leg-dot" style={{ background: 'var(--warning)' }}></span> Debt</span>
-                                                <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{debtPct}%</span>
+                                                <span className="text-muted"><span className="leg-dot" style={{ background: '#f59e0b' }}></span> Gold</span>
+                                                <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{goldPct}%</span>
                                             </div>
-                                            {(rePct > 0 || otherTotal > 0) && (
-                                                <div className="leg-row">
-                                                    <span className="text-muted"><span className="leg-dot" style={{ background: 'var(--color-3)' }}></span> Others</span>
-                                                    <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{100 - equityPct - debtPct}%</span>
-                                                </div>
-                                            )}
+                                            <div className="leg-row">
+                                                <span className="text-muted"><span className="leg-dot" style={{ background: '#94a3b8' }}></span> Others</span>
+                                                <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{otherPct}%</span>
+                                            </div>
                                         </div>
                                     </>
                                 );
@@ -240,7 +255,7 @@ const ReportView = ({
                                         <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Target Year: {g.targetYear}</p>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
                                             <span style={{ fontWeight: 600 }}>{formatCurrency(totalAssigned)} <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>Assigned</span></span>
-                                            <span style={{ fontWeight: 600, color: 'var(--color-1)' }}>{formatCurrency(g.futureCost)} <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>Target</span></span>
+                                            <span style={{ fontWeight: 600, color: 'var(--color-1)' }}>{formatCurrency(g.futureCost || g.presentValue || 0)} <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>Target</span></span>
                                         </div>
                                     </div>
                                 </div>
@@ -264,8 +279,10 @@ const ReportView = ({
                             const roleBg = isSelf ? 'rgba(0,169,242,0.1)' : (isChild ? 'rgba(245, 158, 11,0.1)' : 'rgba(120, 124, 254,0.1)');
                             const roleColor = isSelf ? 'var(--color-2)' : (isChild ? 'var(--warning)' : 'var(--color-3)');
                             
-                            const maxAgeText = isChild ? "P.G.: 22" : `Retires: ${m.retirementYear || 60}`;
-                            const pct = isChild ? Math.min(100, (m.age / 22) * 100) : Math.min(100, (m.age / (m.retirementYear || 60)) * 100);
+                            const targetAge = isChild ? 22 : (m.retirementAge || 60);
+                            const yearsLeft = Math.max(0, targetAge - m.age);
+                            const maxAgeText = isChild ? `Yrs to Independence: ${yearsLeft}` : `Working Yrs Left: ${yearsLeft}`;
+                            const pct = Math.min(100, (m.age / targetAge) * 100);
                             
                             return (
                                 <div key={i} className="card" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -284,12 +301,39 @@ const ReportView = ({
                         })}
                     </div>
                 </div>
+                </div>
                 </>
             ) : (
-                <div className="report-sections">
-                {/* 2. Cash Flow Summary */}
-                <section className="report-section card" style={{ marginTop: '1.5rem' }}>
-                    <h3>2. Income - Expenses - Surplus Analysis</h3>
+                <div className="report-layout" style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+                    
+                    <aside className="quick-nav-sidebar" style={{ position: 'sticky', top: '90px', width: '60px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '30px', padding: '1rem 0', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
+                        {[
+                            {id: 1, title: 'Surplus Analysis'},
+                            {id: 2, title: 'Protection Gap'},
+                            {id: 3, title: 'Contingency Fund'},
+                            {id: 4, title: 'Net Worth'},
+                            {id: 5, title: 'Life Goals'},
+                            {id: 6, title: 'Insurance Summary', cond: policies.length > 0},
+                            {id: 7, title: 'Financial Adjustments', cond: journeyAdjustments && journeyAdjustments.length > 0},
+                            {id: 8, title: 'Investment Strategy', cond: allocations.length > 0},
+                            {id: 9, title: 'Goal Fulfillment', cond: validGoals.length > 0},
+                            {id: 10, title: 'Income Tax'},
+                            {id: 11, title: 'Cash Flow Projections', cond: projections && projections.length > 0},
+                            {id: 12, title: 'Net Worth Projections'},
+                            {id: 13, title: 'Disclaimer'}
+                        ].filter(item => item.cond !== false).map(item => (
+                            <a key={item.id} href={`#sec-${item.id}`} title={item.title} style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-main)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s', border: '1px solid var(--border)' }}
+                               onMouseOver={e => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.color = 'white'; }}
+                               onMouseOut={e => { e.currentTarget.style.background = 'var(--bg-main)'; e.currentTarget.style.color = 'var(--text-main)'; }}>
+                                {item.id}
+                            </a>
+                        ))}
+                    </aside>
+
+                <div className="report-sections" style={{ flex: 1, minWidth: 0 }}>
+                {/* 1. Cash Flow Summary */}
+                <section id="sec-1" className="report-section card" style={{ marginTop: '1.5rem' }}>
+                    <h3>1. Income - Expenses - Surplus Analysis</h3>
                     <div className="grid">
                         <div className="summary-box">
                             <label>Total Monthly Income</label>
@@ -339,9 +383,9 @@ const ReportView = ({
                     </div>
                 </section>
 
-                {/* 3. Protection Gap Analysis */}
-                <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
-                    <h3>3. Protection Gap Analysis</h3>
+                {/* 2. Protection Gap Analysis */}
+                <section id="sec-2" className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                    <h3>2. Protection Gap Analysis</h3>
                     <FinancialPyramid 
                         isReadOnlyMode={true}
                         expenseCategories={expenseCategories}
@@ -359,9 +403,9 @@ const ReportView = ({
                     </div>
                 </section>
 
-                {/* 4. Contingency Fund Planning */}
-                <section className="report-section card" style={{ marginTop: '1.5rem' }}>
-                    <h3>4. Contingency Fund Planning</h3>
+                {/* 3. Contingency Fund Planning */}
+                <section id="sec-3" className="report-section card" style={{ marginTop: '1.5rem' }}>
+                    <h3>3. Contingency Fund Planning</h3>
                     <div style={{ padding: '1.5rem', background: 'var(--bg-main)', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                             <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Allocated Contingency Fund</div>
@@ -378,9 +422,9 @@ const ReportView = ({
                     </div>
                 </section>
 
-                {/* 5. Net Worth Statement */}
-                <section className="report-section card" style={{ marginTop: '1.5rem' }}>
-                    <h3>5. Net Worth Statement</h3>
+                {/* 4. Net Worth Statement */}
+                <section id="sec-4" className="report-section card" style={{ marginTop: '1.5rem' }}>
+                    <h3>4. Net Worth Statement</h3>
                     <div className="grid">
                         <div>
                             <h4>Liabilities</h4>
@@ -413,9 +457,9 @@ const ReportView = ({
                     </div>
                 </section>
 
-                {/* 6. Life Goals */}
-                <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
-                    <h3>6. Life Goals Projections</h3>
+                {/* 5. Life Goals */}
+                <section id="sec-5" className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                    <h3>5. Life Goals Projections</h3>
                     {['short', 'medium', 'long'].map(key => (
                         <div key={key} style={{ marginBottom: '1.5rem' }}>
                             <h4 style={{ textTransform: 'capitalize' }}>{key} Term Goals</h4>
@@ -445,10 +489,10 @@ const ReportView = ({
                     ))}
                 </section>
                 
-                {/* 7. Insurance & Protection Summary */}
+                {/* 6. Insurance & Protection Summary */}
                 {policies.length > 0 && (
-                    <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
-                        <h3>7. Insurance & Protection Summary</h3>
+                    <section id="sec-6" className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                        <h3>6. Insurance & Protection Summary</h3>
                         
                         <div style={{ marginBottom: '2rem' }}>
                             <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -514,10 +558,10 @@ const ReportView = ({
                     </section>
                 )}
 
-                {/* 8. Planned Future Financial Adjustments */}
+                {/* 7. Planned Future Financial Adjustments */}
                 {journeyAdjustments && journeyAdjustments.length > 0 && (
-                    <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
-                        <h3>8. Planned Future Financial Adjustments</h3>
+                    <section id="sec-7" className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                        <h3>7. Planned Future Financial Adjustments</h3>
                         <div style={{ overflowX: 'auto' }}>
                             <table className="report-table">
                                 <thead>
@@ -549,10 +593,10 @@ const ReportView = ({
                     </section>
                 )}
 
-                {/* 9. Investment Strategy */}
+                {/* 8. Investment Strategy */}
                 {allocations.length > 0 && (
-                    <section className="report-section card" style={{ marginTop: '1.5rem' }}>
-                        <h3>9. Planned Investment Strategy</h3>
+                    <section id="sec-8" className="report-section card" style={{ marginTop: '1.5rem' }}>
+                        <h3>8. Planned Investment Strategy</h3>
                         <p className="text-muted" style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>
                             Based on your investible surplus, the following investments are planned to achieve your financial objectives.
                         </p>
@@ -581,10 +625,10 @@ const ReportView = ({
                     </section>
                 )}
 
-                {/* 10. Goal Fulfillment Roadmap */}
+                {/* 9. Goal Fulfillment Roadmap */}
                 {validGoals.length > 0 && (
-                    <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
-                        <h3>10. Goal Fulfillment Roadmap</h3>
+                    <section id="sec-9" className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                        <h3>9. Goal Fulfillment Roadmap</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             {validGoals.map((g, i) => {
                                 const mappingDict = goalMappings[g.id] || {};
@@ -701,8 +745,8 @@ const ReportView = ({
                     </section>
                 )}
 
-                {/* 11. Income tax */}
-                <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                {/* 10. Income tax */}
+                <section id="sec-10" className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
                     <IncomeTaxModule 
                         familyMembers={familyMembers}
                         income={income}
@@ -710,17 +754,17 @@ const ReportView = ({
                     />
                 </section>
 
-                {/* 12. Inflow - Outflow till Retirement */}
+                {/* 11. Inflow - Outflow till Retirement */}
                 {projections && projections.length > 0 && (
-                    <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
-                        <h3>12. Inflow - Outflow till Retirement</h3>
+                    <section id="sec-11" className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                        <h3>11. Inflow - Outflow till Retirement</h3>
                         <JourneyTable projections={projections} />
                     </section>
                 )}
 
-                {/* 13. Net Worth till Retirement */}
-                <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
-                    <h3>13. Net Worth till Retirement</h3>
+                {/* 12. Net Worth till Retirement */}
+                <section id="sec-12" className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
+                    <h3>12. Net Worth till Retirement</h3>
                     <GrowthModule 
                         isReadOnlyMode={true}
                         familyMembers={familyMembers}
@@ -735,8 +779,8 @@ const ReportView = ({
                     />
                 </section>
 
-                {/* 14. Disclaimer */}
-                <section className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                {/* 13. Disclaimer */}
+                <section id="sec-13" className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                     <h3 style={{ borderBottom: 'none', marginBottom: '1rem', color: 'var(--text-main)' }}>Disclaimer</h3>
                     <p style={{ marginBottom: '0.5rem' }}>This financial plan has been prepared by Finbrella based on the information provided by you. The projections, assumptions, and recommendations are based on current data, historical trends, and standard financial models.</p>
                     <p style={{ marginBottom: '0.5rem' }}>All future projections (including returns, inflation, and goal outcomes) are estimates only and may vary due to market movements, economic changes, policy changes, or other unforeseen factors.</p>
@@ -747,6 +791,7 @@ const ReportView = ({
                     <p style={{ marginBottom: '0' }}>Finbrella shall not be held liable for any decisions taken based on this report.</p>
                 </section>
 
+                </div>
             </div>
             )}
 

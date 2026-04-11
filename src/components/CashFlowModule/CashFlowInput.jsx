@@ -310,14 +310,14 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                                         });
                                                     }}
                                                     style={{ 
-                                                        minWidth: '80px',
+                                                        minWidth: '100px',
                                                         width: '100%', 
-                                                        padding: '0.5rem', 
+                                                        padding: '0.5rem 0.5rem 0.5rem 2rem', 
                                                         background: isLocked ? 'var(--bg-main)' : 'var(--bg-card)', 
                                                         border: isLocked ? 'none' : '1px solid var(--border)', 
                                                         borderRadius: '4px',
                                                         color: isLocked ? 'var(--text-muted)' : 'var(--text-main)',
-                                                        textAlign: 'center',
+                                                        textAlign: 'left',
                                                         fontSize: '0.85rem',
                                                         cursor: isLocked ? 'not-allowed' : 'text'
                                                     }} 
@@ -346,14 +346,14 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                                         });
                                                     }}
                                                     style={{ 
-                                                        minWidth: '80px',
+                                                        minWidth: '100px',
                                                         width: '100%', 
-                                                        padding: '0.5rem', 
+                                                        padding: '0.5rem 0.5rem 0.5rem 2rem', 
                                                         background: isLocked ? 'var(--bg-main)' : 'var(--bg-card)', 
                                                         border: isLocked ? 'none' : '1px solid var(--border)', 
                                                         borderRadius: '4px',
                                                         color: isLocked ? 'var(--text-muted)' : 'var(--text-main)',
-                                                        textAlign: 'center',
+                                                        textAlign: 'left',
                                                         fontSize: '0.85rem',
                                                         cursor: isLocked ? 'not-allowed' : 'text'
                                                     }} 
@@ -461,9 +461,22 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                         <CurrencyInput 
                                             value={expenseCategories.insurance[ins.key].value} 
                                             onChange={(e) => handleInsuranceChange(ins.key, 'value', e.target.value)} 
-                                            
                                             placeholder="0" 
                                         />
+                                        {ins.info && (
+                                            <div style={{ 
+                                                fontWeight: 500, 
+                                                fontSize: '0.85rem', 
+                                                color: 'var(--primary)', 
+                                                marginTop: '0.5rem',
+                                                background: 'rgba(37, 99, 235, 0.05)',
+                                                padding: '0.5rem 0.75rem',
+                                                borderRadius: '6px',
+                                                borderLeft: '4px solid var(--primary)'
+                                            }}>
+                                                {ins.info}
+                                            </div>
+                                        )}
                                     </div>
                                     
                                     {['health', 'car', 'bike'].includes(ins.key) && (
@@ -508,20 +521,6 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                         </div>
                                     </div>
                                 </div>
-                                {ins.info && (
-                                    <div style={{ 
-                                        fontWeight: 800, 
-                                        fontSize: '1rem', 
-                                        color: 'var(--primary)', 
-                                        marginTop: '0.25rem',
-                                        background: 'rgba(37, 99, 235, 0.05)',
-                                        padding: '0.5rem 1rem',
-                                        borderRadius: '6px',
-                                        borderLeft: '4px solid var(--primary)'
-                                    }}>
-                                        {ins.info}
-                                    </div>
-                                )}
                             </div>
                         ))}
                     </div>

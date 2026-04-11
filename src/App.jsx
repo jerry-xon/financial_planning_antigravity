@@ -58,6 +58,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   // State for tracking the current navigation step (1-12)
   const [currentStep, setCurrentStep] = useState(1);
@@ -739,7 +740,10 @@ function App() {
                           style={{ opacity: isLocked ? 0.4 : 1 }}
                         >
                           {isCompleted && !isActive ? (
-                            <CheckCircle2 size={20} color="var(--emerald-500)" />
+                            <div style={{ position: 'relative' }}>
+                              <mod.icon size={20} />
+                              <CheckCircle2 size={10} color="var(--emerald-500)" style={{ position: 'absolute', bottom: -2, right: -2, background: 'var(--bg-card)', borderRadius: '50%' }} />
+                            </div>
                           ) : (
                             <mod.icon size={20} />
                           )}
@@ -795,7 +799,7 @@ function App() {
         {/* Main Content Area */}
         <div className="main-content-wrapper fade-in">
           <header style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem', marginRight: '3rem' }}>
               {saving ? (
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -807,14 +811,56 @@ function App() {
                   Saved at {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               ) : null}
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', background: 'var(--border)', padding: '2px 8px', borderRadius: '4px' }}>PWA v1.2</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
-                  <User size={16} /> {user?.email}
-                </span>
-                <button className="btn" onClick={handleLogout} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: '1px solid var(--border)' }}>
-                  <LogOut size={16} /> Logout
+              <div style={{ position: 'relative' }}>
+                <button 
+                  className="profile-icon-btn" 
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  style={{ 
+                    background: 'var(--primary-light)', 
+                    border: '1px solid var(--primary-light)', 
+                    borderRadius: '50%', 
+                    width: '40px', 
+                    height: '40px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    cursor: 'pointer',
+                    color: 'var(--primary)',
+                    marginLeft: '1rem'
+                  }}
+                >
+                  <User size={20} />
                 </button>
+                {showProfileMenu && (
+                  <>
+                    <div 
+                      style={{ position: 'fixed', inset: 0, zIndex: 1040 }} 
+                      onClick={() => setShowProfileMenu(false)}
+                    />
+                    <div className="fade-in" style={{
+                      position: 'absolute',
+                      top: '100%',
+                      right: 0,
+                      marginTop: '0.5rem',
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '12px',
+                      boxShadow: 'var(--shadow-md)',
+                      padding: '1rem',
+                      minWidth: '220px',
+                      zIndex: 1050
+                    }}>
+                      <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+                        <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <User size={14} /> {user?.email || 'User'}
+                        </p>
+                      </div>
+                      <button className="btn" onClick={handleLogout} style={{ width: '100%', padding: '0.6rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'var(--bg-main)', color: 'var(--text-main)', border: '1px solid var(--border)', borderRadius: '6px' }}>
+                        <LogOut size={16} /> Logout
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </header>

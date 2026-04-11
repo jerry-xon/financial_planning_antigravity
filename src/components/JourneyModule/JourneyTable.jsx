@@ -272,9 +272,6 @@ const JourneyTable = ({ projections }) => {
                 .zebra-row:hover {
                     background: rgba(37, 99, 235, 0.05) !important;
                 }
-                .zebra-row:hover td:first-child {
-                    background: rgba(37, 99, 235, 0.05) !important;
-                }
 
                 .outflow-btn {
                     background: rgba(255,255,255,0.05);
