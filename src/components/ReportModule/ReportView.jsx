@@ -51,7 +51,26 @@ const ReportView = ({
     };
 
     return (
-        <div className="report-view fade-in">
+        <div className="report-view max-w-7xl mx-auto" style={{ padding: '0 2rem 2rem 2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem', position: 'sticky', top: 0, zIndex: 9999, background: 'var(--bg-main)', padding: '1.5rem 0 1rem 0', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-card)', padding: '6px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                    <button onClick={() => setIsDashboardMode(true)} style={{ padding: '0.6rem 1.25rem', borderRadius: '6px', border: 'none', background: isDashboardMode ? 'var(--primary)' : 'transparent', color: isDashboardMode ? 'white' : 'var(--text-main)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem' }}>
+                        Overview Dashboard
+                    </button>
+                    <button onClick={() => setIsDashboardMode(false)} style={{ padding: '0.6rem 1.25rem', borderRadius: '6px', border: 'none', background: !isDashboardMode ? 'var(--primary)' : 'transparent', color: !isDashboardMode ? 'white' : 'var(--text-main)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem' }}>
+                        Detailed Report
+                    </button>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button className="btn btn-secondary" onClick={onBack} style={{ background: '#fff', border: '1px solid var(--border)', color: 'var(--text-main)', padding: '0.6rem 1.25rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+                        Back
+                    </button>
+                    <button className="btn btn-primary" onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', background: 'var(--primary)', color: 'white', border: 'none', padding: '0.6rem 1.25rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+                        <Printer size={18} style={{ marginRight: '8px' }} /> Export PDF
+                    </button>
+                </div>
+            </div>
+
             {isDashboardMode ? (
                 <>
                         {/* New Premium Dashboard Header Area (Module 12) */}
@@ -83,25 +102,6 @@ const ReportView = ({
                             <span className="kpi-val">{formatCurrency(contingencyFund || 0)}</span>
                         </div>
                     </div>
-                </div>
-            </div>
-        <div className="report-view max-w-7xl mx-auto" style={{ padding: '0 2rem 2rem 2rem', animation: 'fadeIn 0.5s ease-out' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem', position: 'sticky', top: 0, zIndex: 9999, background: 'var(--bg-main)', padding: '1.5rem 0', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-card)', padding: '6px', borderRadius: '10px', border: '1px solid var(--border)' }}>
-                    <button onClick={() => setIsDashboardMode(true)} style={{ padding: '0.6rem 1.25rem', borderRadius: '6px', border: 'none', background: isDashboardMode ? 'var(--primary)' : 'transparent', color: isDashboardMode ? 'white' : 'var(--text-main)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem' }}>
-                        Overview Dashboard
-                    </button>
-                    <button onClick={() => setIsDashboardMode(false)} style={{ padding: '0.6rem 1.25rem', borderRadius: '6px', border: 'none', background: !isDashboardMode ? 'var(--primary)' : 'transparent', color: !isDashboardMode ? 'white' : 'var(--text-main)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem' }}>
-                        Detailed Report
-                    </button>
-                </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button className="btn btn-secondary" onClick={onBack} style={{ background: '#fff', border: '1px solid var(--border)', color: 'var(--text-main)', padding: '0.6rem 1.25rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
-                        Back
-                    </button>
-                    <button className="btn btn-primary" onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', background: 'var(--primary)', color: 'white', border: 'none', padding: '0.6rem 1.25rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
-                        <Printer size={18} style={{ marginRight: '8px' }} /> Export PDF
-                    </button>
                 </div>
             </div>
 
@@ -300,7 +300,6 @@ const ReportView = ({
                             );
                         })}
                     </div>
-                </div>
                 </div>
                 </>
             ) : (
