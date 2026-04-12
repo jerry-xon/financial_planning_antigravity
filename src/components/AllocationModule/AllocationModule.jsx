@@ -9,6 +9,7 @@ const AllocationModule = ({
     allocations, 
     setAllocations, 
     projections = [],
+    planStartMonth = 0,
     onNext, 
     onBack 
 }) => {
@@ -18,11 +19,31 @@ const AllocationModule = ({
     const [hasAcknowledgedDeficit, setHasAcknowledgedDeficit] = useState(false);
     const [viewMode, setViewMode] = useState('10');
 
+    const adjustedProjections = useMemo(() => {
+        return projections.map((p, idx) => {
+            if (idx === 0) {
+                const remainingMonths = Math.max(1, 12 - planStartMonth);
+                const proratedSurplus = (p.netInvestibleSurplus / 12) * remainingMonths;
+                const proratedUnallocated = proratedSurplus - (p.yearAllocationsTotal || 0);
+                return {
+                    ...p,
+                    netInvestibleSurplus: proratedSurplus,
+                    unallocatedSurplus: proratedUnallocated,
+                    yearHasDeficit: proratedUnallocated < 0 ? true : p.yearHasDeficit
+                };
+            }
+            return p;
+        });
+    }, [projections, planStartMonth]);
+
+    const proratedYear1Surplus = adjustedProjections[0]?.netInvestibleSurplus || 0;
+    const remainingMonths = Math.max(1, 12 - planStartMonth);
+
     useEffect(() => {
-        if (!projections.some(p => p.yearHasDeficit)) {
+        if (!adjustedProjections.some(p => p.yearHasDeficit)) {
             setHasAcknowledgedDeficit(false);
         }
-    }, [projections]);
+    }, [adjustedProjections]);
 
     const toggleCollapse = (id) => {
         const newCollapsed = new Set(collapsedIds);
@@ -151,7 +172,7 @@ const AllocationModule = ({
     const hasDuration = (type) => isRecurring(type) || type === 'Fixed Deposit';
 
     const deficitInfo = useMemo(() => {
-        const deficitYear = projections.find(p => p.yearHasDeficit);
+        const deficitYear = adjustedProjections.find(p => p.yearHasDeficit);
         if (deficitYear) {
             const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             return {
@@ -160,7 +181,7 @@ const AllocationModule = ({
             };
         }
         return null;
-    }, [projections]);
+    }, [adjustedProjections]);
 
     return (
         <div className="allocation-module fade-in">
@@ -235,7 +256,7 @@ const AllocationModule = ({
                 </div>
 
                 <p className="text-muted" style={{ marginBottom: '2rem' }}>
-                    Allocate your annual Net Investible Surplus into various investment avenues.
+                    Allocate your Adjusted Net Investible Surplus for Year 1 into various investment avenues.
                 </p>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
@@ -505,7 +526,7 @@ const AllocationModule = ({
                         marginBottom: '3rem'
                     }}>
                         <Wallet size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                        <p>No investments planned yet. Start allocating your {formatCurrency(netInvestibleSurplus)} annual surplus.</p>
+                        <p>No investments planned yet. Start allocating your {formatCurrency(proratedYear1Surplus)} surplus.</p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
                             {['SIP', 'Lumpsum', 'Life Insurance', 'Gold', 'PPF', 'NPS', 'Direct Equity & ETFs', 'FD', 'RD', 'Other Investment'].map(type => (
                                 <button key={type} className="btn btn-secondary" onClick={() => addAllocation(type === 'FD' ? 'Fixed Deposit' : (type === 'RD' ? 'Recurring Deposit' : type))} style={{ borderStyle: 'solid', background: 'var(--bg-main)', padding: '0.5rem 1rem' }}>
@@ -520,7 +541,12 @@ const AllocationModule = ({
             {/* Timeline Table */}
             <div style={{ marginBottom: '2.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-                        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>Yearly Allocation Timeline</h3>
+                        <div>
+                            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem' }}>Yearly Allocation Timeline</h3>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', background: 'var(--bg-main)', padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', display: 'inline-block' }}>
+                                <strong>Note:</strong> Net Investible Surplus for the current year is taken for <strong>{remainingMonths}</strong> months as you start planning with Finbrella from <strong>{['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][planStartMonth]}</strong>.
+                            </div>
+                        </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '4px' }}>
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', paddingLeft: '8px' }}>
                                 <Filter size={14} /> View
@@ -551,7 +577,7 @@ const AllocationModule = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {(viewMode === 'all' ? projections : projections.slice(0, parseInt(viewMode, 10))).map((row, idx) => {
+                                {(viewMode === 'all' ? adjustedProjections : adjustedProjections.slice(0, parseInt(viewMode, 10))).map((row, idx) => {
                                     const allocationsByType = {};
                                     dynamicColumns.forEach(type => {
                                         allocationsByType[type] = row.activeAllocations

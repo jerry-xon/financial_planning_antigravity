@@ -99,7 +99,8 @@ export const createFinancialPlan = async (planName = 'My Financial Plan') => {
           loan_proposals: [],
           allocation_plans: {},
           goal_mappings: {},
-          insurance_mode: null
+          insurance_mode: null,
+          plan_start_month: new Date().getMonth()
         }
       ])
       .select()

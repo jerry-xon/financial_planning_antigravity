@@ -6,7 +6,7 @@ import InvestmentDetailsModal from './InvestmentDetailsModal';
 import DocumentUploadButton from '../common/DocumentUploadButton';
 import CurrencyInput from '../common/CurrencyInput';
 
-const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, currentYearLedger, setCurrentYearLedger, subStep }) => {
+const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, currentYearLedger, setCurrentYearLedger, subStep, planStartMonth = 0 }) => {
     const [activeModal, setActiveModal] = useState(null);
     const [activeInvModal, setActiveInvModal] = useState(null);
     const [policyDocs, setPolicyDocs] = useState({});
@@ -272,10 +272,13 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                 <div className="cash-flow-section card" style={{ background: 'var(--bg-main)', border: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '0.5rem', borderBottom: '2px solid var(--border)' }}>
                         <h3 style={{ borderBottom: 'none', margin: 0 }}>Current Year Tracking Ledger (Monthly)</h3>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: 600, background: 'var(--success-light)', padding: '4px 8px', borderRadius: '4px' }}>Year {new Date().getFullYear()}</span>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.85rem', color: 'white', fontWeight: 600, background: 'var(--primary)', padding: '4px 8px', borderRadius: '4px' }}>Plan Start: {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][planStartMonth]}</span>
+                            <span style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: 600, background: 'var(--success-light)', padding: '4px 8px', borderRadius: '4px' }}>Year {new Date().getFullYear()}</span>
+                        </div>
                     </div>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                        This table establishes your intra-year granular timeline. Past months are locked. Editing the current or future months will automatically establish a new run-rate projected to the end of the year.
+                        This table establishes your intra-year granular timeline. Your first year surplus is calculated strictly from the Planning Start Month ({['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][planStartMonth]}) to December. Editing the current or future months will automatically establish a new run-rate projected to the end of the year.
                     </p>
                     
                     <div style={{ overflowX: 'auto' }}>

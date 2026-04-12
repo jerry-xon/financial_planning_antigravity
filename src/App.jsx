@@ -41,6 +41,7 @@ import { useBreakpoints } from '@/hooks';
 import { useAuth } from './contexts/AuthContext';
 import { signOut } from './services/authService';
 import { getActivePlan, updateFinancialPlan } from './services/financialPlanService';
+import finbrellaLogo from './assets/finbrella_logo.png';
 
 /**
  * Main App Component
@@ -83,6 +84,7 @@ function App() {
   const [activeSection, setActiveSection] = useState('modules'); // 'modules' or 'calculators'
   const [activeCalculator, setActiveCalculator] = useState(null);
   const [insuranceMode, setInsuranceMode] = useState(null); // 'accurate' or 'anyway'
+  const [planStartMonth, setPlanStartMonth] = useState(new Date().getMonth());
 
   // State for Family Profile details
   const [familyMembers, setFamilyMembers] = useState([
@@ -196,6 +198,7 @@ function App() {
     setActiveSection('modules');
     setActiveCalculator(null);
     setInsuranceMode(null);
+    setPlanStartMonth(new Date().getMonth());
     setSaving(false);
     setFamilyMembers([
       {
@@ -329,6 +332,7 @@ function App() {
 
         setCurrentStep(data.current_step || 1);
         setInsuranceMode(data.insurance_mode || null);
+        setPlanStartMonth(data.plan_start_month ?? (data.created_at ? new Date(data.created_at).getMonth() : new Date().getMonth()));
         setFamilyMembers(data.family_members && data.family_members.length > 0 
           ? data.family_members.map(m => ({ ...m, mobile: m.mobile || '' })) 
           : [{ name: '', dob: '', occupation: '', retirementAge: 60, relation: 'Self', mobile: '' }]);
@@ -574,9 +578,11 @@ function App() {
       journeyAdjustments,
       investmentAllocations,
       loanProposals,
-      policies
+      policies,
+      planStartMonth,
+      currentYearLedger
     });
-  }, [familyMembers, income, expenseCategories, goals, inflationRates, journeyAdjustments, investmentAllocations, loanProposals, policies]);
+  }, [familyMembers, income, expenseCategories, goals, inflationRates, journeyAdjustments, investmentAllocations, loanProposals, policies, planStartMonth, currentYearLedger]);
 
   const proposedSIPs = useMemo(() => {
     return investmentAllocations.filter(a => a.type === 'SIP');
@@ -616,7 +622,8 @@ function App() {
         goal_mappings: goalMappings,
         insurance_mode: insuranceMode,
         calculator_inputs: calculatorInputs,
-        current_year_ledger: currentYearLedger
+        current_year_ledger: currentYearLedger,
+        plan_start_month: planStartMonth
       });
       
       if (error) {
@@ -641,7 +648,7 @@ function App() {
     }, 1000); // Debounce for 1 second
 
     return () => clearTimeout(timeoutId);
-  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, journeyAdjustments, investmentAllocations, loanProposals, allocationPlans, goalMappings, insuranceMode, calculatorInputs, currentYearLedger]);
+  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, journeyAdjustments, investmentAllocations, loanProposals, allocationPlans, goalMappings, insuranceMode, calculatorInputs, currentYearLedger, planStartMonth]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -672,7 +679,7 @@ function App() {
         <aside className="sidebar left-drawer">
           <div className="sidebar-header">
             <LayoutDashboard size={24} color="var(--primary)" />
-            <span className="nav-label">FinPlan Start</span>
+            <span className="nav-label">Finbrella</span>
           </div>
           
           <div style={{ flex: 1, padding: '1rem 0' }}>
@@ -798,8 +805,11 @@ function App() {
 
         {/* Main Content Area */}
         <div className="main-content-wrapper fade-in">
-          <header style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem', marginRight: '3rem' }}>
+          <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '4rem' }}>
+              <img src={finbrellaLogo} alt="Finbrella Logo" style={{ height: '56px', width: 'auto', objectFit: 'contain' }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginRight: '3rem' }}>
               {saving ? (
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -886,6 +896,7 @@ function App() {
                   setCurrentYearLedger={setCurrentYearLedger}
                   cashFlowSubStep={cashFlowSubStep}
                   setCashFlowSubStep={setCashFlowSubStep}
+                  planStartMonth={planStartMonth}
                   onNext={() => { handleStepProgression(3); setCashFlowSubStep(1); }}
                   onBack={() => { setCurrentStep(1); window.scrollTo(0, 0); }}
                   setCurrentStep={setCurrentStep}
@@ -977,6 +988,7 @@ function App() {
                   allocations={investmentAllocations}
                   setAllocations={setInvestmentAllocations}
                   projections={journeyProjections}
+                  planStartMonth={planStartMonth}
                   onNext={() => { handleStepProgression(10); }}
                   onBack={() => { setCurrentStep(8); window.scrollTo(0, 0); }}
                 />

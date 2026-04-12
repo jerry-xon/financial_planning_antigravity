@@ -143,18 +143,9 @@ export const generateProjections = ({
 
         let householdOutflow = (householdMonthly * 12) * Math.pow(1 + (householdInflation / 100), i);
 
-        // Current Year Exact Overrides via Hybrid Ledger
-        if (i === 0 && hasLedger) {
-            annualInflow = currentYearLedger.income.reduce((sum, val) => sum + (Number(val) || 0), 0);
-            householdOutflow = currentYearLedger.household.reduce((sum, val) => sum + (Number(val) || 0), 0);
-            
-            // Reverse-engineer the ratio to apply precise taxation across exact sum
-            selfInflated = annualInflow * selfRatio;
-            spouseInflated = annualInflow * spouseRatio;
-        }
+        // Removed exact ledger summation override to ensure pure annual representation
 
-        // --- NEW: Income Tax Calculation ---
-        // We mock the monthly structure for calculateIncomeTax
+        // --- Income Tax Calculation ---
         const selfTaxRes = calculateIncomeTax({ salary: selfInflated / 12, bonus: 0, passive: 0, other: 0 }, selfMember.occupation);
         
         let spouseTax = 0;
@@ -164,6 +155,7 @@ export const generateProjections = ({
         }
 
         const approxTax = selfTaxRes.finalTax + spouseTax;
+
         const netInflowAfterTax = annualInflow - approxTax;
 
         // Outflows logic
