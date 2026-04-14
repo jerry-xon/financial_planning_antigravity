@@ -132,6 +132,7 @@ export const updateFinancialPlan = async (planId, updates) => {
       .single();
 
     if (error) throw error;
+    console.log("YOUR DATA FOR THIS FUNCTION IS", data);
     return { data, error: null };
   } catch (error) {
     console.error('Error updating financial plan:', error);

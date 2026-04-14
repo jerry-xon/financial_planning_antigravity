@@ -67,6 +67,7 @@ create table if not exists public.financial_plans (
   policies jsonb default '[]'::jsonb,
   contingency_fund numeric default 0,
   inflation_rates jsonb default '{"incomeIncrement": 10, "householdInflation": 6, "educationInflation": 8}'::jsonb,
+  plan_start_month integer default 0,
   is_active boolean default true,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
