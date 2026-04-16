@@ -190,6 +190,27 @@ function App() {
   });
   const [cashFlowSubStep, setCashFlowSubStep] = useState(1);
 
+  // --- Active State Cleanup for Phantom Spouse Income ---
+  useEffect(() => {
+    const spouseMember = familyMembers.find(m => m.relation?.toLowerCase() === 'spouse');
+    const isSpouseHousewife = spouseMember?.occupation?.toLowerCase() === 'housewife';
+    
+    if (!spouseMember || isSpouseHousewife) {
+      setIncome(prev => {
+        if (prev.spouse || prev.spouseBonus || prev.spousePassive || prev.spouseOther) {
+          return {
+            ...prev,
+            spouse: '',
+            spouseBonus: '',
+            spousePassive: '',
+            spouseOther: ''
+          };
+        }
+        return prev;
+      });
+    }
+  }, [familyMembers]);
+
   // --- Reset All State ---
   const resetState = () => {
     setPlanId(null);
