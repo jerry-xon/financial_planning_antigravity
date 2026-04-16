@@ -3,6 +3,7 @@ import { Shield, CreditCard, CheckCircle2, Ticket, Lock, Zap } from 'lucide-reac
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { signOut } from '../../services/authService';
+import finbrellaLogo from '../../assets/finbrella_logo.png';
 
 const SubscriptionGate = ({ onActivate }) => {
   const { user } = useAuth();
@@ -76,7 +77,7 @@ const SubscriptionGate = ({ onActivate }) => {
   return (
     <div className="subscription-gate">
       <div className="gate-header">
-        <Shield size={48} className="gate-icon" />
+        <img src={finbrellaLogo} alt="Finbrella Logo" style={{ height: '80px', objectFit: 'contain' }} className="gate-icon" />
         <h1>Activate Your Account</h1>
         <p>Choose a subscription plan to unlock full access to the Finbrella Financial Planning Suite.</p>
       </div>
@@ -129,9 +130,9 @@ const SubscriptionGate = ({ onActivate }) => {
       <div className="coupon-section">
         <div className="coupon-header">
           <Ticket size={24} color="var(--primary)" />
-          <h4>Have a Bypass Code?</h4>
+          <h4>Have a Coupon code?</h4>
         </div>
-        <p>Enter your VIP or Agent-provided access code to bypass the payment gateway.</p>
+        <p>Enter your coupon code to bypass the payment gateway</p>
         
         <form onSubmit={handleApplyCoupon} className="coupon-form">
           <input 
@@ -147,6 +148,10 @@ const SubscriptionGate = ({ onActivate }) => {
         </form>
 
         {error && <div className="error-message"><Lock size={14} /> {error}</div>}
+      </div>
+
+      <div style={{ marginTop: '1.5rem', fontSize: '0.95rem', color: 'var(--text-muted)', textAlign: 'center', maxWidth: '500px' }}>
+        Don't have a coupon code? Email us at <a href="mailto:finbrellafpd@gmail.com?subject=GET ME COUPON CODE" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>finbrellafpd@gmail.com</a> with the subject "GET ME COUPON CODE."
       </div>
 
       <button onClick={() => signOut()} className="logout-btn">
@@ -378,8 +383,8 @@ const SubscriptionGate = ({ onActivate }) => {
           padding: 0 1.5rem;
           border-radius: 8px;
           border: none;
-          background: var(--text);
-          color: var(--bg-main);
+          background: var(--primary);
+          color: #ffffff;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.3s;

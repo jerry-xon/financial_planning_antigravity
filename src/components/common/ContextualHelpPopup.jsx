@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, HelpCircle, Phone, Mail } from 'lucide-react';
+import { X, HelpCircle, Phone, Mail, ExternalLink } from 'lucide-react';
 
 const ContextualHelpPopup = ({ isOpen, onClose, title, message, supportContacts, imageSrc }) => {
     if (!isOpen) return null;
@@ -96,19 +96,52 @@ const ContextualHelpPopup = ({ isOpen, onClose, title, message, supportContacts,
                     </p>
 
                     {imageSrc && (
-                        <div style={{ 
-                            margin: '0 0 1.5rem', 
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            border: '1px solid var(--border)',
-                            background: 'var(--bg-card)',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                        }}>
-                            <img 
-                                src={imageSrc} 
-                                alt="Support Visual" 
-                                style={{ width: '100%', height: 'auto', display: 'block' }}
-                            />
+                        <div style={{ margin: '0 0 1.5rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+                                <a 
+                                    href={imageSrc} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        fontSize: '0.85rem',
+                                        color: 'var(--primary)',
+                                        textDecoration: 'none',
+                                        fontWeight: 600,
+                                        padding: '4px 8px',
+                                        background: 'rgba(37, 99, 235, 0.05)',
+                                        borderRadius: '6px',
+                                        transition: 'background 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(37, 99, 235, 0.1)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(37, 99, 235, 0.05)'}
+                                >
+                                    <ExternalLink size={14} />
+                                    Enlarge Image
+                                </a>
+                            </div>
+                            <div 
+                                style={{ 
+                                    borderRadius: '12px',
+                                    overflow: 'hidden',
+                                    border: '1px solid var(--border)',
+                                    background: 'var(--bg-card)',
+                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                                    cursor: 'pointer'
+                                }}
+                                onClick={() => window.open(imageSrc, '_blank')}
+                                title="Click to enlarge"
+                            >
+                                <img 
+                                    src={imageSrc} 
+                                    alt="Support Visual" 
+                                    style={{ width: '100%', height: 'auto', display: 'block', transition: 'transform 0.3s ease' }}
+                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                />
+                            </div>
                         </div>
                     )}
 
