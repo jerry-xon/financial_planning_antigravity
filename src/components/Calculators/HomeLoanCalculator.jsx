@@ -160,100 +160,107 @@ const HomeLoanEngine = ({
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '2.5rem' }}>
-                    {/* Left Column: Inputs & Events */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <div className="form-group">
-                            <label><DollarSign size={16} /> Loan Amount (₹)</label>
-                            <input 
-                                type="number" 
-                                value={loanAmount} 
-                                readOnly={isReadOnly}
-                                onChange={(e) => !isReadOnly && setLoanAmount(parseFloat(e.target.value) || 0)} 
-                                className="form-input" 
-                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label><TrendingDown size={16} /> Annual Interest Rate (%)</label>
-                            <input 
-                                type="number" 
-                                step="0.01"
-                                value={interestRate} 
-                                readOnly={isReadOnly}
-                                onChange={(e) => !isReadOnly && setInterestRate(parseFloat(e.target.value) || 0)} 
-                                className="form-input" 
-                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label><Clock size={16} /> Tenure (Years)</label>
-                            <input 
-                                type="number" 
-                                value={tenureYears} 
-                                readOnly={isReadOnly}
-                                onChange={(e) => !isReadOnly && setTenureYears(parseInt(e.target.value) || 0)} 
-                                className="form-input" 
-                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
-                            />
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                    {/* SECTION 1: PRIMARY INPUTS */}
+                    <div style={{ background: 'var(--bg-card)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                        <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.1rem', color: 'var(--text-main)' }}>Primary Parameters</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
                             <div className="form-group">
-                                <label>Start Month</label>
-                                <select value={startMonth} onChange={(e) => !isReadOnly && setStartMonth(parseInt(e.target.value))} className="form-input" disabled={isReadOnly} style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}>
-                                    {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
-                                </select>
+                                <label><DollarSign size={16} /> Loan Amount (₹)</label>
+                                <input 
+                                    type="number" 
+                                    value={loanAmount} 
+                                    readOnly={isReadOnly}
+                                    onChange={(e) => !isReadOnly && setLoanAmount(parseFloat(e.target.value) || 0)} 
+                                    className="form-input" 
+                                    style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
+                                />
                             </div>
-                            <div className="form-group">
-                                <label>Start Year</label>
-                                <select value={startYear} onChange={(e) => !isReadOnly && setStartYear(parseInt(e.target.value))} className="form-input" disabled={isReadOnly} style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}>
-                                    {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-                                </select>
-                            </div>
-                        </div>
 
-                        {/* Event System */}
-                        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                <h3 style={{ margin: 0, fontSize: '1rem' }}>Adjustments & Events</h3>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button className="btn" onClick={() => addEvent('prepayment')} title="Add Prepayment" style={{ padding: '4px 8px', background: '#ecfdf5', color: '#059669', border: '1px solid #10b981', fontSize: '0.75rem' }}>+ Prepay</button>
-                                    <button className="btn" onClick={() => addEvent('rate_change')} title="Add Rate Change" style={{ padding: '4px 8px', background: '#eff6ff', color: '#2563eb', border: '1px solid #3b82f6', fontSize: '0.75rem' }}>+ Rate %</button>
+                            <div className="form-group">
+                                <label><TrendingDown size={16} /> Annual Interest Rate (%)</label>
+                                <input 
+                                    type="number" 
+                                    step="0.01"
+                                    value={interestRate} 
+                                    readOnly={isReadOnly}
+                                    onChange={(e) => !isReadOnly && setInterestRate(parseFloat(e.target.value) || 0)} 
+                                    className="form-input" 
+                                    style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label><Clock size={16} /> Tenure (Years)</label>
+                                <input 
+                                    type="number" 
+                                    value={tenureYears} 
+                                    readOnly={isReadOnly}
+                                    onChange={(e) => !isReadOnly && setTenureYears(parseInt(e.target.value) || 0)} 
+                                    className="form-input" 
+                                    style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
+                                />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label>Start Month</label>
+                                    <select value={startMonth} onChange={(e) => !isReadOnly && setStartMonth(parseInt(e.target.value))} className="form-input" disabled={isReadOnly} style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}>
+                                        {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
+                                    </select>
                                 </div>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                {events.map(event => (
-                                    <div key={event.id} className="card" style={{ padding: '0.75rem', position: 'relative', border: `1px solid ${event.type === 'prepayment' ? '#10b981' : '#3b82f6'}` }}>
-                                        <button onClick={() => removeEvent(event.id)} style={{ position: 'absolute', top: '4px', right: '4px', color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={12} /></button>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', alignItems: 'center' }}>
-                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase' }}>{event.type.replace('_', ' ')}</div>
-                                            <select value={event.month} onChange={(e) => updateEvent(event.id, 'month', e.target.value)} style={{ fontSize: '0.8rem', padding: '2px' }}>
-                                                {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
-                                            </select>
-                                            <select value={event.year} onChange={(e) => updateEvent(event.id, 'year', e.target.value)} style={{ fontSize: '0.8rem', padding: '2px' }}>
-                                                {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-                                            </select>
-                                        </div>
-                                        <div style={{ marginTop: '0.5rem' }}>
-                                            <input 
-                                                type="number" 
-                                                placeholder={event.type === 'prepayment' ? 'Amount' : 'New Rate %'} 
-                                                value={event.value} 
-                                                onChange={(e) => updateEvent(event.id, 'value', e.target.value)} 
-                                                style={{ width: '100%', padding: '4px', fontSize: '0.85rem' }}
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
+                                <div className="form-group">
+                                    <label>Start Year</label>
+                                    <select value={startYear} onChange={(e) => !isReadOnly && setStartYear(parseInt(e.target.value))} className="form-input" disabled={isReadOnly} style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}>
+                                        {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Right Column: Summaries & Table */}
+                    {/* SECTION 2: INCREMENTAL ADJUSTMENTS */}
+                    <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Adjustments & Events</h3>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button className="btn" onClick={() => addEvent('prepayment')} title="Add Prepayment" style={{ padding: '0.4rem 0.8rem', background: '#ecfdf5', color: '#059669', border: '1px solid #10b981', fontSize: '0.85rem' }}>+ Prepay</button>
+                                <button className="btn" onClick={() => addEvent('rate_change')} title="Add Rate Change" style={{ padding: '0.4rem 0.8rem', background: '#eff6ff', color: '#2563eb', border: '1px solid #3b82f6', fontSize: '0.85rem' }}>+ Rate %</button>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                            {events.map(event => (
+                                <div key={event.id} className="card" style={{ padding: '1rem', position: 'relative', border: `1px solid ${event.type === 'prepayment' ? '#10b981' : '#3b82f6'}`, flex: '1 1 auto', minWidth: '260px', maxWidth: '350px' }}>
+                                    <button onClick={() => removeEvent(event.id)} style={{ position: 'absolute', top: '8px', right: '8px', color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={14} /></button>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginRight: '1.5rem' }}>
+                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: event.type === 'prepayment' ? '#10b981' : '#3b82f6', width: '80px' }}>
+                                                {event.type.replace('_', ' ')}
+                                            </span>
+                                            <select value={event.month} onChange={(e) => updateEvent(event.id, 'month', e.target.value)} className="form-input" style={{ fontSize: '0.8rem', padding: '0.3rem', width: 'auto' }}>
+                                                {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
+                                            </select>
+                                            <select value={event.year} onChange={(e) => updateEvent(event.id, 'year', e.target.value)} className="form-input" style={{ fontSize: '0.8rem', padding: '0.3rem', width: 'auto' }}>
+                                                {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                                            </select>
+                                        </div>
+                                        <input 
+                                            type="number" 
+                                            placeholder={event.type === 'prepayment' ? 'Amount (₹)' : 'New Rate %'} 
+                                            value={event.value} 
+                                            onChange={(e) => updateEvent(event.id, 'value', e.target.value)} 
+                                            className="form-input"
+                                            style={{ width: '100%', padding: '0.4rem', fontSize: '0.85rem' }} 
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                            {events.length === 0 && <p className="text-muted" style={{ fontSize: '0.85rem', textAlign: 'center', width: '100%', border: '1px dashed var(--border)', padding: '1.5rem', borderRadius: '8px' }}>No adjustments added.</p>}
+                        </div>
+                    </div>
+
+                    {/* SECTION 3: VISUALIZATION */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                         {/* Summary Header */}
                         <div style={{ 
@@ -261,24 +268,24 @@ const HomeLoanEngine = ({
                             background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', 
                             borderRadius: '16px', 
                             color: 'white',
-                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
                         }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
                                 <div>
-                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.85rem', color: 'white' }}>Monthly EMI</p>
-                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'white' }}>₹{Math.round(calculationData.baseEMI).toLocaleString('en-IN')}</h3>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem', color: 'white' }}>Monthly EMI</p>
+                                    <h3 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 800, color: 'white' }}>₹{Math.round(calculationData.baseEMI).toLocaleString('en-IN')}</h3>
                                 </div>
-                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.3)', paddingLeft: '1.5rem' }}>
-                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.85rem', color: 'white' }}>Total Principal</p>
-                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'white' }}>₹{loanAmount.toLocaleString('en-IN')}</h3>
+                                <div>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem', color: 'white' }}>Total Principal</p>
+                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'white' }}>₹{loanAmount.toLocaleString('en-IN')}</h3>
                                 </div>
-                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.3)', paddingLeft: '1.5rem' }}>
-                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.85rem', color: 'white' }}>Total Interest</p>
-                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'white' }}>₹{Math.round(totalInterest).toLocaleString('en-IN')}</h3>
+                                <div>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem', color: 'white' }}>Total Interest</p>
+                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'white' }}>₹{Math.round(totalInterest).toLocaleString('en-IN')}</h3>
                                 </div>
-                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.3)', paddingLeft: '1.5rem' }}>
-                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.85rem', color: 'white' }}>Total Payable</p>
-                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'white' }}>₹{Math.round(totalPaid).toLocaleString('en-IN')}</h3>
+                                <div>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem', color: 'white' }}>Total Payable</p>
+                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'white' }}>₹{Math.round(totalPaid).toLocaleString('en-IN')}</h3>
                                 </div>
                             </div>
                         </div>
@@ -287,7 +294,7 @@ const HomeLoanEngine = ({
                         <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
                             <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto' }}>
                                 <table className="summary-table" style={{ width: '100%', fontSize: '0.9rem', borderCollapse: 'collapse' }}>
-                                    <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', borderBottom: '2px solid var(--border)', zIndex: 10 }}>
+                                    <thead style={{ background: '#f8fafc', borderBottom: '2px solid var(--border)' }}>
                                         <tr>
                                             <th style={{ padding: '1rem', textAlign: 'left' }}>Year</th>
                                             <th style={{ padding: '1rem', textAlign: 'right' }}>Opening Balance</th>
@@ -300,7 +307,7 @@ const HomeLoanEngine = ({
                                     <tbody>
                                         {calculationData.schedule.map((row, idx) => (
                                             <tr key={row.year} style={{ borderBottom: '1px solid var(--border)', background: idx % 2 === 0 ? 'transparent' : '#f8fbfc' }}>
-                                                <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>{row.year}</td>
+                                                <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--primary)' }}>{row.year}</td>
                                                 <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>₹{Math.round(row.openingBalance).toLocaleString('en-IN')}</td>
                                                 <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>₹{Math.round(row.principalPaid).toLocaleString('en-IN')}</td>
                                                 <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>₹{Math.round(row.interestPaid).toLocaleString('en-IN')}</td>

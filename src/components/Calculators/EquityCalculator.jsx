@@ -178,49 +178,52 @@ const EquityCalculator = ({ assetCategories = {}, familyMembers = [], proposedEq
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) minmax(0, 1fr)', gap: '2.5rem' }}>
-                    {/* Left Column: Inputs & Events */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <div className="form-group">
-                            <label><DollarSign size={16} /> Current Portfolio Value (₹)</label>
-                            <input 
-                                type="number" 
-                                value={currentValue} 
-                                readOnly
-                                className="form-input bg-muted" 
-                                style={{ opacity: 0.7, cursor: 'not-allowed' }}
-                            />
-                        </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    
+                    {/* SECTION 1: PRIMARY INPUTS */}
+                    <div style={{ background: 'var(--bg-card)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                        <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.1rem', color: 'var(--text-main)' }}>Primary Parameters</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
+                            <div className="form-group">
+                                <label><DollarSign size={16} /> Current Portfolio Value (₹)</label>
+                                <input 
+                                    type="number" 
+                                    value={currentValue} 
+                                    readOnly
+                                    className="form-input bg-muted" 
+                                    style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                                />
+                            </div>
 
-                        <div className="form-group">
-                            <label><TrendingUp size={16} /> Expected Returns (CAGR %)</label>
-                            <input 
-                                type="number" 
-                                step="0.1"
-                                value={expectedReturns} 
-                                onChange={(e) => setExpectedReturns(parseFloat(e.target.value) || 0)} 
-                                className="form-input" 
-                            />
-                        </div>
+                            <div className="form-group">
+                                <label><TrendingUp size={16} /> Expected Returns (CAGR %)</label>
+                                <input 
+                                    type="number" 
+                                    step="0.1"
+                                    value={expectedReturns} 
+                                    onChange={(e) => setExpectedReturns(parseFloat(e.target.value) || 0)} 
+                                    className="form-input" 
+                                />
+                            </div>
 
-                        <div className="form-group">
-                            <label><Clock size={16} /> Tenure (Years)</label>
-                            <input 
-                                type="number" 
-                                value={tenureYears} 
-                                onChange={(e) => setTenureYears(parseInt(e.target.value) || 0)} 
-                                className="form-input" 
-                            />
-                            <small className="text-muted">Tenure in Months: {tenureYears * 12}</small>
-                        </div>
+                            <div className="form-group">
+                                <label><Clock size={16} /> Tenure (Years)</label>
+                                <input 
+                                    type="number" 
+                                    value={tenureYears} 
+                                    onChange={(e) => setTenureYears(parseInt(e.target.value) || 0)} 
+                                    className="form-input" 
+                                />
+                                <small className="text-muted">Tenure in Months: {tenureYears * 12}</small>
+                            </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                             <div className="form-group">
                                 <label>Start Month</label>
                                 <select value={startMonth} onChange={(e) => setStartMonth(parseInt(e.target.value))} className="form-input">
                                     {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
                                 </select>
                             </div>
+                            
                             <div className="form-group">
                                 <label>Start Year</label>
                                 <select value={startYear} onChange={(e) => setStartYear(parseInt(e.target.value))} className="form-input">
@@ -228,109 +231,122 @@ const EquityCalculator = ({ assetCategories = {}, familyMembers = [], proposedEq
                                 </select>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Adjustments */}
-                        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                <h3 style={{ margin: 0, fontSize: '1rem' }}>Future Additions & Withdrawals</h3>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button className="btn" onClick={() => addEvent('addition')} style={{ padding: '4px 8px', background: '#ecfdf5', color: '#059669', border: '1px solid #10b981', fontSize: '0.75rem' }}>+ Add</button>
-                                    <button className="btn" onClick={() => addEvent('withdrawal')} style={{ padding: '4px 8px', background: '#fff1f2', color: '#e11d48', border: '1px solid #f43f5e', fontSize: '0.75rem' }}>- Withdraw</button>
-                                </div>
+                    {/* SECTION 2: INCREMENTAL ADJUSTMENTS */}
+                    <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Future Additions & Withdrawals</h3>
+                            <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                <button className="btn" onClick={() => addEvent('addition')} title="Add Increment" style={{ height: '36px', padding: '0 12px', display: 'flex', alignItems: 'center', gap: '6px', background: '#ecfdf5', color: '#059669', border: '1px solid #10b981', fontWeight: 600 }}>
+                                    <Plus size={16} /> Add
+                                </button>
+                                <button className="btn" onClick={() => addEvent('withdrawal')} title="Add Withdrawal" style={{ height: '36px', padding: '0 12px', display: 'flex', alignItems: 'center', gap: '6px', background: '#fff1f2', color: '#e11d48', border: '1px solid #f43f5e', fontWeight: 600 }}>
+                                    <Trash2 size={16} /> Withdraw
+                                </button>
                             </div>
+                        </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                {/* Proposed Lumpsums from Allocation */}
-                                {proposedEquities.map((l) => (
-                                    <div key={`proposed-${l.id}`} className="card" style={{ padding: '1rem', border: '1px solid #6366f1', background: '#f5f3ff', position: 'relative' }}>
-                                        <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#6366f1', marginBottom: '0.5rem' }}>
-                                            ALLOCATION MODULE: {l.type}
-                                        </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Amount (₹)</label>
-                                                <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{parseFloat(l.amount).toLocaleString('en-IN')}</div>
-                                            </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Date</label>
-                                                <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{monthNames[l.startMonth - 1]} {l.startYear}</div>
-                                            </div>
-                                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                            {/* Proposed Lumpsums from Allocation */}
+                            {proposedEquities.map((l) => (
+                                <div key={`proposed-${l.id}`} className="card" style={{ padding: '1rem', border: '1px solid #6366f1', background: '#f5f3ff', position: 'relative', flex: '1 1 auto', minWidth: '280px', maxWidth: '350px' }}>
+                                    <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#6366f1', marginBottom: '0.75rem' }}>
+                                        ALLOCATION MODULE: {l.type}
                                     </div>
-                                ))}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Amount</span>
+                                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{parseFloat(l.amount).toLocaleString('en-IN')}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Date</span>
+                                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{monthNames[l.startMonth - 1]} {l.startYear}</span>
+                                    </div>
+                                </div>
+                            ))}
 
-                                {/* Roadmap Module Auto-Withdrawals */}
-                                {goals.flatMap(g => {
-                                    const mappedAmt = (goalMappings[g.id] || {})['equity'] || 0;
-                                    const gYear = new Date().getFullYear() + Math.round(parseFloat(g.yearsToGoal) || 0);
-                                    if (mappedAmt > 0 && gYear >= startYear && gYear <= startYear + tenureYears) {
-                                        return [(
-                                            <div key={`roadmap-lumpsum-${g.id}`} className="card" style={{ padding: '1rem', border: '1px solid #f59e0b', background: '#fffbeb', position: 'relative' }}>
-                                                <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#d97706', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    <Calculator size={12} /> FULFILLMENT ROADMAP
-                                                </div>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Auto Withdrawal (₹)</label>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{parseFloat(mappedAmt).toLocaleString('en-IN')}</div>
-                                                    </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Goal Year</label>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{gYear} ({g.name || 'Goal'})</div>
-                                                    </div>
-                                                </div>
+                            {/* Roadmap Module Auto-Withdrawals */}
+                            {goals.flatMap(g => {
+                                const mappedAmt = (goalMappings[g.id] || {})['equity'] || 0;
+                                const gYear = new Date().getFullYear() + Math.round(parseFloat(g.yearsToGoal) || 0);
+                                if (mappedAmt > 0 && gYear >= startYear && gYear <= startYear + tenureYears) {
+                                    return [(
+                                        <div key={`roadmap-lumpsum-${g.id}`} className="card" style={{ padding: '1rem', border: '1px solid #f59e0b', background: '#fffbeb', position: 'relative', flex: '1 1 auto', minWidth: '280px', maxWidth: '350px' }}>
+                                            <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#d97706', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <Calculator size={12} /> FULFILLMENT ROADMAP
                                             </div>
-                                        )];
-                                    }
-                                    return [];
-                                })}
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Auto Withdrawal</span>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{parseFloat(mappedAmt).toLocaleString('en-IN')}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Goal Year</span>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{gYear} ({g.name || 'Goal'})</span>
+                                            </div>
+                                        </div>
+                                    )];
+                                }
+                                return [];
+                            })}
 
-                                {events.map(event => (
-                                    <div key={event.id} className="card" style={{ padding: '1rem', position: 'relative', border: `1px solid ${event.type === 'addition' ? '#10b981' : '#f43f5e'}` }}>
-                                        <button onClick={() => removeEvent(event.id)} style={{ position: 'absolute', top: '4px', right: '4px', color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={12} /></button>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                            <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>{event.type}</div>
-                                            <select value={event.month} onChange={(e) => updateEvent(event.id, 'month', e.target.value)} style={{ fontSize: '0.8rem' }}>
+                            {events.map(event => (
+                                <div key={event.id} className="card" style={{ padding: '1.25rem', position: 'relative', border: `1px solid ${event.type === 'addition' ? '#10b981' : '#f43f5e'}`, flex: '1 1 auto', minWidth: '300px', maxWidth: '400px' }}>
+                                    <button onClick={() => removeEvent(event.id)} style={{ position: 'absolute', top: '8px', right: '8px', color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}><Trash2 size={16} /></button>
+                                    
+                                    <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: event.type === 'addition' ? '#059669' : '#e11d48', marginBottom: '1rem' }}>
+                                        MANUAL {event.type === 'addition' ? 'ADDITION' : 'WITHDRAWAL'}
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', gridColumn: '1 / -1' }}>
+                                            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Amount (₹)</label>
+                                            <input 
+                                                type="number" 
+                                                value={event.amount} 
+                                                onChange={(e) => updateEvent(event.id, 'amount', e.target.value)}
+                                                style={{ padding: '0.5rem', fontSize: '0.9rem', width: '100%', borderRadius: '6px', border: '1px solid var(--border)' }}
+                                                placeholder="Enter amount"
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Month</label>
+                                            <select value={event.month} onChange={(e) => updateEvent(event.id, 'month', e.target.value)} style={{ padding: '0.5rem', fontSize: '0.9rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
                                                 {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
                                             </select>
-                                            <select value={event.year} onChange={(e) => updateEvent(event.id, 'year', e.target.value)} style={{ fontSize: '0.8rem' }}>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                            <label style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Year</label>
+                                            <select value={event.year} onChange={(e) => updateEvent(event.id, 'year', e.target.value)} style={{ padding: '0.5rem', fontSize: '0.9rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
                                                 {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                                             </select>
                                         </div>
-                                        <input 
-                                            type="number" 
-                                            placeholder="Amount (₹)" 
-                                            value={event.amount} 
-                                            onChange={(e) => updateEvent(event.id, 'amount', e.target.value)} 
-                                            style={{ width: '100%', padding: '4px', fontSize: '0.85rem' }} 
-                                        />
                                     </div>
-                                ))}
-                                {events.length === 0 && proposedEquities.length === 0 && <p className="text-muted" style={{ fontSize: '0.85rem', textAlign: 'center', border: '1px dashed var(--border)', padding: '1rem', borderRadius: '8px' }}>No adjustments added.</p>}
-                            </div>
+                                </div>
+                            ))}
+                            {events.length === 0 && proposedEquities.length === 0 && <p className="text-muted" style={{ fontSize: '0.85rem', textAlign: 'center', width: '100%', padding: '1rem', fontStyle: 'italic' }}>No adjustments added.</p>}
                         </div>
                     </div>
 
-                    {/* Right Column: Visualization */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    {/* SECTION 3: VISUALIZATION (Wide) */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         {/* Summary Header */}
                         <div style={{ 
                             padding: '2rem', 
                             background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', 
                             borderRadius: '16px', 
                             color: 'white',
-                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
                         }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
                                 <div>
                                     <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Projected Value</p>
                                     <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 800 }}>₹{Math.round(finalValue).toLocaleString('en-IN')}</h2>
                                 </div>
-                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                <div>
                                     <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Total Invested</p>
                                     <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>₹{totalInvested.toLocaleString('en-IN')}</h3>
                                 </div>
-                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                <div>
                                     <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Wealth Created</p>
                                     <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>₹{Math.round(finalValue - totalInvested + totalWithdrawals).toLocaleString('en-IN')}</h3>
                                 </div>
@@ -341,7 +357,7 @@ const EquityCalculator = ({ assetCategories = {}, familyMembers = [], proposedEq
                         <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
                             <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto' }}>
                                 <table className="summary-table" style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
-                                    <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', borderBottom: '2px solid var(--border)', zIndex: 10 }}>
+                                    <thead style={{ background: '#f8fafc', borderBottom: '2px solid var(--border)' }}>
                                         <tr>
                                             <th style={{ padding: '1.25rem', textAlign: 'left' }}>Year</th>
                                             <th style={{ padding: '1.25rem', textAlign: 'right' }}>Investment & Addition</th>

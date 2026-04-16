@@ -138,30 +138,31 @@ const SWPCalculator = ({ data, setData }) => {
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '2.5rem' }}>
-                    {/* Left Column: Inputs & Events */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                        <div className="form-group">
-                            <label><DollarSign size={16} /> Initial Investment (₹)</label>
-                            <input 
-                                type="number" 
-                                value={investmentAmount} 
-                                onChange={(e) => setInvestmentAmount(parseFloat(e.target.value) || 0)} 
-                                className="form-input" 
-                            />
-                        </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                    {/* SECTION 1: PRIMARY INPUTS */}
+                    <div style={{ background: 'var(--bg-card)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                        <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.1rem', color: 'var(--text-main)' }}>Primary Parameters</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
+                            <div className="form-group">
+                                <label><DollarSign size={16} /> Initial Investment (₹)</label>
+                                <input 
+                                    type="number" 
+                                    value={investmentAmount} 
+                                    onChange={(e) => setInvestmentAmount(parseFloat(e.target.value) || 0)} 
+                                    className="form-input" 
+                                />
+                            </div>
 
-                        <div className="form-group">
-                            <label><ArrowDownRight size={16} /> Initial Monthly Withdrawal (₹)</label>
-                            <input 
-                                type="number" 
-                                value={monthlyWithdrawal} 
-                                onChange={(e) => setMonthlyWithdrawal(parseFloat(e.target.value) || 0)} 
-                                className="form-input" 
-                            />
-                        </div>
+                            <div className="form-group">
+                                <label><ArrowDownRight size={16} /> Initial Monthly Withdrawal (₹)</label>
+                                <input 
+                                    type="number" 
+                                    value={monthlyWithdrawal} 
+                                    onChange={(e) => setMonthlyWithdrawal(parseFloat(e.target.value) || 0)} 
+                                    className="form-input" 
+                                />
+                            </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                             <div className="form-group">
                                 <label><TrendingUp size={16} /> Exp. CAGR (%)</label>
                                 <input 
@@ -172,6 +173,7 @@ const SWPCalculator = ({ data, setData }) => {
                                     className="form-input" 
                                 />
                             </div>
+
                             <div className="form-group">
                                 <label><ArrowUpRight size={16} /> Annual Increase (%)</label>
                                 <input 
@@ -181,9 +183,7 @@ const SWPCalculator = ({ data, setData }) => {
                                     className="form-input" 
                                 />
                             </div>
-                        </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                             <div className="form-group">
                                 <label><Calendar size={16} /> Start After (Years)</label>
                                 <input 
@@ -193,6 +193,7 @@ const SWPCalculator = ({ data, setData }) => {
                                     className="form-input" 
                                 />
                             </div>
+
                             <div className="form-group">
                                 <label><Clock size={16} /> Tenure (Years)</label>
                                 <input 
@@ -202,82 +203,87 @@ const SWPCalculator = ({ data, setData }) => {
                                     className="form-input" 
                                 />
                             </div>
-                        </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <div className="form-group">
-                                <label>Start Month</label>
-                                <select value={startMonth} onChange={(e) => setStartMonth(parseInt(e.target.value))} className="form-input">
-                                    {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>Start Year</label>
-                                <select value={startYear} onChange={(e) => setStartYear(parseInt(e.target.value))} className="form-input">
-                                    {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Adjustments Section */}
-                        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                <h3 style={{ margin: 0, fontSize: '0.95rem' }}>Future Adjustments</h3>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button className="btn" onClick={() => addEvent('adjustment')} style={{ padding: '4px 8px', background: '#eff6ff', color: '#2563eb', border: '1px solid #3b82f6', fontSize: '0.7rem' }}>+ Adjust Monthly</button>
-                                    <button className="btn" onClick={() => addEvent('lumpsum')} style={{ padding: '4px 8px', background: '#fff1f2', color: '#e11d48', border: '1px solid #f43f5e', fontSize: '0.7rem' }}>+ Lumpsum Withdraw</button>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label>Start Month</label>
+                                    <select value={startMonth} onChange={(e) => setStartMonth(parseInt(e.target.value))} className="form-input">
+                                        {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Start Year</label>
+                                    <select value={startYear} onChange={(e) => setStartYear(parseInt(e.target.value))} className="form-input">
+                                        {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                                    </select>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                {events.map(event => (
-                                    <div key={event.id} className="card" style={{ padding: '0.75rem', position: 'relative', border: `1px solid ${event.type === 'adjustment' ? '#3b82f6' : '#f43f5e'}` }}>
-                                        <button onClick={() => removeEvent(event.id)} style={{ position: 'absolute', top: '4px', right: '4px', color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={12} /></button>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                            <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>{event.type}</div>
-                                            <select value={event.month} onChange={(e) => updateEvent(event.id, 'month', e.target.value)} style={{ fontSize: '0.75rem' }}>
+                    {/* SECTION 2: INCREMENTAL ADJUSTMENTS */}
+                    <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Future Adjustments</h3>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button className="btn" onClick={() => addEvent('adjustment')} style={{ padding: '0.4rem 0.8rem', background: '#eff6ff', color: '#2563eb', border: '1px solid #3b82f6', fontSize: '0.85rem' }}>+ Adjust Monthly</button>
+                                <button className="btn" onClick={() => addEvent('lumpsum')} style={{ padding: '0.4rem 0.8rem', background: '#fff1f2', color: '#e11d48', border: '1px solid #f43f5e', fontSize: '0.85rem' }}>+ Lumpsum Withdraw</button>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                            {events.map(event => (
+                                <div key={event.id} className="card" style={{ padding: '1rem', position: 'relative', border: `1px solid ${event.type === 'adjustment' ? '#3b82f6' : '#f43f5e'}`, flex: '1 1 auto', minWidth: '260px', maxWidth: '350px' }}>
+                                    <button onClick={() => removeEvent(event.id)} style={{ position: 'absolute', top: '8px', right: '8px', color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={14} /></button>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginRight: '1.5rem' }}>
+                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: event.type === 'adjustment' ? '#3b82f6' : '#f43f5e', width: '80px' }}>
+                                                {event.type}
+                                            </span>
+                                            <select value={event.month} onChange={(e) => updateEvent(event.id, 'month', e.target.value)} className="form-input" style={{ fontSize: '0.8rem', padding: '0.3rem', width: 'auto' }}>
                                                 {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
                                             </select>
-                                            <select value={event.year} onChange={(e) => updateEvent(event.id, 'year', e.target.value)} style={{ fontSize: '0.75rem' }}>
+                                            <select value={event.year} onChange={(e) => updateEvent(event.id, 'year', e.target.value)} className="form-input" style={{ fontSize: '0.8rem', padding: '0.3rem', width: 'auto' }}>
                                                 {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                                             </select>
                                         </div>
                                         <input 
                                             type="number" 
-                                            placeholder={event.type === 'adjustment' ? 'New Monthly Amt' : 'Lumpsum Amt'} 
+                                            placeholder={event.type === 'adjustment' ? 'New Monthly Amt (₹)' : 'Lumpsum Amt (₹)'} 
                                             value={event.value} 
                                             onChange={(e) => updateEvent(event.id, 'value', e.target.value)} 
-                                            style={{ width: '100%', padding: '4px', fontSize: '0.8rem' }} 
+                                            className="form-input"
+                                            style={{ width: '100%', padding: '0.4rem', fontSize: '0.85rem' }} 
                                         />
                                     </div>
-                                ))}
-                            </div>
+                                </div>
+                            ))}
+                            {events.length === 0 && <p className="text-muted" style={{ fontSize: '0.85rem', textAlign: 'center', width: '100%', border: '1px dashed var(--border)', padding: '1.5rem', borderRadius: '8px' }}>No future adjustments added.</p>}
                         </div>
                     </div>
 
-                    {/* Right Column: Visualization */}
+                    {/* SECTION 3: VISUALIZATION */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                         {/* Summary Header */}
                         <div style={{ 
-                            padding: '2.5rem', 
-                            background: 'white', 
-                            borderRadius: '20px', 
-                            color: 'var(--text-main)',
-                            border: '1px solid var(--border)',
-                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                            padding: '2rem', 
+                            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', 
+                            borderRadius: '16px', 
+                            color: 'white',
+                            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
                         }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '2rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
                                 <div>
-                                    <p style={{ margin: '0 0 0.5rem 0', color: '#64748b', fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Remaining Balance</p>
-                                    <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 900, color: '#0f172a' }}>₹{Math.round(finalValue).toLocaleString('en-IN')}</h2>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Remaining Balance</p>
+                                    <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 800 }}>₹{Math.round(finalValue).toLocaleString('en-IN')}</h2>
                                 </div>
-                                <div style={{ borderLeft: '1px solid #e2e8f0', paddingLeft: '2rem' }}>
-                                    <p style={{ margin: '0 0 0.5rem 0', color: '#64748b', fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Withdrawn</p>
-                                    <h3 style={{ margin: 0, fontSize: '2rem', fontWeight: 800, color: '#2563eb' }}>₹{Math.round(totalWithdrawn).toLocaleString('en-IN')}</h3>
+                                <div>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Total Withdrawn</p>
+                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#60a5fa' }}>₹{Math.round(totalWithdrawn).toLocaleString('en-IN')}</h3>
                                 </div>
-                                <div style={{ borderLeft: '1px solid #e2e8f0', paddingLeft: '2rem' }}>
-                                    <p style={{ margin: '0 0 0.5rem 0', color: '#64748b', fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Profit/Wealth Generated</p>
-                                    <h3 style={{ margin: 0, fontSize: '2rem', fontWeight: 800, color: '#059669' }}>₹{Math.round(finalValue + totalWithdrawn - investmentAmount).toLocaleString('en-IN')}</h3>
+                                <div>
+                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Profit Generated</p>
+                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#34d399' }}>₹{Math.round(finalValue + totalWithdrawn - investmentAmount).toLocaleString('en-IN')}</h3>
                                 </div>
                             </div>
                         </div>
@@ -286,7 +292,7 @@ const SWPCalculator = ({ data, setData }) => {
                         <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
                             <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto' }}>
                                 <table className="summary-table" style={{ width: '100%', fontSize: '0.9rem', borderCollapse: 'collapse' }}>
-                                    <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', borderBottom: '2px solid var(--border)', zIndex: 10 }}>
+                                    <thead style={{ background: '#f8fafc', borderBottom: '2px solid var(--border)' }}>
                                         <tr>
                                             <th style={{ padding: '1rem', textAlign: 'left' }}>Year</th>
                                             <th style={{ padding: '1rem', textAlign: 'right' }}>Opening Balance</th>
@@ -304,7 +310,7 @@ const SWPCalculator = ({ data, setData }) => {
                                                 <td style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 600 }}>₹{Math.round(row.yearlyWithdrawal).toLocaleString('en-IN')}</td>
                                                 <td style={{ padding: '0.75rem 1rem', textAlign: 'right', opacity: 0.8 }}>₹{Math.round(row.openingBalance - row.yearlyWithdrawal).toLocaleString('en-IN')}</td>
                                                 <td style={{ padding: '0.75rem 1rem', textAlign: 'right', color: '#e11d48' }}>{row.lumpsumWithdrawal > 0 ? `₹${row.lumpsumWithdrawal.toLocaleString('en-IN')}` : '-'}</td>
-                                                <td style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 800, color: '#059669' }}>₹{Math.round(row.finalValue).toLocaleString('en-IN')}</td>
+                                                <td style={{ padding: '0.75rem 1rem', textAlign: 'right', fontWeight: 800, color: '#059669', fontSize: '1.05rem' }}>₹{Math.round(row.finalValue).toLocaleString('en-IN')}</td>
                                             </tr>
                                         ))}
                                     </tbody>

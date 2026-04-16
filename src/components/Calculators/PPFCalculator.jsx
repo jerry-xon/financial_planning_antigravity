@@ -123,60 +123,64 @@ const PPFCalculator = ({ allocations = [], expenseCategories = {}, data, setData
                         <p style={{ fontSize: '0.9rem' }}>Go back to Step 4 or Step 9 to map your baseline or to add a future PPF allocation.</p>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '2.5rem' }}>
-                        {/* Left Column: Inputs */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <div className="form-group">
-                                <label><TrendingUp size={16} /> Expected Returns (CAGR %)</label>
-                                <input 
-                                    type="number" 
-                                    step="0.01"
-                                    min="5"
-                                    max="9"
-                                    value={expectedReturns} 
-                                    onChange={(e) => {
-                                        let val = parseFloat(e.target.value);
-                                        setExpectedReturns(isNaN(val) ? '' : val);
-                                    }} 
-                                    onBlur={(e) => {
-                                        let val = parseFloat(e.target.value);
-                                        if (isNaN(val)) val = 7.10;
-                                        if (val < 5) val = 5;
-                                        if (val > 9) val = 9;
-                                        setExpectedReturns(val.toFixed(2));
-                                    }}
-                                    className="form-input" 
-                                />
-                                <small className="text-muted">Range: 5.00% to 9.00%. Default: 7.10%.</small>
-                            </div>
-
-                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-                                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem' }}>Fetched PPF Allocations</h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    {proposedPPFs.map((p) => (
-                                        <div key={p.id} className="card" style={{ padding: '1rem', border: '1px solid #6366f1', background: '#f5f3ff' }}>
-                                            <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#6366f1', marginBottom: '0.5rem' }}>
-                                                {p.name || 'PPF Allocation'}
-                                            </div>
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                    <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Yearly Amount</label>
-                                                    <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{Math.round(p.amount).toLocaleString('en-IN')}</div>
-                                                </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                    <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Start Date</label>
-                                                    <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                                                        {new Date(0, p.startMonth - 1).toLocaleString('default', { month: 'short' })} {p.startYear}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                        {/* SECTION 1: PRIMARY INPUTS */}
+                        <div style={{ background: 'var(--bg-card)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                            <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.1rem', color: 'var(--text-main)' }}>Primary Parameters</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
+                                <div className="form-group">
+                                    <label><TrendingUp size={16} /> Expected Returns (CAGR %)</label>
+                                    <input 
+                                        type="number" 
+                                        step="0.01"
+                                        min="5"
+                                        max="9"
+                                        value={expectedReturns} 
+                                        onChange={(e) => {
+                                            let val = parseFloat(e.target.value);
+                                            setExpectedReturns(isNaN(val) ? '' : val);
+                                        }} 
+                                        onBlur={(e) => {
+                                            let val = parseFloat(e.target.value);
+                                            if (isNaN(val)) val = 7.10;
+                                            if (val < 5) val = 5;
+                                            if (val > 9) val = 9;
+                                            setExpectedReturns(val.toFixed(2));
+                                        }}
+                                        className="form-input" 
+                                    />
+                                    <small className="text-muted">Range: 5.00% to 9.00%. Default: 7.10%.</small>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Right Column: Visualization */}
+                        {/* SECTION 2: INCREMENTAL ADJUSTMENTS */}
+                        <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Fetched PPF Allocations</h3>
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                                {proposedPPFs.map((p) => (
+                                    <div key={p.id} className="card" style={{ padding: '1rem', border: '1px solid #6366f1', background: '#f5f3ff', flex: '1 1 auto', minWidth: '280px', maxWidth: '350px' }}>
+                                        <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#6366f1', marginBottom: '0.75rem' }}>
+                                            {p.name || 'PPF Allocation'}
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Yearly Amount</span>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{Math.round(p.amount).toLocaleString('en-IN')}</div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Start Date</span>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                                {new Date(0, p.startMonth - 1).toLocaleString('default', { month: 'short' })} {p.startYear}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* SECTION 3: VISUALIZATION (Wide) */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                             {/* Summary Header */}
                             <div style={{ 
@@ -184,23 +188,23 @@ const PPFCalculator = ({ allocations = [], expenseCategories = {}, data, setData
                                 background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', 
                                 borderRadius: '16px', 
                                 color: 'white',
-                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
                             }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
                                     <div>
                                         <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Projected Value</p>
                                         <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 800 }}>₹{Math.round(finalValue).toLocaleString('en-IN')}</h2>
                                     </div>
-                                    <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                    <div>
                                         <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Total Invested</p>
                                         <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>₹{Math.round(totalInvested).toLocaleString('en-IN')}</h3>
                                     </div>
-                                    <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                    <div>
                                         <p style={{ margin: '0 0 0.5rem 0', opacity: 0.8, fontSize: '0.9rem' }}>Wealth Created</p>
                                         <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>₹{Math.round(finalValue - totalInvested).toLocaleString('en-IN')}</h3>
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', gap: '2rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
                                     <div>
                                         <p style={{ margin: '0 0 0.25rem 0', opacity: 0.8, fontSize: '0.8rem', textTransform: 'uppercase' }}>Start Date</p>
                                         <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>{startString}</div>
@@ -219,7 +223,7 @@ const PPFCalculator = ({ allocations = [], expenseCategories = {}, data, setData
                             <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
                                 <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto' }}>
                                     <table className="summary-table" style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
-                                        <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', borderBottom: '2px solid var(--border)', zIndex: 10 }}>
+                                        <thead style={{ background: '#f8fafc', borderBottom: '2px solid var(--border)' }}>
                                             <tr>
                                                 <th style={{ padding: '1.25rem', textAlign: 'left' }}>Year</th>
                                                 <th style={{ padding: '1.25rem', textAlign: 'right' }}>Investment Amount</th>

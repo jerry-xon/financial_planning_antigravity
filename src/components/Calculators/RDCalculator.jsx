@@ -177,84 +177,92 @@ const RDEngine = ({
                         <p style={{ fontSize: '0.9rem' }}>Go back to Step 4 or Step 9 to inject your baseline or allocate future installments.</p>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '2.5rem' }}>
-                        {/* Left Column: Inputs */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <div className="form-group">
-                                <label><TrendingUp size={16} /> Expected Interest Rate (% p.a)</label>
-                                <input 
-                                    type="number" 
-                                    step="0.1"
-                                    min="5"
-                                    max="9"
-                                    value={rate} 
-                                    onChange={(e) => {
-                                        if (!setRate) return;
-                                        let val = parseFloat(e.target.value);
-                                        setRate(isNaN(val) ? '' : val);
-                                    }} 
-                                    onBlur={(e) => {
-                                        if (!setRate) return;
-                                        let val = parseFloat(e.target.value);
-                                        if (isNaN(val)) val = 7.00;
-                                        if (val < 5) val = 5;
-                                        if (val > 9) val = 9;
-                                        setRate(val.toFixed(2));
-                                    }}
-                                    className="form-input" 
-                                />
-                                <small className="text-muted">Prevailing RD rates range from 5% to 9%.</small>
-                            </div>
-
-                            <div className="form-group">
-                                <label><ShieldCheck size={16} /> {isMonthlyAmount ? 'Monthly Deposit (₹)' : 'Yearly Deposit (₹)'}</label>
-                                <div style={{ position: 'relative' }}>
-                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>₹</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                        {/* SECTION 1: PRIMARY INPUTS */}
+                        <div style={{ background: 'var(--bg-card)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                            <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.1rem', color: 'var(--text-main)' }}>Recurring Deposit Parameters</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
+                                <div className="form-group">
+                                    <label><TrendingUp size={16} /> Expected Interest Rate (% p.a)</label>
                                     <input 
                                         type="number" 
-                                        value={localAmount} 
-                                        readOnly={isReadOnly}
-                                        style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed', paddingLeft: '24px' } : { paddingLeft: '24px' }}
-                                        onChange={(e) => !isReadOnly && setLocalAmount(parseFloat(e.target.value) || 0)} 
+                                        step="0.1"
+                                        min="5"
+                                        max="9"
+                                        value={rate} 
+                                        onChange={(e) => {
+                                            if (!setRate) return;
+                                            let val = parseFloat(e.target.value);
+                                            setRate(isNaN(val) ? '' : val);
+                                        }} 
+                                        onBlur={(e) => {
+                                            if (!setRate) return;
+                                            let val = parseFloat(e.target.value);
+                                            if (isNaN(val)) val = 7.00;
+                                            if (val < 5) val = 5;
+                                            if (val > 9) val = 9;
+                                            setRate(val.toFixed(2));
+                                        }}
                                         className="form-input" 
                                     />
+                                    <small className="text-muted">Prevailing RD rates range from 5% to 9%.</small>
                                 </div>
-                                <small className="text-muted">{isReadOnly ? "Locked to your synchronized configuration." : "Manual Standalone Testing Mode."}</small>
-                            </div>
 
-                            <div className="form-group">
-                                <label><Calculator size={16} /> Compounding Frequency</label>
-                                <div style={{ 
-                                    padding: '0.75rem', 
-                                    background: 'var(--bg-main)', 
-                                    border: '1px solid var(--border)', 
-                                    borderRadius: '8px',
-                                    color: 'var(--text-muted)'
-                                }}>
-                                    Quarterly (Fixed)
+                                <div className="form-group">
+                                    <label><ShieldCheck size={16} /> {isMonthlyAmount ? 'Monthly Deposit (₹)' : 'Yearly Deposit (₹)'}</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>₹</span>
+                                        <input 
+                                            type="number" 
+                                            value={localAmount} 
+                                            readOnly={isReadOnly}
+                                            style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed', paddingLeft: '24px' } : { paddingLeft: '24px' }}
+                                            onChange={(e) => !isReadOnly && setLocalAmount(parseFloat(e.target.value) || 0)} 
+                                            className="form-input" 
+                                        />
+                                    </div>
+                                    <small className="text-muted">{isReadOnly ? "Locked to your synchronized configuration." : "Manual Standalone Testing Mode."}</small>
                                 </div>
-                                <small className="text-muted">Indian RD banking regulations strictly default to quarterly interest accrual.</small>
+
+                                <div className="form-group">
+                                    <label><Calculator size={16} /> Compounding Frequency</label>
+                                    <div style={{ 
+                                        padding: '0.75rem', 
+                                        background: 'var(--bg-main)', 
+                                        border: '1px solid var(--border)', 
+                                        borderRadius: '8px',
+                                        color: 'var(--text-muted)'
+                                    }}>
+                                        Quarterly (Fixed)
+                                    </div>
+                                    <small className="text-muted">Indian RD banking regulations strictly default to quarterly interest accrual.</small>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Right Column: Visualization */}
+                        {/* SECTION 2: VISUALIZATION */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                            {/* Summary Cards */}
+                            {/* Summary Ribbon */}
                             <div style={{ 
-                                display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem',
-                                color: 'white'
+                                padding: '2rem', 
+                                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', 
+                                borderRadius: '16px', 
+                                color: 'white',
+                                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
                             }}>
-                                <div style={{ background: '#3b82f6', padding: '1.25rem', borderRadius: '12px' }}>
-                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.85rem' }}>Total Principal Invested</p>
-                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>₹{Math.round(totals.globalDeposit).toLocaleString('en-IN')}</h3>
-                                </div>
-                                <div style={{ background: '#059669', padding: '1.25rem', borderRadius: '12px' }}>
-                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.85rem' }}>Total Interest Earned</p>
-                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>₹{Math.round(totals.globalInterest).toLocaleString('en-IN')}</h3>
-                                </div>
-                                <div style={{ background: '#6366f1', padding: '1.25rem', borderRadius: '12px', border: '2px solid rgba(255,255,255,0.4)' }}>
-                                    <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.85rem' }}>Total Matured Value</p>
-                                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>₹{Math.round(totals.finalMaturity).toLocaleString('en-IN')}</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                                    <div>
+                                        <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem' }}>Total Principal Invested</p>
+                                        <h3 style={{ margin: 0, fontSize: '2rem', fontWeight: 800 }}>₹{Math.round(totals.globalDeposit).toLocaleString('en-IN')}</h3>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem' }}>Total Interest Earned</p>
+                                        <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#a7f3d0' }}>+ ₹{Math.round(totals.globalInterest).toLocaleString('en-IN')}</h3>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem' }}>Total Matured Value</p>
+                                        <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>₹{Math.round(totals.finalMaturity).toLocaleString('en-IN')}</h3>
+                                    </div>
                                 </div>
                             </div>
 
@@ -262,7 +270,7 @@ const RDEngine = ({
                             <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
                                 <div style={{ overflowX: 'auto', maxHeight: '500px', overflowY: 'auto' }}>
                                     <table className="summary-table" style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
-                                        <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', borderBottom: '2px solid var(--border)', zIndex: 10 }}>
+                                        <thead style={{ background: '#f8fafc', borderBottom: '2px solid var(--border)' }}>
                                             <tr>
                                                 <th style={{ padding: '1.25rem', textAlign: 'left' }}>Year</th>
                                                 <th style={{ padding: '1.25rem', textAlign: 'right' }}>Opening Balance</th>

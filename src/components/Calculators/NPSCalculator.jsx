@@ -167,135 +167,137 @@ const NPSCalculator = ({ allocations = [], familyMembers = [], expenseCategories
                         <p style={{ fontSize: '0.9rem' }}>Go back to Step 4 or Step 9 to map your retirement benefits.</p>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) minmax(0, 1fr)', gap: '2.5rem' }}>
-                        {/* Left Column: Inputs */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                             <div className="form-group">
-                                <label><TrendingUp size={16} /> Expected Returns (CAGR %)</label>
-                                <input 
-                                    type="number" 
-                                    step="0.01"
-                                    min="8"
-                                    max="12"
-                                    value={expectedReturns} 
-                                    onChange={(e) => {
-                                        let val = parseFloat(e.target.value);
-                                        setExpectedReturns(isNaN(val) ? '' : val);
-                                    }} 
-                                    onBlur={(e) => {
-                                        let val = parseFloat(e.target.value);
-                                        if (isNaN(val)) val = 10.00;
-                                        if (val < 8) val = 8;
-                                        if (val > 12) val = 12;
-                                        setExpectedReturns(val.toFixed(2));
-                                    }}
-                                    className="form-input" 
-                                />
-                                <small className="text-muted">Market tracking rate: 8% to 12%. Default: 10%.</small>
-                            </div>
-
-                            <div className="form-group">
-                                <label><Briefcase size={16} /> Initial Investment / Current Corpus (₹)</label>
-                                <div style={{ position: 'relative' }}>
-                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>₹</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        {/* SECTION 1: PRIMARY INPUTS */}
+                        <div style={{ background: 'var(--bg-card)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                            <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.1rem', color: 'var(--text-main)' }}>Primary Parameters</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
+                                <div className="form-group">
+                                    <label><TrendingUp size={16} /> Expected Returns (CAGR %)</label>
                                     <input 
                                         type="number" 
-                                        value={localCorpus} 
-                                        onChange={(e) => setLocalCorpus(parseFloat(e.target.value) || 0)} 
+                                        step="0.01"
+                                        min="8"
+                                        max="12"
+                                        value={expectedReturns} 
+                                        onChange={(e) => {
+                                            let val = parseFloat(e.target.value);
+                                            setExpectedReturns(isNaN(val) ? '' : val);
+                                        }} 
+                                        onBlur={(e) => {
+                                            let val = parseFloat(e.target.value);
+                                            if (isNaN(val)) val = 10.00;
+                                            if (val < 8) val = 8;
+                                            if (val > 12) val = 12;
+                                            setExpectedReturns(val.toFixed(2));
+                                        }}
                                         className="form-input" 
-                                        style={{ paddingLeft: '24px' }}
                                     />
+                                    <small className="text-muted">Market tracking rate: 8% to 12%.</small>
                                 </div>
-                                <small className="text-muted">Synced from your Asset configurations automatically.</small>
-                            </div>
 
-                            <div className="form-group">
-                                <label><HeartHandshake size={16} /> Required Annuity (%)</label>
-                                <input 
-                                    type="number" 
-                                    step="1"
-                                    min="40"
-                                    max="100"
-                                    value={annuityPercent} 
-                                    onChange={(e) => {
-                                        let val = parseFloat(e.target.value);
-                                        setAnnuityPercent(isNaN(val) ? '' : val);
-                                    }} 
-                                    onBlur={(e) => {
-                                        let val = parseFloat(e.target.value);
-                                        if (isNaN(val)) val = 40;
-                                        if (val < 40) val = 40; // Mandatory 40%
-                                        if (val > 100) val = 100;
-                                        setAnnuityPercent(Math.round(val));
-                                    }}
-                                    className="form-input" 
-                                />
-                                <small className="text-muted">Min 40% mandatory to claim pension post-maturity.</small>
-                            </div>
-
-                            <div className="form-group">
-                                <label><Calculator size={16} /> Expected Annuity Rate (%)</label>
-                                <input 
-                                    type="number" 
-                                    step="0.01"
-                                    min="5"
-                                    max="8"
-                                    value={annuityRate} 
-                                    onChange={(e) => {
-                                        let val = parseFloat(e.target.value);
-                                        setAnnuityRate(isNaN(val) ? '' : val);
-                                    }} 
-                                    onBlur={(e) => {
-                                        let val = parseFloat(e.target.value);
-                                        if (isNaN(val)) val = 6.00;
-                                        if (val < 5) val = 5;
-                                        if (val > 8) val = 8;
-                                        setAnnuityRate(val.toFixed(2));
-                                    }}
-                                    className="form-input" 
-                                />
-                                <small className="text-muted">Pension yield parameter: 5% to 8%. Default: 6%.</small>
-                            </div>
-
-                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-                                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem' }}>Fetched NPS Allocations</h3>
-                                {proposedNPS.length === 0 ? (
-                                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No future Allocations proposed natively.</div>
-                                ) : (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                        {proposedNPS.map((p) => (
-                                            <div key={p.id} className="card" style={{ padding: '1rem', border: '1px solid #10b981', background: '#ecfdf5' }}>
-                                                <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#10b981', marginBottom: '0.5rem' }}>
-                                                    {p.name || 'NPS Allocation'}
-                                                </div>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Yearly Amount</label>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{Math.round(p.amount).toLocaleString('en-IN')}</div>
-                                                    </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Start Date</label>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                                                            {new Date(2000, p.startMonth - 1, 1).toLocaleString('default', { month: 'short' })} {p.startYear}
-                                                        </div>
-                                                    </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', gridColumn: '1 / -1' }}>
-                                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>Duration</label>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{p.duration} Years</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                <div className="form-group">
+                                    <label><Briefcase size={16} /> Current Corpus (₹)</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>₹</span>
+                                        <input 
+                                            type="number" 
+                                            value={localCorpus} 
+                                            onChange={(e) => setLocalCorpus(parseFloat(e.target.value) || 0)} 
+                                            className="form-input" 
+                                            style={{ paddingLeft: '24px' }}
+                                        />
                                     </div>
-                                )}
+                                    <small className="text-muted">Synced from Asset configs.</small>
+                                </div>
+
+                                <div className="form-group">
+                                    <label><HeartHandshake size={16} /> Required Annuity (%)</label>
+                                    <input 
+                                        type="number" 
+                                        step="1"
+                                        min="40"
+                                        max="100"
+                                        value={annuityPercent} 
+                                        onChange={(e) => {
+                                            let val = parseFloat(e.target.value);
+                                            setAnnuityPercent(isNaN(val) ? '' : val);
+                                        }} 
+                                        onBlur={(e) => {
+                                            let val = parseFloat(e.target.value);
+                                            if (isNaN(val)) val = 40;
+                                            if (val < 40) val = 40; // Mandatory 40%
+                                            if (val > 100) val = 100;
+                                            setAnnuityPercent(Math.round(val));
+                                        }}
+                                        className="form-input" 
+                                    />
+                                    <small className="text-muted">Min 40% mandatory.</small>
+                                </div>
+
+                                <div className="form-group">
+                                    <label><Calculator size={16} /> Expected Annuity Rate (%)</label>
+                                    <input 
+                                        type="number" 
+                                        step="0.01"
+                                        min="5"
+                                        max="8"
+                                        value={annuityRate} 
+                                        onChange={(e) => {
+                                            let val = parseFloat(e.target.value);
+                                            setAnnuityRate(isNaN(val) ? '' : val);
+                                        }} 
+                                        onBlur={(e) => {
+                                            let val = parseFloat(e.target.value);
+                                            if (isNaN(val)) val = 6.00;
+                                            if (val < 5) val = 5;
+                                            if (val > 8) val = 8;
+                                            setAnnuityRate(val.toFixed(2));
+                                        }}
+                                        className="form-input" 
+                                    />
+                                    <small className="text-muted">Yield parameter: 5% to 8%.</small>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Right Column: Visualization */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        {/* SECTION 2: INCREMENTAL ADJUSTMENTS */}
+                        <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                            <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.1rem', color: 'var(--text-main)' }}>Fetched NPS Allocations</h3>
+                            {proposedNPS.length === 0 ? (
+                                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No future Allocations proposed natively.</div>
+                            ) : (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                                    {proposedNPS.map((p) => (
+                                        <div key={p.id} className="card" style={{ padding: '1rem', border: '1px solid #10b981', background: '#ecfdf5', minWidth: '280px', flex: '1 1 auto', maxWidth: '350px' }}>
+                                            <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#10b981', marginBottom: '0.5rem' }}>
+                                                {p.name || 'NPS Allocation'}
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Yearly Amount</span>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>₹{Math.round(p.amount).toLocaleString('en-IN')}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Start Date</span>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                                    {new Date(2000, p.startMonth - 1, 1).toLocaleString('default', { month: 'short' })} {p.startYear}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Duration</span>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{p.duration} Years</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* SECTION 3: VISUALIZATION */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             {/* Summary Cards */}
                             <div style={{ 
-                                display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem',
+                                display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem',
                                 color: 'white'
                             }}>
                                 <div style={{ background: '#10b981', padding: '1.25rem', borderRadius: '12px' }}>
@@ -320,7 +322,7 @@ const NPSCalculator = ({ allocations = [], familyMembers = [], expenseCategories
                             <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
                                 <div style={{ overflowX: 'auto', maxHeight: '500px', overflowY: 'auto' }}>
                                     <table className="summary-table" style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
-                                        <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', borderBottom: '2px solid var(--border)', zIndex: 10 }}>
+                                        <thead style={{ background: '#f8fafc', borderBottom: '2px solid var(--border)' }}>
                                             <tr>
                                                 <th style={{ padding: '1.25rem', textAlign: 'left' }}>Year</th>
                                                 <th style={{ padding: '1.25rem', textAlign: 'center' }}>Age</th>

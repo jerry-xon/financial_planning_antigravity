@@ -100,86 +100,89 @@ const CarLoanEngine = ({
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 350px) 1fr', gap: '2.5rem' }}>
-                    {/* Inputs */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <div className="form-group">
-                            <label><DollarSign size={16} /> Loan Amount (₹)</label>
-                            <input 
-                                type="number" 
-                                value={loanAmount} 
-                                readOnly={isReadOnly}
-                                onChange={(e) => !isReadOnly && setLoanAmount(parseFloat(e.target.value) || 0)} 
-                                className="form-input" 
-                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label><TrendingDown size={16} /> Interest Rate (% p.a.)</label>
-                            <input 
-                                type="number" 
-                                step="0.1"
-                                value={interestRate} 
-                                readOnly={isReadOnly}
-                                onChange={(e) => !isReadOnly && setInterestRate(parseFloat(e.target.value) || 0)} 
-                                className="form-input" 
-                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label><Clock size={16} /> Tenure (Years)</label>
-                            <input 
-                                type="number" 
-                                value={tenureYears} 
-                                readOnly={isReadOnly}
-                                onChange={(e) => !isReadOnly && setTenureYears(parseInt(e.target.value) || 0)} 
-                                className="form-input" 
-                                style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
-                            />
-                            <small className="text-muted">Tenure in Months: {tenureMonths}</small>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                    {/* SECTION 1: PRIMARY INPUTS */}
+                    <div style={{ background: 'var(--bg-card)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                        <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.1rem', color: 'var(--text-main)' }}>Primary Parameters</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
                             <div className="form-group">
-                                <label>Start Month</label>
-                                <select 
-                                    value={startMonth} 
-                                    onChange={(e) => !isReadOnly && setStartMonth(parseInt(e.target.value))}
-                                    className="form-input"
-                                    disabled={isReadOnly}
+                                <label><DollarSign size={16} /> Loan Amount (₹)</label>
+                                <input 
+                                    type="number" 
+                                    value={loanAmount} 
+                                    readOnly={isReadOnly}
+                                    onChange={(e) => !isReadOnly && setLoanAmount(parseFloat(e.target.value) || 0)} 
+                                    className="form-input" 
                                     style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
-                                >
-                                    {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
-                                </select>
+                                />
                             </div>
+
                             <div className="form-group">
-                                <label>Start Year</label>
-                                <select 
-                                    value={startYear} 
-                                    onChange={(e) => !isReadOnly && setStartYear(parseInt(e.target.value))}
-                                    className="form-input"
-                                    disabled={isReadOnly}
+                                <label><TrendingDown size={16} /> Interest Rate (% p.a.)</label>
+                                <input 
+                                    type="number" 
+                                    step="0.1"
+                                    value={interestRate} 
+                                    readOnly={isReadOnly}
+                                    onChange={(e) => !isReadOnly && setInterestRate(parseFloat(e.target.value) || 0)} 
+                                    className="form-input" 
                                     style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
-                                >
-                                    {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-                                </select>
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label><Clock size={16} /> Tenure (Years)</label>
+                                <input 
+                                    type="number" 
+                                    value={tenureYears} 
+                                    readOnly={isReadOnly}
+                                    onChange={(e) => !isReadOnly && setTenureYears(parseInt(e.target.value) || 0)} 
+                                    className="form-input" 
+                                    style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
+                                />
+                                <small className="text-muted">Tenure in Months: {tenureMonths}</small>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label>Start Month</label>
+                                    <select 
+                                        value={startMonth} 
+                                        onChange={(e) => !isReadOnly && setStartMonth(parseInt(e.target.value))}
+                                        className="form-input"
+                                        disabled={isReadOnly}
+                                        style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
+                                    >
+                                        {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Start Year</label>
+                                    <select 
+                                        value={startYear} 
+                                        onChange={(e) => !isReadOnly && setStartYear(parseInt(e.target.value))}
+                                        className="form-input"
+                                        disabled={isReadOnly}
+                                        style={isReadOnly ? { background: 'var(--bg-main)', cursor: 'not-allowed' } : {}}
+                                    >
+                                        {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                                    </select>
+                                </div>
                             </div>
                         </div>
-
-                        <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--bg-main)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>
+                        
+                        <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--bg-main)', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
                                 <Calendar size={16} />
-                                <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Loan Timeline</span>
+                                <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Loan Timeline:</span>
                             </div>
-                            <p style={{ margin: 0, fontSize: '0.85rem' }}>
-                                Ends in: <span style={{ fontWeight: 700 }}>{monthNames[endDateData.month-1]} {endDateData.year}</span>
+                            <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                                Ends in: <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{monthNames[endDateData.month-1]} {endDateData.year}</span>
                             </p>
                         </div>
                     </div>
 
-                    {/* Results */}
+                    {/* SECTION 2: VISUALIZATION */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                         {/* Summary Cards */}
                         <div style={{ 
@@ -187,24 +190,24 @@ const CarLoanEngine = ({
                             background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)', 
                             borderRadius: '16px', 
                             color: 'white',
-                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
                         }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
                                 <div>
                                     <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem' }}>Monthly EMI</p>
-                                    <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 800 }}>
+                                    <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 800 }}>
                                         ₹{Math.round(emiData.emi).toLocaleString('en-IN')}
                                     </h2>
                                 </div>
-                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                <div>
                                     <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem' }}>Principal Amount</p>
-                                    <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 800 }}>
+                                    <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>
                                         ₹{loanAmount.toLocaleString('en-IN')}
                                     </h2>
                                 </div>
-                                <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1.5rem' }}>
+                                <div>
                                     <p style={{ margin: '0 0 0.5rem 0', opacity: 0.9, fontSize: '0.9rem' }}>Total Interest</p>
-                                    <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: 800 }}>
+                                    <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>
                                         ₹{Math.round(emiData.totalInterest).toLocaleString('en-IN')}
                                     </h2>
                                 </div>
@@ -216,12 +219,11 @@ const CarLoanEngine = ({
                             background: 'var(--bg-card)', 
                             borderRadius: '12px', 
                             border: '1px solid var(--border)', 
-                            overflow: 'hidden',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+                            overflow: 'hidden'
                         }}>
                             <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto' }}>
                                 <table className="summary-table" style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
-                                    <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', borderBottom: '2px solid var(--border)', zIndex: 10 }}>
+                                    <thead style={{ background: '#f8fafc', borderBottom: '2px solid var(--border)' }}>
                                         <tr>
                                             <th style={{ padding: '1.25rem', textAlign: 'left', fontWeight: 700 }}>Year</th>
                                             <th style={{ padding: '1.25rem', textAlign: 'right', fontWeight: 700 }}>Opening Balance</th>

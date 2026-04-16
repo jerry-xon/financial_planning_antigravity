@@ -166,10 +166,12 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
                 </div>
 
                 {/* Main Grid: Inputs on left (Narrow), Results on right (Wide) */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 350px) minmax(0, 1fr)', gap: '2.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
                     
-                    {/* Left Column: Input Section */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {/* SECTION 1: PRIMARY INPUTS */}
+                    <div style={{ background: 'var(--bg-card)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                        <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.1rem', color: 'var(--text-main)' }}>Primary Parameters</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
                         <div className="form-group">
                             <label><Wallet size={16} /> Monthly Amount of SIP (₹)</label>
                             <input 
@@ -212,8 +214,11 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
                             />
                         </div>
 
-                        {/* Incremental Adjustments - 2x2 Grid Layout */}
-                        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+                        </div>
+                    </div>
+
+                    {/* SECTION 2: INCREMENTAL ADJUSTMENTS */}
+                    <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                                 <h3 style={{ margin: 0, fontSize: '1rem' }}>Incremental Adjustments</h3>
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -226,7 +231,7 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                                 {proposedSIPs.map((s) => (
                                     <div key={`proposed-${s.id}`} className="card" style={{ padding: '1rem', border: '1px solid var(--primary)', background: '#f0f9ff', position: 'relative' }}>
                                         <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)', marginBottom: '0.5rem' }}>
@@ -324,10 +329,10 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
                                 ))}
                                 {events.length === 0 && proposedSIPs.length === 0 && <p className="text-muted" style={{ fontSize: '0.85rem', textAlign: 'center', border: '1px dashed var(--border)', padding: '1rem', borderRadius: '8px' }}>No incremental adjustments added.</p>}
                             </div>
-                        </div>
+                            </div>
                     </div>
 
-                    {/* Right Column: Output Section (Wide) */}
+                    {/* SECTION 3: OUTPUT (Wide) */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                         
                         {/* Summary Header */}
@@ -364,7 +369,7 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
                         }}>
                             <div style={{ overflowX: 'auto', maxHeight: '700px', overflowY: 'auto' }}>
                                 <table className="summary-table" style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
-                                    <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', borderBottom: '2px solid var(--border)', zIndex: 10 }}>
+                                    <thead style={{ background: '#f8fafc', borderBottom: '2px solid var(--border)' }}>
                                         <tr>
                                             <th style={{ padding: '1.25rem', textAlign: 'left', fontWeight: 700 }}>Year</th>
                                             <th style={{ padding: '1.25rem', textAlign: 'right', fontWeight: 700 }}>Monthly SIP (Final)</th>
@@ -399,7 +404,6 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
                     </div>
                 </div>
             </div>
-        </div>
     );
 };
 
