@@ -215,16 +215,24 @@ const JourneyTable = ({ projections }) => {
                                                             <strong>{formatCurrency(row.insurancePremium)}</strong>
                                                         </div>
                                                         <div className="breakdown-item">
-                                                            <span>Saving Schemes</span>
-                                                            <strong>{formatCurrency(row.savingsBreakdown.savingSchemes)}</strong>
+                                                            <span>PPF</span>
+                                                            <strong>{formatCurrency(row.savingsBreakdown.ppf)}</strong>
                                                         </div>
                                                         <div className="breakdown-item">
-                                                            <span>MFs – SIP / Equity</span>
+                                                            <span>NPS</span>
+                                                            <strong>{formatCurrency(row.savingsBreakdown.nps)}</strong>
+                                                        </div>
+                                                        <div className="breakdown-item">
+                                                            <span>RD</span>
+                                                            <strong>{formatCurrency(row.savingsBreakdown.rdTotal)}</strong>
+                                                        </div>
+                                                        <div className="breakdown-item">
+                                                            <span>MF-SIP</span>
                                                             <strong>{formatCurrency(row.savingsBreakdown.sip)}</strong>
                                                         </div>
                                                         <div className="breakdown-item">
-                                                            <span>Other Saving</span>
-                                                            <strong>{formatCurrency(row.savingsBreakdown.otherSaving)}</strong>
+                                                            <span>Any other savings</span>
+                                                            <strong>{formatCurrency(row.savingsBreakdown.otherSaving + (row.savingsBreakdown.savingSchemes || 0) + (row.savingsBreakdown.fdTotal || 0))}</strong>
                                                         </div>
                                                         <div className="breakdown-divider"></div>
                                                         <div className="breakdown-total">

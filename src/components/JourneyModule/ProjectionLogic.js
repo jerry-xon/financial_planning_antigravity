@@ -537,6 +537,7 @@ export const generateProjections = ({
                 rdTotal: (Array.isArray(expenseCategories.savings?.rd) ? expenseCategories.savings.rd : (expenseCategories.savings?.rd ? [expenseCategories.savings.rd] : [])).reduce((sum, item) => sum + (parseFloat(item?.amount !== undefined ? item.amount : item) || 0), 0) * 12,
                 fdTotal: (Array.isArray(expenseCategories.savings?.fd) ? expenseCategories.savings.fd : (expenseCategories.savings?.fd ? [expenseCategories.savings.fd] : [])).reduce((sum, item) => sum + (parseFloat(item?.amount !== undefined ? item.amount : item) || 0), 0) * 12,
                 ppf: (parseFloat(expenseCategories.savings?.ppf?.amount !== undefined ? expenseCategories.savings.ppf.amount : expenseCategories.savings?.ppf) || 0) * 12,
+                nps: (parseFloat(expenseCategories.savings?.nps?.amount !== undefined ? expenseCategories.savings.nps.amount : expenseCategories.savings?.nps) || 0) * 12,
                 savingSchemes: (parseFloat(expenseCategories.savings?.savingSchemes?.amount !== undefined ? expenseCategories.savings.savingSchemes.amount : expenseCategories.savings?.savingSchemes) || 0) * 12,
                 sip: (parseFloat(expenseCategories.savings?.sip?.amount !== undefined ? expenseCategories.savings.sip.amount : expenseCategories.savings?.sip) || 0) * 12,
                 otherSaving: (parseFloat(expenseCategories.savings?.otherSaving?.amount !== undefined ? expenseCategories.savings.otherSaving.amount : expenseCategories.savings?.otherSaving) || 0) * 12

@@ -19,11 +19,23 @@ export const categorizeGoals = (goals) => {
     goals.forEach(goal => {
         const years = parseFloat(goal.yearsToGoal) || 0;
         const targetYear = currentYear + Math.round(years);
-        const futureCost = calculateFutureCost(goal.presentValue, years, goal.inflationRate);
+        const inflation = parseFloat(goal.inflationRate) || 8; // fallback to 8 if not defined
+        
+        let futureCost = calculateFutureCost(goal.presentValue, years, goal.inflationRate);
+        let presentValue = goal.presentValue;
+
+        // Use pre-expanded futureValue if provided (like for Higher Education duration spread)
+        if (goal.futureValue) {
+            futureCost = Math.round(parseFloat(goal.futureValue));
+            if (!presentValue || parseFloat(presentValue) === 0) {
+                presentValue = Math.round(futureCost / Math.pow(1 + inflation / 100, years));
+            }
+        }
 
         const goalData = {
             ...goal,
             targetYear,
+            presentValue,
             futureCost
         };
 

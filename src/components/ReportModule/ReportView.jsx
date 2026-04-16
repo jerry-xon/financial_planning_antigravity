@@ -629,11 +629,11 @@ const ReportView = ({
                     <section id="sec-9" className="report-section card" style={{ marginTop: '1.5rem', breakBefore: 'page' }}>
                         <h3>9. Goal Fulfillment Roadmap</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            {validGoals.map((g, i) => {
+                            {[...goalResults.short, ...goalResults.medium, ...goalResults.long].map((g, i) => {
                                 const mappingDict = goalMappings[g.id] || {};
                                 const selectedSources = Object.keys(mappingDict);
                                 const totalAssigned = Object.values(mappingDict).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-                                const shortfall = g.futureCost - totalAssigned;
+                                const shortfall = (g.futureCost || 0) - totalAssigned;
                                 const isFullyFunded = Math.round(shortfall) <= 0;
                                 const hasAssignments = totalAssigned > 0;
                                 
