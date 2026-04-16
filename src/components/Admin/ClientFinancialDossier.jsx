@@ -7,17 +7,51 @@ const ClientFinancialDossier = ({ report, onBack }) => {
   if (!report) return null;
 
   const renderRawData = (data) => {
+    if (!data) return null;
+
+    const DataViewer = ({ value, depth = 0 }) => {
+      if (value === null || value === undefined) return <span className="val-primitive text-muted">-</span>;
+      if (typeof value === 'boolean') return <span className="val-primitive text-accent">{value ? 'Yes' : 'No'}</span>;
+      if (typeof value === 'string' || typeof value === 'number') return <span className="val-primitive">{value}</span>;
+
+      if (Array.isArray(value)) {
+        if (value.length === 0) return <span className="val-empty text-muted">Empty list</span>;
+        return (
+          <div className="data-list" style={{ marginLeft: depth > 0 ? '0.5rem' : '0' }}>
+            {value.map((item, idx) => (
+              <div key={idx} className="data-list-item">
+                <DataViewer value={item} depth={depth + 1} />
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      if (typeof value === 'object') {
+        const keys = Object.keys(value);
+        if (keys.length === 0) return <span className="val-empty text-muted">Empty</span>;
+
+        return (
+          <div className={`data-grid ${depth === 0 ? 'root-grid' : ''}`}>
+            {keys.map(key => (
+              <div key={key} className="data-row">
+                <div className="data-label">{key.replace(/[_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
+                <div className="data-content">
+                  <DataViewer value={value[key]} depth={depth + 1} />
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      return null;
+    };
+
     return (
-      <pre style={{ 
-        background: '#1e1e1e', 
-        color: '#d4d4d4', 
-        padding: '1.5rem', 
-        borderRadius: '8px', 
-        overflowX: 'auto',
-        fontSize: '0.875rem'
-      }}>
-        {JSON.stringify(data, null, 2)}
-      </pre>
+      <div className="structured-data-viewer">
+        <DataViewer value={data} />
+      </div>
     );
   };
 
@@ -229,6 +263,88 @@ const ClientFinancialDossier = ({ report, onBack }) => {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Structured Data Viewer Styles */
+        .structured-data-viewer {
+          background: transparent;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          overflow: hidden;
+        }
+
+        .data-grid {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+        }
+
+        .root-grid > .data-row:not(:last-child) {
+          border-bottom: 1px solid var(--border);
+        }
+
+        .data-row {
+          display: flex;
+          flex-direction: column;
+          padding: 0.75rem 1rem;
+          border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        .root-grid > .data-row:first-child { border-top: none; }
+
+        @media (min-width: 640px) {
+          .data-row {
+            flex-direction: row;
+            align-items: flex-start;
+          }
+        }
+
+        .data-row:hover {
+          background: rgba(0,0,0,0.02);
+        }
+
+        .data-label {
+          font-weight: 600;
+          color: var(--text-muted);
+          font-size: 0.85rem;
+          min-width: 200px;
+          padding-right: 1rem;
+          margin-bottom: 0.25rem;
+        }
+
+        @media (min-width: 640px) {
+          .data-label {
+            margin-bottom: 0;
+            padding-top: 0.15rem;
+          }
+        }
+
+        .data-content {
+          flex: 1;
+          color: var(--text);
+          font-size: 0.95rem;
+          overflow-wrap: break-word;
+          word-break: break-word;
+        }
+
+        .data-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          padding-left: 0.5rem;
+          border-left: 2px solid var(--border);
+          margin-top: 0.25rem;
+        }
+
+        .data-list-item {
+          background: var(--bg-card);
+          padding: 0.75rem;
+          border-radius: 6px;
+          border: 1px solid var(--border);
+        }
+
+        .text-muted { color: var(--text-muted); }
+        .text-accent { color: var(--primary); font-weight: 500; }
+        .val-primitive { font-family: monospace; font-size: 0.9rem; }
+
       `}</style>
     </div>
   );

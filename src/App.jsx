@@ -412,6 +412,8 @@ function App() {
             personalLoan: loadedExpenseCategories.emi?.personalLoan ?? '',
             homeLoan: loadedExpenseCategories.emi?.homeLoan ?? '',
             educationLoan: loadedExpenseCategories.emi?.educationLoan ?? '',
+            carLoan: loadedExpenseCategories.emi?.carLoan ?? '',
+            twoWheelerLoan: loadedExpenseCategories.emi?.twoWheelerLoan ?? '',
             otherEmi: loadedExpenseCategories.emi?.otherEmi ?? ''
           },
           insurance: migratedInsurance,

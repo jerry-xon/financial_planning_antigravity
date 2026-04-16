@@ -178,7 +178,7 @@ const EquityCalculator = ({ assetCategories = {}, familyMembers = [], proposedEq
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '2.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) minmax(0, 1fr)', gap: '2.5rem' }}>
                     {/* Left Column: Inputs & Events */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         <div className="form-group">

@@ -120,50 +120,15 @@ const RoleBasedRouting = ({ children }) => {
     );
   }
 
-  // DEBUG BANNER (Temporary)
-  const debugBanner = (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        background: "red",
-        color: "white",
-        zIndex: 10000,
-        padding: "5px",
-        fontSize: "12px",
-      }}
-    >
-      DEBUG: user={user?.email ? "YES" : "NO"} | role={userRole} | subActive=
-      {String(subscriptionActive)}
-    </div>
-  );
-
   if (!user) {
-    return (
-      <>
-        {debugBanner}
-        {children}
-      </>
-    );
+    return <>{children}</>;
   }
 
   if (!subscriptionActive) {
-    return (
-      <>
-        {debugBanner}
-        <SubscriptionGate onActivate={() => setSubscriptionActive(true)} />
-      </>
-    );
+    return <SubscriptionGate onActivate={() => setSubscriptionActive(true)} />;
   }
 
-  return (
-    <>
-      {debugBanner}
-      {children}
-    </>
-  );
+  return <>{children}</>;
 };
 
 export default RoleBasedRouting;

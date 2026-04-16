@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { PieChart, Plus, Target, Info, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PieChart, Plus, Target, Info, TrendingUp, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 import InsuranceInput from './InsuranceInput';
 import InsuranceOutput from './InsuranceOutput';
 import { calculateYearlyInsuranceSummary, getInsuredNamesList } from './InsuranceLogic';
 import { convertToAnnual } from '../CashFlowModule/CashFlowLogic';
 import SharedDocumentVault from './SharedDocumentVault';
+import ContextualHelpPopup from '../common/ContextualHelpPopup';
 
 const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategories, setExpenseCategories, investmentAllocations = [], onNext, onBack, setCurrentStep }) => {
     const [results, setResults] = useState(null);
@@ -14,6 +15,7 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
     const [showDetailedPolicies, setShowDetailedPolicies] = useState(false);
     const [showProposedPolicies, setShowProposedPolicies] = useState(false);
     const [policyCounts, setPolicyCounts] = useState({});
+    const [showHelpPopup, setShowHelpPopup] = useState(false);
 
     // Sync frequency from allocation module if it changes
     useEffect(() => {
@@ -264,27 +266,49 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                     </div>
 
                     <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '2.5rem' }}>
-                        <button 
-                            className="btn btn-secondary" 
-                            onClick={() => setShowDetailedPolicies(!showDetailedPolicies)}
-                            style={{ 
-                                flex: 1, 
-                                borderStyle: 'dashed', 
-                                background: 'transparent',
-                                padding: '1.5rem',
-                                fontSize: '1.1rem',
-                                fontWeight: 600,
-                                color: 'var(--primary)',
-                                borderColor: 'var(--primary)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '12px'
-                            }}
-                        >
-                            <span style={{ fontSize: '1.5rem' }}>{showDetailedPolicies ? '-' : '+'}</span>
-                            For accurate financial planning provide complete details of each policy
-                        </button>
+                        <div style={{ flex: 1, display: 'flex', gap: '8px' }}>
+                            <button 
+                                className="btn btn-secondary" 
+                                onClick={() => setShowDetailedPolicies(!showDetailedPolicies)}
+                                style={{ 
+                                    flex: 1, 
+                                    borderStyle: 'dashed', 
+                                    background: 'transparent',
+                                    padding: '1.5rem',
+                                    fontSize: '1.1rem',
+                                    fontWeight: 600,
+                                    color: 'var(--primary)',
+                                    borderColor: 'var(--primary)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '12px'
+                                }}
+                            >
+                                <span style={{ fontSize: '1.5rem' }}>{showDetailedPolicies ? '-' : '+'}</span>
+                                For accurate financial planning provide complete details of each policy
+                            </button>
+                            <button 
+                                onClick={() => setShowHelpPopup(true)}
+                                title="Need Help?"
+                                style={{
+                                    background: 'var(--bg-main)',
+                                    border: '1px dashed var(--primary)',
+                                    color: 'var(--primary)',
+                                    padding: '0 1rem',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s',
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(37, 99, 235, 0.1)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--bg-main)'; }}
+                            >
+                                <HelpCircle size={24} />
+                            </button>
+                        </div>
 
                         <button 
                             className="btn btn-secondary" 
@@ -481,6 +505,17 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                 </div>,
                 document.body
             )}
+
+            <ContextualHelpPopup 
+                isOpen={showHelpPopup}
+                onClose={() => setShowHelpPopup(false)}
+                title="Need Help with Insurance Policies?"
+                message="Finbrella can assist you with this. Simply upload your policy bond below, or reach out via call or email."
+                supportContacts={{
+                    email: "finbrellafpd@gmail.com",
+                    phone: ["+91 9785895737", "+91 7046069999"]
+                }}
+            />
         </div>
     );
 };

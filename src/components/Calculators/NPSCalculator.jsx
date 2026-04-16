@@ -167,7 +167,7 @@ const NPSCalculator = ({ allocations = [], familyMembers = [], expenseCategories
                         <p style={{ fontSize: '0.9rem' }}>Go back to Step 4 or Step 9 to map your retirement benefits.</p>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) 1fr', gap: '2.5rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 400px) minmax(0, 1fr)', gap: '2.5rem' }}>
                         {/* Left Column: Inputs */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                              <div className="form-group">

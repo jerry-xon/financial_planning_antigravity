@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { formatCurrency } from '../CashFlowModule/CashFlowLogic';
-import { ShieldAlert, ShieldCheck, TrendingDown, Target, User, Users, Info } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, TrendingDown, Target, User, Users, Info, HelpCircle } from 'lucide-react';
+import ContextualHelpPopup from '../common/ContextualHelpPopup';
 
 const ProtectionGapOutput = ({ results }) => {
     const [animate, setAnimate] = useState(false);
+    const [showHelpPopup, setShowHelpPopup] = useState(false);
 
     useEffect(() => {
         // Trigger animations after mount
@@ -186,6 +188,43 @@ const ProtectionGapOutput = ({ results }) => {
                 {renderIndividualGap(results.self, "Self")}
                 {renderIndividualGap(results.spouse, "Spouse")}
             </div>
+
+            <div style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'center' }}>
+                <button 
+                    className="btn btn-secondary fade-in" 
+                    onClick={() => setShowHelpPopup(true)}
+                    style={{ 
+                        padding: '1rem 2rem', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.75rem',
+                        fontSize: '1.05rem',
+                        fontWeight: 600,
+                        background: 'rgba(37, 99, 235, 0.05)',
+                        border: '1px dashed var(--primary)',
+                        color: 'var(--primary)',
+                        borderRadius: '12px',
+                        transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(37, 99, 235, 0.1)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(37, 99, 235, 0.05)'; }}
+                >
+                    <HelpCircle size={20} />
+                    View Indicative Term Insurance Premiums & Get Support
+                </button>
+            </div>
+
+            <ContextualHelpPopup 
+                isOpen={showHelpPopup}
+                onClose={() => setShowHelpPopup(false)}
+                title="Term Insurance Premiums & Support"
+                message="Finbrella can help you choose the right term insurance to bridge your protection gap. Below are indicative premiums from top providers—contact us via call or email for competitive quotes."
+                imageSrc="/term_quote.png"
+                supportContacts={{
+                    email: "finbrellafpd@gmail.com",
+                    phone: ["+91 9785895737", "+91 7046069999"]
+                }}
+            />
 
             <style>{`
                 .member-gap-card:hover {

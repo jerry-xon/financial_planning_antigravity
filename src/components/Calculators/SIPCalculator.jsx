@@ -166,7 +166,7 @@ const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [],
                 </div>
 
                 {/* Main Grid: Inputs on left (Narrow), Results on right (Wide) */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 350px) 1fr', gap: '2.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 350px) minmax(0, 1fr)', gap: '2.5rem' }}>
                     
                     {/* Left Column: Input Section */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
