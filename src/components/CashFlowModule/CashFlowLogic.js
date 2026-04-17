@@ -50,7 +50,12 @@ export const calculateCashFlow = (income, expenseCategories) => {
         return sum + convertToMonthly(item.value, item.frequency);
     }, 0);
 
-    const savingsSum = Object.values(expenseCategories.savings || {}).reduce((sum, val) => sum + (parseFloat(val?.amount !== undefined ? val.amount : val) || 0), 0);
+    const savingsSum = Object.values(expenseCategories.savings || {}).reduce((sum, val) => {
+        if (Array.isArray(val)) {
+            return sum + val.reduce((arrSum, item) => arrSum + (parseFloat(item?.amount !== undefined ? item.amount : item) || 0), 0);
+        }
+        return sum + (parseFloat(val?.amount !== undefined ? val.amount : val) || 0);
+    }, 0);
 
     const categorySums = {
         household: householdSum,
@@ -74,18 +79,33 @@ export const calculateCashFlow = (income, expenseCategories) => {
     // Regular categories
     ['household', 'emi', 'savings'].forEach(cat => {
         Object.entries(expenseCategories[cat] || {}).forEach(([itemKey, value]) => {
-            let amount = 0;
-            if (cat === 'emi' && value !== null && typeof value === 'object') {
-                amount = parseFloat(value.emi) || 0;
-            } else {
-                amount = parseFloat(value) || 0;
-            }
-            if (amount > 0) {
-                expenseBreakdown.push({
-                    name: getItemLabel(itemKey),
-                    category: getCategoryLabel(cat),
-                    value: amount
+            if (Array.isArray(value)) {
+                value.forEach((v, idx) => {
+                    let amount = parseFloat(v?.amount !== undefined ? v.amount : v) || 0;
+                    if (amount > 0) {
+                        expenseBreakdown.push({
+                            name: `${getItemLabel(itemKey)} #${idx + 1}`,
+                            category: getCategoryLabel(cat),
+                            value: amount
+                        });
+                    }
                 });
+            } else {
+                let amount = 0;
+                if (cat === 'emi' && value !== null && typeof value === 'object') {
+                    amount = parseFloat(value.emi) || 0;
+                } else if (value !== null && typeof value === 'object' && value.amount !== undefined) {
+                    amount = parseFloat(value.amount) || 0;
+                } else {
+                    amount = parseFloat(value) || 0;
+                }
+                if (amount > 0) {
+                    expenseBreakdown.push({
+                        name: getItemLabel(itemKey),
+                        category: getCategoryLabel(cat),
+                        value: amount
+                    });
+                }
             }
         });
     });

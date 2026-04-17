@@ -368,6 +368,9 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                             </tbody>
                         </table>
                     </div>
+                    <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(37, 99, 235, 0.05)', borderRadius: '8px', borderLeft: '4px solid var(--primary)', fontSize: '0.9rem', color: 'var(--text-main)' }}>
+                        <strong>Note:</strong> Education expenses are not included in income & lifestyle expenses in above table. You can track education expenses in journey module in Total Outflow column.
+                    </div>
                 </div>
             </div>
             </>
