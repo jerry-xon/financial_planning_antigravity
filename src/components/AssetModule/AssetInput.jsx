@@ -260,15 +260,16 @@ const AssetInput = ({ assetCategories, setAssetCategories, liabilityCategories, 
                                                     </div>
                                                 </div>
                                                 <CurrencyInput 
-                                                    readOnly={isConfigured}
+                                                    readOnly={true}
                                                     value={displayValue || ''} 
                                                     onChange={(e) => {
                                                         const newFds = [...fdArray];
                                                         newFds[fdIndex] = e.target.value;
                                                         handleAssetChange('investments', 'fixedDeposit', newFds);
                                                     }} 
+                                                    onClick={() => setActiveModal({ category: 'investments', item: 'fixedDeposit', title: 'Fixed Deposit (FD)', index: fdIndex })}
                                                     placeholder="0" 
-                                                    style={{ background: isConfigured ? 'var(--bg-main)' : 'var(--bg-card)', color: isConfigured ? 'var(--primary)' : 'var(--text-main)', cursor: isConfigured ? 'not-allowed' : 'text' }}
+                                                    style={{ background: isConfigured ? 'var(--bg-main)' : 'var(--bg-card)', color: isConfigured ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'pointer' }}
                                                 />
                                             </div>
                                         );

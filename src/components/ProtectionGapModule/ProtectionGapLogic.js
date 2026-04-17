@@ -36,6 +36,6 @@ export const calculateProtectionGap = (expenseCategories, policies, familyMember
         multiplier,
         protectionNeed,
         self: calculateIndividualGap(selfMember?.name || 'Self'),
-        spouse: spouseMember ? calculateIndividualGap(spouseMember.name) : null
+        spouse: (spouseMember && spouseMember.occupation?.toLowerCase() !== 'housewife') ? calculateIndividualGap(spouseMember.name) : null
     };
 };

@@ -33,8 +33,13 @@ const ProfileModule = ({ members, setMembers, onNext }) => {
                         <button 
                             className="btn btn-primary" 
                             onClick={() => {
+                                const missingBasic = members.some(m => !m.name || !m.dob);
                                 const missingMobile = members.some(m => (m.relation === 'Self' || m.relation === 'Spouse') && !m.mobile);
-                                if (missingMobile) {
+                                
+                                if (missingBasic) {
+                                    setError('Please provide Name and Date of Birth for all family members.');
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                } else if (missingMobile) {
                                     setError('Please provide mobile number for Self and Spouse.');
                                     window.scrollTo({ top: 0, behavior: 'smooth' });
                                 } else {

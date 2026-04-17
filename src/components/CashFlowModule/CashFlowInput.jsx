@@ -416,9 +416,9 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                         value={displayValue} 
                                         readOnly={true}
                                         onChange={(e) => handleExpenseChange('emi', loanKey, e.target.value)} 
-                                        
+                                        onClick={() => setActiveModal(loanKey)}
                                         placeholder="0" 
-                                        style={{ background: 'var(--bg-card)', color: isConfigured ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'not-allowed' }}
+                                        style={{ background: 'var(--bg-card)', color: isConfigured ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'pointer' }}
                                     />
                                 </div>
                             );
@@ -628,9 +628,9 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                         value={displayValue} 
                                         readOnly={true}
                                         onChange={(e) => handleExpenseChange('savings', invKey, e.target.value)} 
-                                        
+                                        onClick={() => setActiveInvModal(invKey)}
                                         placeholder="0" 
-                                        style={{ background: 'var(--bg-card)', color: isConfigured ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'not-allowed' }}
+                                        style={{ background: 'var(--bg-card)', color: isConfigured ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'pointer' }}
                                     />
                                 </div>
                             );
@@ -704,9 +704,9 @@ const CashFlowInput = ({ familyMembers, income, setIncome, expenseCategories, se
                                                             newRds[rdIndex] = e.target.value;
                                                             handleExpenseChange('savings', 'rd', newRds);
                                                         }} 
-                                                        
+                                                        onClick={() => setActiveInvModal({ key: 'rd', index: rdIndex })}
                                                         placeholder="0" 
-                                                        style={{ background: 'var(--bg-main)', color: isConfigured ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'not-allowed' }}
+                                                        style={{ background: 'var(--bg-main)', color: isConfigured ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'pointer' }}
                                                     />
                                                 </div>
                                             );

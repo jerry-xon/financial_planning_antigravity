@@ -79,7 +79,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
 
                     <div className="grid-cols-3">
                         <div className="input-group">
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><User size={14} /> Name</label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><User size={14} /> Name <span style={{ color: '#ef4444' }}>*</span></label>
                             <input
                                 type="text"
                                 name="name"
@@ -90,7 +90,7 @@ const ProfileInput = ({ members, setMembers, onCalculate }) => {
                         </div>
 
                         <div className="input-group">
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Calendar size={14} /> Date of Birth</label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Calendar size={14} /> Date of Birth <span style={{ color: '#ef4444' }}>*</span></label>
                             <input
                                 type="date"
                                 name="dob"
