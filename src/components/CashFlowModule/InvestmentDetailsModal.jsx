@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Target, X, Calendar, DollarSign, Clock } from 'lucide-react';
 
 const InvestmentDetailsModal = ({ isOpen, onClose, onSave, initialData, investmentTypeTitle }) => {
     const currentYearVal = new Date().getFullYear();
@@ -12,6 +11,8 @@ const InvestmentDetailsModal = ({ isOpen, onClose, onSave, initialData, investme
         startYear: currentYearVal,
         duration: investmentTypeTitle === 'PPF' ? 15 : 10
     });
+
+    const [showSuccess, setShowSuccess] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -49,133 +50,127 @@ const InvestmentDetailsModal = ({ isOpen, onClose, onSave, initialData, investme
                 duration: investmentTypeTitle === 'PPF' ? 15 : (parseInt(formData.duration, 10) || 10)
             });
         }
-        onClose();
+        setShowSuccess(true);
+        setTimeout(() => {
+            setShowSuccess(false);
+            onClose();
+        }, 1500);
     };
+
+    const handleClear = () => {
+        onSave('');
+        onClose();
+    }
 
     const isPPF = investmentTypeTitle === 'PPF';
 
     return createPortal(
-        <div className="modal-overlay">
-            <div className="modal-content" style={{ maxWidth: '500px' }}>
-                <div className="modal-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Target size={24} className="text-primary" />
-                        <h2>Configure {investmentTypeTitle} Details</h2>
-                    </div>
-                    <button className="close-btn" onClick={onClose}><X size={24} /></button>
-                </div>
+        <div style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
+            zIndex: 1000, padding: '1rem'
+        }}>
+            <div className="card fade-in" style={{
+                background: 'var(--bg-main)', width: '100%', maxWidth: '550px',
+                padding: '2rem', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                border: '1px solid var(--border)',
+                maxHeight: '90vh', overflowY: 'auto',
+                position: 'relative'
+            }}>
+                <h3 style={{ marginTop: 0, color: 'var(--primary)', borderBottom: '2px solid var(--border)', paddingBottom: '0.75rem', marginBottom: '1.5rem' }}>
+                    Configure {investmentTypeTitle} Details
+                </h3>
+                
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                    Configure the exact parameters of your active {investmentTypeTitle} to ensure accurate compounding baseline synchronization.
+                </p>
 
-                <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <p className="text-muted" style={{ fontSize: '0.9rem', margin: 0 }}>
-                        Configure the exact parameters of your active {investmentTypeTitle} investment to ensure accurate compounding baseline synchronization.
-                    </p>
-
-                    <div className="input-group">
-                        <label>Monthly Investment / Contribution Amount (₹)</label>
-                        <div style={{ position: 'relative' }}>
-                            <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontWeight: 'bold' }}>₹</span>
-                            <input 
-                                type="number" 
+                {/* Section 1: Investment Details */}
+                <div style={{ marginBottom: '1.5rem', background: 'var(--bg-card)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-main)', fontSize: '1rem' }}>Investment Details</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                        <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+                            <label htmlFor="amount">Monthly Investment / Contribution Amount (₹)</label>
+                            <input id="amount" type="number" 
+                                aria-label="Investment Amount"
                                 value={formData.amount} 
                                 onChange={(e) => setFormData({...formData, amount: e.target.value})} 
-                                placeholder="0" 
-                                style={{ paddingLeft: '32px' }}
-                            />
+                                />
+                            <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>e.g. 5000</small>
                         </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div className="input-group">
-                            <label>Start Month</label>
-                            <div style={{ position: 'relative' }}>
-                                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}><Calendar size={16} /></span>
-                                <select 
-                                    value={formData.startMonth} 
-                                    onChange={(e) => setFormData({...formData, startMonth: parseInt(e.target.value, 10)})}
-                                    style={{ paddingLeft: '32px' }}
-                                >
-                                    {monthNames.map((m, i) => <option key={m} value={i+1}>{m}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="input-group">
-                            <label>Start Year</label>
-                            <div style={{ position: 'relative' }}>
-                                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}><Clock size={16} /></span>
-                                <select 
-                                    value={formData.startYear} 
-                                    onChange={(e) => setFormData({...formData, startYear: parseInt(e.target.value, 10)})}
-                                    style={{ paddingLeft: '32px' }}
-                                >
-                                    {[...Array(41)].map((_, i) => {
-                                        const y = currentYearVal - 40 + i;
-                                        return <option key={y} value={y}>{y}</option>;
-                                    })}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Extended Properties: Tenure Binding */}
-                        {isPPF ? (
-                            <div style={{ gridColumn: '1 / -1', background: 'var(--bg-card)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <span style={{ fontWeight: 600, color: 'var(--text-main)', display: 'block' }}>Mandatory Tenure: 15 Years</span>
-                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Maturity Date: {monthNames[parseInt(formData.startMonth, 10) - 1]} {parseInt(formData.startYear, 10) + 15}</span>
-                                </div>
-                                <span style={{ padding: '0.25rem 0.5rem', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>AUTO-LOCKED</span>
-                            </div>
-                        ) : (
+                        
+                        {!isPPF && (
                             <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-                                <label>Tenure / Duration (Years)</label>
-                                <div style={{ position: 'relative' }}>
-                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}><Clock size={16} /></span>
-                                    <input 
-                                        type="number"
-                                        min="1"
-                                        max="60"
-                                        value={formData.duration}
-                                        onChange={(e) => setFormData({...formData, duration: e.target.value})}
-                                        style={{ paddingLeft: '32px' }}
-                                        placeholder="Enter duration in years"
+                                <label htmlFor="duration">Tenure / Duration (Years)</label>
+                                <input id="duration" type="number" min="1" max="60"
+                                    aria-label="Investment Duration"
+                                    value={formData.duration} 
+                                    onChange={(e) => setFormData({...formData, duration: e.target.value})} 
                                     />
+                                <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>e.g. 10</small>
+                            </div>
+                        )}
+                        
+                        {isPPF && (
+                            <div style={{ gridColumn: '1 / -1', background: 'var(--indigo-50, #e0f2fe)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--indigo-200, #bae6fd)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <span style={{ fontWeight: 600, color: 'var(--slate-700, #0f172a)', display: 'block' }}>Mandatory Tenure: 15 Years</span>
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--slate-600, #334155)' }}>Maturity Date: {monthNames[parseInt(formData.startMonth, 10) - 1]} {parseInt(formData.startYear, 10) + 15}</span>
                                 </div>
+                                <span style={{ padding: '0.25rem 0.6rem', background: 'var(--indigo-600, #0284c7)', color: 'white', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>AUTO-LOCKED</span>
                             </div>
                         )}
                     </div>
                 </div>
 
-                <div className="modal-footer">
-                    <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-                    <button className="btn btn-primary" onClick={handleSave}>Verify & Save Configuration</button>
+                {/* Section 2: Timeline */}
+                <div style={{ marginBottom: '1.5rem', background: 'var(--bg-card)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-main)', fontSize: '1rem' }}>Timeline</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
+                        <div className="input-group">
+                            <label htmlFor="startMonth">Start Month</label>
+                            <select id="startMonth" aria-label="Start Month" value={formData.startMonth} onChange={(e) => setFormData({...formData, startMonth: e.target.value})}
+                                style={{ appearance: 'auto', padding: '0.6rem', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--bg-main)', color: 'var(--text-main)', width: '100%' }}
+                            >
+                                {monthNames.map((m, i) => (
+                                    <option key={m} value={i+1}>{m}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="input-group">
+                            <label htmlFor="startYear">Start Year</label>
+                            <select id="startYear" aria-label="Start Year"
+                                value={formData.startYear} 
+                                onChange={(e) => setFormData({...formData, startYear: parseInt(e.target.value, 10)})}
+                                style={{ appearance: 'auto', padding: '0.6rem', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--bg-main)', color: 'var(--text-main)', width: '100%' }}
+                            >
+                                {[...Array(41)].map((_, i) => {
+                                    const y = currentYearVal - 40 + i;
+                                    return <option key={y} value={y}>{y}</option>;
+                                })}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {showSuccess && (
+                    <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'var(--emerald-500, #10b981)', color: 'white', padding: '0.5rem 1rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600 }}>
+                        Saved Successfully!
+                    </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                    <button className="btn" aria-label="Clear Configuration" onClick={handleClear} style={{ color: 'var(--rose-500, #f43f5e)', background: 'transparent', border: 'none', padding: '0.5rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer' }}>
+                         <span style={{fontSize: '1.2rem', lineHeight: 1}}>×</span> Clear Config
+                    </button>
+                    <div style={{ display: 'flex', gap: '1rem', marginLeft: 'auto' }}>
+                        <button className="btn" aria-label="Cancel" onClick={onClose} style={{ padding: '0.6rem 1rem', background: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border)', cursor: 'pointer' }}>Cancel</button>
+                        <button className="btn btn-primary" aria-label="Save Configuration" onClick={handleSave} style={{ padding: '0.6rem 1.5rem', transition: 'background 0.2s', cursor: 'pointer' }}>Verify & Save</button>
+                    </div>
                 </div>
             </div>
-            
-            <style jsx>{`
-                .modal-overlay {
-                    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-                    background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px);
-                    display: flex; align-items: center; justify-content: center; z-index: 1000;
-                }
-                .modal-content {
-                    background: var(--bg-main); width: 90%; max-height: 90vh;
-                    border-radius: 16px; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-                    border: 1px solid var(--border); animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-                }
-                .modal-header {
-                    padding: 1.5rem 2rem; border-bottom: 1px solid var(--border);
-                    display: flex; justify-content: space-between; align-items: center;
-                }
-                .modal-header h2 { margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
-                .close-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s; }
-                .close-btn:hover { background: var(--bg-card); color: var(--danger); }
-                .modal-body { padding: 2rem; }
-                .modal-footer { padding: 1.5rem 2rem; border-top: 1px solid var(--border); background: var(--bg-card); display: flex; justify-content: flex-end; gap: 1rem; border-radius: 0 0 16px 16px; }
-                @keyframes modalIn {
-                    from { opacity: 0; transform: translateY(20px) scale(0.95); }
-                    to { opacity: 1; transform: translateY(0) scale(1); }
-                }
-            `}</style>
         </div>,
         document.body
     );
