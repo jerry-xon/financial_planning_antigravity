@@ -7,6 +7,7 @@ import { calculateYearlyInsuranceSummary, getInsuredNamesList } from './Insuranc
 import { convertToAnnual } from '../CashFlowModule/CashFlowLogic';
 import SharedDocumentVault from './SharedDocumentVault';
 import ContextualHelpPopup from '../common/ContextualHelpPopup';
+import logo from '../../assets/finbrella_logo.png';
 
 const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategories, setExpenseCategories, investmentAllocations = [], onNext, onBack, setCurrentStep }) => {
     const [results, setResults] = useState(null);
@@ -220,6 +221,9 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                                                 placeholder="Enter number of policies"
                                                 style={{ width: '100%' }}
                                             />
+                                            <div style={{ fontSize: '0.9rem', color: 'var(--text-main)', marginTop: '6px' }}>
+                                                Enter the number of policies for which you are paying above mentioned premium
+                                            </div>
                                         </div>
                                     </div>
                                 );
@@ -509,8 +513,9 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
             <ContextualHelpPopup 
                 isOpen={showHelpPopup}
                 onClose={() => setShowHelpPopup(false)}
-                title="Need Help with Insurance Policies?"
+                title="Need help in filling policies details?"
                 message="Finbrella can assist you with this. Simply upload your policy bond below, or reach out via call or email."
+                logoSrc={logo}
                 supportContacts={{
                     email: "finbrellafpd@gmail.com",
                     phone: ["+91 9785895737", "+91 7046069999"]

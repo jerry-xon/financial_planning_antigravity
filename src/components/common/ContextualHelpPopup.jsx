@@ -2,7 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, HelpCircle, Phone, Mail, ExternalLink } from 'lucide-react';
 
-const ContextualHelpPopup = ({ isOpen, onClose, title, message, supportContacts, imageSrc }) => {
+const ContextualHelpPopup = ({ isOpen, onClose, title, message, supportContacts, imageSrc, logoSrc }) => {
     if (!isOpen) return null;
 
     return createPortal(
@@ -86,6 +86,11 @@ const ContextualHelpPopup = ({ isOpen, onClose, title, message, supportContacts,
 
                 {/* Body */}
                 <div style={{ padding: '1.5rem', flex: 1 }}>
+                    {logoSrc && (
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                            <img src={logoSrc} alt="Logo" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} />
+                        </div>
+                    )}
                     <p style={{ 
                         margin: '0 0 1.5rem', 
                         lineHeight: '1.6', 
