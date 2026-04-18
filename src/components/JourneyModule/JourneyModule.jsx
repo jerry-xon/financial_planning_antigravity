@@ -1,8 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { TrendingUp, PieChart, GraduationCap, Map, Plus, Trash2, Calendar, Banknote, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TrendingUp, PieChart, GraduationCap, Map, Plus, Trash2, Calendar, Banknote, AlertTriangle, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 import { generateProjections } from './ProjectionLogic';
 import JourneyTable from './JourneyTable';
+
+import finbrellaLogo from '../../assets/finbrella_logo.png';
+import adjustmentTypeImage from '../../assets/adjustment_type.png';
 
 const JourneyModule = ({ 
     familyMembers, 
@@ -22,6 +25,7 @@ const JourneyModule = ({
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
     const [hasAcknowledgedDeficit, setHasAcknowledgedDeficit] = useState(false);
+    const [showHelpModal, setShowHelpModal] = useState(false);
 
     const projections = useMemo(() => {
         return passedProjections || generateProjections({
@@ -170,6 +174,106 @@ const JourneyModule = ({
                 </div>,
                 document.body
             )}
+
+            {showHelpModal && createPortal(
+                <div style={{
+                    position: 'fixed',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10000,
+                    animation: 'fadeIn 0.2s ease-out'
+                }}>
+                    <div style={{
+                        background: 'var(--bg-main)',
+                        padding: '2.5rem',
+                        borderRadius: '12px',
+                        maxWidth: '600px',
+                        width: '90%',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                        position: 'relative'
+                    }}>
+                        <button 
+                            onClick={() => setShowHelpModal(false)}
+                            style={{
+                                position: 'absolute',
+                                top: '1rem',
+                                right: '1rem',
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: '0.5rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'var(--text-muted)'
+                            }}
+                        >
+                            ✕
+                        </button>
+
+                        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                            <img src={finbrellaLogo} alt="Finbrella Logo" style={{ height: '40px', objectFit: 'contain' }} />
+                        </div>
+                        
+                        <p style={{ color: 'var(--text-main)', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
+                            In this section, you can plan your future expenses and commitments. You will see two types of adjustments <img src={adjustmentTypeImage} alt="Adjustment Types" style={{ height: '26px', verticalAlign: 'middle', marginLeft: '6px' }} />
+                        </p>
+
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <strong style={{ color: 'var(--primary)', display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>A. Standard Expenses</strong>
+                            <p style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.05rem', lineHeight: '1.6' }}>
+                                These are expenses that you have not already added in the Goals section and may come up suddenly.<br/>
+                                For example: buying a new laptop for your child, paying for an online course, subscriptions, etc.<br/>
+                                These are usually one-time expenses, and you can add them here.
+                            </p>
+                        </div>
+
+                        <div style={{ marginBottom: '2rem' }}>
+                            <strong style={{ color: 'var(--primary)', display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>B. Future Loan</strong>
+                            <p style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.05rem', lineHeight: '1.6' }}>
+                                Here, you can plan any loan you may need in the future to achieve your goals, such as a personal loan, home loan, education loan, or car loan.
+                            </p>
+                        </div>
+
+                        <div style={{ 
+                            background: 'rgba(37, 99, 235, 0.05)', 
+                            padding: '1.5rem', 
+                            borderRadius: '10px', 
+                            border: '1px solid rgba(37, 99, 235, 0.2)',
+                            textAlign: 'center' 
+                        }}>
+                            <p style={{ margin: '0 0 0.75rem', fontWeight: 600, color: 'var(--text-main)', fontSize: '1.05rem' }}>
+                                If you need any help with this section, you can contact Finbrella at:
+                            </p>
+                            <p style={{ margin: 0, color: 'var(--primary)', fontWeight: 600, fontSize: '1.1rem' }}>
+                                📧 finbrellafpd@gmail.com
+                            </p>
+                            <p style={{ margin: '0.25rem 0 0', color: 'var(--primary)', fontWeight: 600, fontSize: '1.1rem' }}>
+                                📞 9785895737, 7046069999
+                            </p>
+                        </div>
+
+                        <button 
+                            className="btn btn-primary"
+                            onClick={() => setShowHelpModal(false)}
+                            style={{ 
+                                width: '100%', 
+                                padding: '0.75rem', 
+                                marginTop: '1.5rem',
+                                fontSize: '1rem' 
+                            }}
+                        >
+                            Got It
+                        </button>
+                    </div>
+                </div>,
+                document.body
+            )}
             
             <div className="card" style={{ marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
@@ -183,8 +287,11 @@ const JourneyModule = ({
 
                 <div className="grid" style={{ gap: '1.5rem' }}>
                     <div className="input-group">
-                        <label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <TrendingUp size={14} /> Annual Income Increment (%)
+                            <div style={{ display: 'inline-flex', cursor: 'help' }} title="Enter expected %age increase in annual household income">
+                                <HelpCircle size={18} color="var(--primary)" />
+                            </div>
                         </label>
                         <input
                             type="number"
@@ -229,9 +336,14 @@ const JourneyModule = ({
                                 Add future events like new loans, EMIs, or additional lifestyle expenses.
                             </p>
                         </div>
-                        <button className="btn btn-secondary" onClick={addAdjustment} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
-                            <Plus size={16} style={{ marginRight: '6px' }} /> Add Adjustment
-                        </button>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                            <button className="btn btn-outline" onClick={() => setShowHelpModal(true)} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}>
+                                <HelpCircle size={16} style={{ marginRight: '6px' }} /> Need Help
+                            </button>
+                            <button className="btn btn-secondary" onClick={addAdjustment} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+                                <Plus size={16} style={{ marginRight: '6px' }} /> Add Adjustment
+                            </button>
+                        </div>
                     </div>
 
                     {journeyAdjustments.length > 0 ? (

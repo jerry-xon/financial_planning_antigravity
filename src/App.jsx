@@ -353,7 +353,51 @@ function App() {
 
         setCurrentStep(data.current_step || 1);
         setInsuranceMode(data.insurance_mode || null);
-        setPlanStartMonth(data.plan_start_month ?? (data.created_at ? new Date(data.created_at).getMonth() : new Date().getMonth()));
+        let rawPlanStartMonth = data.plan_start_month;
+        let derivedPlanStartMonth = (rawPlanStartMonth !== undefined && rawPlanStartMonth !== null) ? parseInt(rawPlanStartMonth, 10) : null;
+        
+        let finalMonth = (derivedPlanStartMonth !== null && !isNaN(derivedPlanStartMonth)) ? derivedPlanStartMonth : new Date().getMonth();
+
+        // If the database returns 0 (January), we verify it since old test profiles often lack valid creation months.
+        if (finalMonth === 0) {
+            let trueMonth = null;
+            
+            // 1. First Authority: Is there mathematical proof in the Ledger?
+            if (data.current_year_ledger && data.current_year_ledger.income) {
+                const firstActive = data.current_year_ledger.income.findIndex(val => Number(val) > 0);
+                if (firstActive > 0) {
+                    trueMonth = firstActive; // Safely establishes March (2) if Jan/Feb are empty!
+                }
+            }
+
+            // 2. Second Authority: Supabase Timestamps
+            if (trueMonth === null) {
+                const extractMonth = (dateVal) => {
+                     if (!dateVal) return null;
+                     let normalized = dateVal;
+                     if (typeof dateVal === 'string' && !/^\d+$/.test(dateVal)) {
+                         normalized = dateVal.replace(' ', 'T');
+                     } else if (typeof dateVal === 'string' && /^\d+$/.test(dateVal)) {
+                         normalized = parseInt(dateVal, 10);
+                     }
+                     const mt = new Date(normalized).getMonth();
+                     return isNaN(mt) ? null : mt;
+                };
+                
+                trueMonth = extractMonth(user?.created_at) ?? extractMonth(data.created_at) ?? extractMonth(data.updated_at);
+            }
+            
+            // Overwrite the 0 with the established true start month
+            if (trueMonth !== null && trueMonth !== 0) {
+                finalMonth = trueMonth;
+            } else if (new Date().getMonth() !== 0) {
+                // Failsafe for completely empty/bugged test profiles to match live clock instead of trailing to January
+                finalMonth = new Date().getMonth();
+            }
+        }
+        
+        if (isNaN(finalMonth)) finalMonth = new Date().getMonth();
+        setPlanStartMonth(finalMonth);
         setFamilyMembers(data.family_members && data.family_members.length > 0 
           ? data.family_members.map(m => ({ ...m, mobile: m.mobile || '' })) 
           : [{ name: '', dob: '', occupation: '', retirementAge: 60, relation: 'Self', mobile: '' }]);

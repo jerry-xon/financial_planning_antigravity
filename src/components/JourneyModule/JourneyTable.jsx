@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { formatCurrency } from '../CashFlowModule/CashFlowLogic';
-import { Filter, Calendar, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Filter, Calendar, TrendingUp, AlertTriangle, HelpCircle } from 'lucide-react';
 
 const JourneyTable = ({ projections }) => {
     const [selectedRow, setSelectedRow] = useState(null);
@@ -109,9 +109,23 @@ const JourneyTable = ({ projections }) => {
                                 <th>Annual Inflows</th>
                                 <th>Income Tax</th>
                                 <th>Net Inflow (After Tax)</th>
-                                <th>Total Outflow</th>
+                                <th>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+                                        Total Outflow
+                                        <div style={{ display: 'inline-flex', cursor: 'help' }} title="Click on the Total Outflow field below to view all outflow details.">
+                                            <HelpCircle size={18} color="var(--primary)" />
+                                        </div>
+                                    </div>
+                                </th>
                                 <th>Surplus (Pre-Saving)</th>
-                                <th>Investments</th>
+                                <th>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+                                        Investments
+                                        <div style={{ display: 'inline-flex', cursor: 'help' }} title="Click on the Investment field below to view all investment details.">
+                                            <HelpCircle size={18} color="var(--primary)" />
+                                        </div>
+                                    </div>
+                                </th>
                                 <th>Net Investible Surplus</th>
                             </tr>
                         </thead>
