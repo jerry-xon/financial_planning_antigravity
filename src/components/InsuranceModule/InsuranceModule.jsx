@@ -8,8 +8,11 @@ import { convertToAnnual } from '../CashFlowModule/CashFlowLogic';
 import SharedDocumentVault from './SharedDocumentVault';
 import ContextualHelpPopup from '../common/ContextualHelpPopup';
 import logo from '../../assets/finbrella_logo.png';
+import { useAuth } from '../../contexts/AuthContext';
+import { buildSupportEmailContextFromUser } from '../../services/supportRequestEmailService';
 
 const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategories, setExpenseCategories, investmentAllocations = [], onNext, onBack, setCurrentStep }) => {
+    const { user } = useAuth();
     const [results, setResults] = useState(null);
     const [showMismatchModal, setShowMismatchModal] = useState(false);
     const [amounts, setAmounts] = useState({ here: 0, cashFlow: 0 });
@@ -520,6 +523,7 @@ const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategori
                     email: "finbrellafpd@gmail.com",
                     phone: ["+91 9785895737", "+91 7046069999"]
                 }}
+                supportEmailContext={buildSupportEmailContextFromUser(familyMembers, user, 'Insurance')}
             />
         </div>
     );

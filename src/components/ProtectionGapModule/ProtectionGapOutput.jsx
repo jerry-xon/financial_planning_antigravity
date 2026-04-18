@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { formatCurrency } from '../CashFlowModule/CashFlowLogic';
 import { ShieldAlert, ShieldCheck, TrendingDown, Target, User, Users, Info, HelpCircle } from 'lucide-react';
 import ContextualHelpPopup from '../common/ContextualHelpPopup';
+import { useAuth } from '../../contexts/AuthContext';
+import { buildSupportEmailContextFromUser } from '../../services/supportRequestEmailService';
 
-const ProtectionGapOutput = ({ results }) => {
+const ProtectionGapOutput = ({ results, familyMembers, moduleName = 'Protection Gap' }) => {
+    const { user } = useAuth();
     const [animate, setAnimate] = useState(false);
     const [showHelpPopup, setShowHelpPopup] = useState(false);
 
@@ -224,6 +227,7 @@ const ProtectionGapOutput = ({ results }) => {
                     email: "finbrellafpd@gmail.com",
                     phone: ["+91 9785895737", "+91 7046069999"]
                 }}
+                supportEmailContext={buildSupportEmailContextFromUser(familyMembers, user, moduleName)}
             />
 
             <style>{`

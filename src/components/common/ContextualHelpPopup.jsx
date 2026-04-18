@@ -1,9 +1,106 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, HelpCircle, Phone, Mail, ExternalLink } from 'lucide-react';
+import { X, HelpCircle, Phone, Mail, ExternalLink, Send, Check } from 'lucide-react';
+import {
+    submitSupportRequestViaWeb3forms,
+    getSupportWeb3StorageKey,
+    isSupportWeb3CooldownActive,
+    markSupportWeb3Sent,
+} from '../../services/supportRequestEmailService';
 
-const ContextualHelpPopup = ({ isOpen, onClose, title, message, supportContacts, imageSrc, logoSrc }) => {
+const ERROR_COOLDOWN_SEC = 60;
+
+const ContextualHelpPopup = ({ isOpen, onClose, title, message, supportContacts, imageSrc, logoSrc, supportEmailContext }) => {
+    const [sendState, setSendState] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
+    const [retrySeconds, setRetrySeconds] = useState(null);
+
+    const userEmail = supportEmailContext?.userEmail;
+    const moduleName = supportEmailContext?.moduleName;
+    const storageKey =
+        supportEmailContext && userEmail != null && moduleName != null
+            ? getSupportWeb3StorageKey(userEmail, moduleName)
+            : null;
+
+    useEffect(() => {
+        if (!isOpen || !supportEmailContext || !storageKey) return;
+        if (isSupportWeb3CooldownActive(storageKey)) {
+            setSendState('success');
+        } else {
+            setSendState('idle');
+        }
+        setRetrySeconds(null);
+    }, [isOpen, storageKey]);
+
+    useEffect(() => {
+        if (retrySeconds === null || retrySeconds <= 0) return undefined;
+        const t = setTimeout(() => {
+            setRetrySeconds((prev) => {
+                if (prev === null || prev <= 1) {
+                    setSendState('idle');
+                    return null;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearTimeout(t);
+    }, [retrySeconds]);
+
+    const handleSendSupportEmail = async () => {
+        if (!supportEmailContext || !storageKey || sendState === 'loading' || sendState === 'success') return;
+        if (isSupportWeb3CooldownActive(storageKey)) {
+            setSendState('success');
+            return;
+        }
+
+        setSendState('loading');
+        const { ok } = await submitSupportRequestViaWeb3forms(supportEmailContext);
+
+        if (ok) {
+            markSupportWeb3Sent(storageKey);
+            setSendState('success');
+            setRetrySeconds(null);
+        } else {
+            setSendState('error');
+            setRetrySeconds(ERROR_COOLDOWN_SEC);
+        }
+    };
+
     if (!isOpen) return null;
+
+    const supportButtonDisabled =
+        sendState === 'loading' ||
+        sendState === 'success' ||
+        (sendState === 'error' && retrySeconds !== null && retrySeconds > 0);
+
+    const supportButtonStyle = {
+        marginTop: '1rem',
+        width: '100%',
+        padding: '0.85rem 1.25rem',
+        fontWeight: 600,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '0.5rem',
+        borderRadius: '12px',
+        border: 'none',
+        cursor: supportButtonDisabled ? 'not-allowed' : 'pointer',
+        transition: 'background 0.2s, color 0.2s',
+        flexWrap: 'wrap',
+        textAlign: 'center',
+        lineHeight: 1.35,
+    };
+
+    let supportButtonColors = {
+        background: 'var(--primary)',
+        color: '#fff',
+    };
+    if (sendState === 'success') {
+        supportButtonColors = { background: '#16a34a', color: '#fff' };
+    } else if (sendState === 'error') {
+        supportButtonColors = { background: '#dc2626', color: '#fff' };
+    } else if (sendState === 'loading') {
+        supportButtonColors = { background: 'var(--primary)', color: '#fff', opacity: 0.85 };
+    }
 
     return createPortal(
         <div style={{
@@ -190,6 +287,39 @@ const ContextualHelpPopup = ({ isOpen, onClose, title, message, supportContacts,
                                 )}
                             </div>
                         </div>
+                    )}
+                    {supportContacts && supportEmailContext && (
+                        <button
+                            type="button"
+                            onClick={handleSendSupportEmail}
+                            disabled={supportButtonDisabled}
+                            style={{ ...supportButtonStyle, ...supportButtonColors }}
+                        >
+                            {sendState === 'loading' && (
+                                <>
+                                    <Send size={18} />
+                                    Sending…
+                                </>
+                            )}
+                            {sendState === 'success' && (
+                                <>
+                                    <Check size={18} strokeWidth={2.5} />
+                                    Email sent
+                                </>
+                            )}
+                            {sendState === 'error' && (
+                                <span style={{ fontSize: '0.92rem' }}>
+                                    Issue sending email. Please try refreshing your browser or try again in{' '}
+                                    <strong>{retrySeconds ?? 0}s</strong>.
+                                </span>
+                            )}
+                            {sendState === 'idle' && (
+                                <>
+                                    <Send size={18} />
+                                    Email support with my details
+                                </>
+                            )}
+                        </button>
                     )}
                 </div>
 

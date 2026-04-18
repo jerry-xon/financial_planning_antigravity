@@ -49,7 +49,7 @@ const ProtectionGapModule = ({
                 protectionGapResults={results}
             />
 
-            <ProtectionGapOutput results={results} />
+            <ProtectionGapOutput results={results} familyMembers={familyMembers} />
 
             <div className="sticky-action-bar">
                 <button className="btn btn-secondary" onClick={onBack} style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

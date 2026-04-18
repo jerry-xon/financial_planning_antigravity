@@ -398,7 +398,7 @@ const ReportView = ({
                         protectionGapResults={protectionGapResults}
                     />
                     <div style={{ marginTop: '2rem' }}>
-                        <ProtectionGapOutput results={protectionGapResults} />
+                        <ProtectionGapOutput results={protectionGapResults} familyMembers={familyMembers} moduleName="Financial Plan Report" />
                     </div>
                 </section>
 
