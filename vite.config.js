@@ -6,6 +6,23 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+/** Warn when the Web3Forms key is missing on Vercel builds (VITE_* is inlined at build time). */
+function warnWeb3formsKeyOnVercel() {
+  return {
+    name: 'warn-web3forms-key-vercel',
+    configResolved() {
+      if (process.env.VERCEL !== '1') return
+      const key = process.env.VITE_WEB3FORMS_ACCESS_KEY
+      if (key && String(key).trim()) return
+      console.warn(
+        '\n[Help & Support] VITE_WEB3FORMS_ACCESS_KEY is empty for this Vercel build.\n' +
+          'Add it under Project → Settings → Environment Variables for Production (and Preview if you use preview URLs),\n' +
+          'then trigger a new deployment — local .env is not used on Vercel.\n'
+      )
+    },
+  }
+}
+
 export default defineConfig({
   resolve: {
     alias: {
@@ -13,6 +30,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    warnWeb3formsKeyOnVercel(),
     {
       name: 'cursor-debug-log-proxy',
       configureServer(server) {
