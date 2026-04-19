@@ -1,8 +1,27 @@
-import React, { useState } from 'react';
-import { ChevronLeft, User, DollarSign, PieChart, Target, ShieldAlert, Cpu } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { ChevronLeft, User, DollarSign, FileText } from 'lucide-react';
+import ReportView from '../ReportModule/ReportView';
+import { generateProjections } from '../JourneyModule/ProjectionLogic';
 
 const ClientFinancialDossier = ({ report, onBack }) => {
   const [activeTab, setActiveTab] = useState('profile');
+
+  const projections = useMemo(() => {
+     if (!report || !report.family_members || !report.family_members.find(m => m.relation?.toLowerCase() === 'self')) return [];
+     return generateProjections({
+       familyMembers: report.family_members || [],
+       income: report.income || {},
+       expenseCategories: report.expense_categories || {},
+       goals: report.goals || [],
+       inflationRates: report.inflation_rates || { incomeIncrement: 10, householdInflation: 6, educationInflation: 8 },
+       journeyAdjustments: report.journey_adjustments || [],
+       investmentAllocations: report.investment_allocations || [],
+       loanProposals: report.loan_proposals || [],
+       policies: report.policies || [],
+       planStartMonth: report.plan_start_month ?? new Date().getMonth(),
+       currentYearLedger: report.current_year_ledger || { income: Array(12).fill(0), household: Array(12).fill(0) }
+     });
+  }, [report]);
 
   if (!report) return null;
 
@@ -57,11 +76,8 @@ const ClientFinancialDossier = ({ report, onBack }) => {
 
   const tabs = [
     { id: 'profile', label: 'Profile Matrix', icon: <User size={18} /> },
-    { id: 'cashflow', label: 'Cash Flow', icon: <DollarSign size={18} /> },
-    { id: 'networth', label: 'Net Worth', icon: <PieChart size={18} /> },
-    { id: 'goals', label: 'Goal Atlas', icon: <Target size={18} /> },
-    { id: 'insurance', label: 'Insurance & Contingency', icon: <ShieldAlert size={18} /> },
-    { id: 'algorithmic', label: 'Algorithmic Output', icon: <Cpu size={18} /> },
+    { id: 'cashflow', label: 'Cash Flow Input', icon: <DollarSign size={18} /> },
+    { id: 'full_report', label: 'Comprehensive Report', icon: <FileText size={18} /> },
   ];
 
   return (
@@ -102,48 +118,30 @@ const ClientFinancialDossier = ({ report, onBack }) => {
             <h3>Cash Flow <span>(Inflows & Outflows)</span></h3>
             <p className="dossier-desc">Includes strict categorical breakdowns: EMIs, health policies, life insurance, lifestyle, and basic living.</p>
             {renderRawData({
-              inflow: report.inflow || {},
-              outflow: report.outflow || {},
-              monthly_commitments: report.monthly_commitments || {}
+              income: report.income || {},
+              expense_categories: report.expense_categories || {}
             })}
           </div>
         )}
 
-        {activeTab === 'networth' && (
-          <div className="dossier-section">
-            <h3>Net Worth <span>(Assets & Liabilities)</span></h3>
-            {renderRawData({
-              assets: report.assets || {},
-              liabilities: report.liabilities || {}
-            })}
-          </div>
-        )}
-
-        {activeTab === 'goals' && (
-          <div className="dossier-section">
-            <h3>Goal Atlas</h3>
-            {renderRawData(report.goals || [])}
-          </div>
-        )}
-
-        {activeTab === 'insurance' && (
-          <div className="dossier-section">
-            <h3>Insurance & Contingency</h3>
-            {renderRawData({
-              insurance: report.insurance || {},
-              contingency: report.contingency || {}
-            })}
-          </div>
-        )}
-
-        {activeTab === 'algorithmic' && (
-          <div className="dossier-section">
-            <h3>Algorithmic Output <span>(Engine Variables & Adjusted Matrices)</span></h3>
-            {renderRawData({
-              projected_ledger: report.projected_ledger || {},
-              allocations: report.allocations || {},
-              engine_variables: report.engine_variables || {}
-            })}
+        {activeTab === 'full_report' && (
+          <div className="dossier-section report-view-container" style={{ padding: 0, background: 'transparent', border: 'none' }}>
+            <ReportView 
+              familyMembers={report.family_members || []}
+              income={report.income || {}}
+              expenseCategories={report.expense_categories || {}}
+              assetCategories={report.asset_categories || {}}
+              liabilityCategories={report.liability_categories || {}}
+              goals={report.goals || []}
+              policies={report.policies || []}
+              contingencyFund={report.contingency_fund || ''}
+              allocations={report.investment_allocations || []}
+              goalMappings={report.goal_mappings || {}}
+              journeyAdjustments={report.journey_adjustments || []}
+              projections={projections}
+              calculatorInputs={report.calculator_inputs || {}}
+              onBack={() => {}} 
+            />
           </div>
         )}
       </div>

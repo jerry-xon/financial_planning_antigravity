@@ -865,20 +865,73 @@ const ReportView = ({
         }
 
         @media print {
-          .btn, header, nav, .app-container > header {
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          @page {
+            size: A4 portrait;
+            margin: 1cm;
+          }
+          .btn, header, nav, .app-container > header, .quick-nav-sidebar, .dossier-tabs, .back-btn, .sidebar, .left-drawer, .admin-header, .admin-tabs {
             display: none !important;
           }
-          .card {
-            border: 1px solid #eee !important;
+          .main-content-wrapper, .app-shell, .admin-content, .admin-dashboard, .dossier-container {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          .card, .report-section {
+            border: 1px solid #ddd !important;
             box-shadow: none !important;
-            break-inside: avoid;
+            background: white !important;
           }
           body {
             background: white !important;
             color: black !important;
           }
           .report-view {
-            max-width: 100%;
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .report-layout {
+            display: block !important;
+          }
+          /* Force all containers wrapping tables to expand fully instead of scroll/cut */
+          .report-section div[style*="overflow"] {
+            overflow: visible !important;
+            overflow-x: visible !important;
+          }
+          /* Optimize Table Layout for A4 */
+          .report-table {
+            width: 100% !important;
+            table-layout: auto !important;
+            margin-bottom: 2rem !important;
+          }
+          .report-table th, .report-table td {
+            font-size: 0.75rem !important; /* Scale down so metrics fit horizontally */
+            padding: 6px !important;
+            word-wrap: break-word;
+          }
+          /* Strict Page Break Rules */
+          .report-section {
+            page-break-inside: auto;
+          }
+          .card {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          /* Ensure headers stay with their tables */
+          h3, h4 {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+          }
+          /* Ensure table rows do not split in half */
+          tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
         }
       
