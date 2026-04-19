@@ -53,13 +53,31 @@ const ContextualHelpPopup = ({ isOpen, onClose, title, message, supportContacts,
         }
 
         setSendState('loading');
-        const { ok } = await submitSupportRequestViaWeb3forms(supportEmailContext);
+        console.log('[Help & Support] Send email button: submitting', {
+            moduleName: supportEmailContext?.moduleName,
+        });
 
-        if (ok) {
-            markSupportWeb3Sent(storageKey);
-            setSendState('success');
-            setRetrySeconds(null);
-        } else {
+        try {
+            const { ok, message } = await submitSupportRequestViaWeb3forms(supportEmailContext);
+
+            if (ok) {
+                console.log('[Help & Support] Send email button: success');
+                markSupportWeb3Sent(storageKey);
+                setSendState('success');
+                setRetrySeconds(null);
+            } else {
+                console.error('[Help & Support] Send email button: failed', {
+                    message,
+                    moduleName: supportEmailContext?.moduleName,
+                });
+                setSendState('error');
+                setRetrySeconds(ERROR_COOLDOWN_SEC);
+            }
+        } catch (err) {
+            console.error('[Help & Support] Send email button: unexpected error', {
+                moduleName: supportEmailContext?.moduleName,
+                error: err,
+            });
             setSendState('error');
             setRetrySeconds(ERROR_COOLDOWN_SEC);
         }

@@ -88,6 +88,7 @@ export async function submitSupportRequestViaWeb3forms({
 }) {
   const accessKey = getWeb3AccessKey();
   if (!accessKey) {
+    console.error('[Help & Support] network: missing VITE_WEB3FORMS_ACCESS_KEY');
     return {
       ok: false,
       message: 'Support email is not configured (missing VITE_WEB3FORMS_ACCESS_KEY).',
@@ -105,6 +106,13 @@ export async function submitSupportRequestViaWeb3forms({
     '',
     'Thank you.',
   ].join('\n');
+
+  const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  console.log('[Help & Support] network: request start', {
+    url: WEB3FORMS_URL,
+    method: 'POST',
+    moduleName: formatField(moduleName),
+  });
 
   try {
     const response = await fetch(WEB3FORMS_URL, {
@@ -125,9 +133,23 @@ export async function submitSupportRequestViaWeb3forms({
     });
 
     const data = await response.json().catch(() => ({}));
+    const durationMs = Math.round(
+      (typeof performance !== 'undefined' ? performance.now() : Date.now()) - startedAt
+    );
+
     const ok =
       response.ok &&
       (data.success === true || data?.body?.message === 'Email sent successfully!');
+
+    console.log('[Help & Support] network: response', {
+      url: WEB3FORMS_URL,
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      durationMs,
+      apiSuccess: data.success,
+      apiMessage: data?.message || data?.body?.message,
+    });
 
     if (ok) {
       return { ok: true, message: data?.message || data?.body?.message };
@@ -139,9 +161,23 @@ export async function submitSupportRequestViaWeb3forms({
       (response.status === 429
         ? 'Too many requests. Please try later.'
         : `Request failed (${response.status})`);
+
+    console.error('[Help & Support] network: submission rejected', {
+      status: response.status,
+      durationMs,
+      message: errMsg,
+    });
+
     return { ok: false, message: errMsg };
   } catch (e) {
-    console.error('Web3Forms submit error:', e);
+    const durationMs = Math.round(
+      (typeof performance !== 'undefined' ? performance.now() : Date.now()) - startedAt
+    );
+    console.error('[Help & Support] network: fetch failed', {
+      url: WEB3FORMS_URL,
+      durationMs,
+      error: e,
+    });
     return {
       ok: false,
       message: 'Network error. Please check your connection and try again.',
