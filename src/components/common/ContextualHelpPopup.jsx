@@ -10,7 +10,7 @@ import {
 
 const ERROR_COOLDOWN_SEC = 60;
 
-const ContextualHelpPopup = ({ isOpen, onClose, title, message, supportContacts, imageSrc, logoSrc, supportEmailContext }) => {
+const ContextualHelpPopup = ({ isOpen, onClose, title, message, supportContacts, imageSrc, logoSrc, supportEmailContext, children }) => {
     const [sendState, setSendState] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
     const [retrySeconds, setRetrySeconds] = useState(null);
 
@@ -188,14 +188,21 @@ const ContextualHelpPopup = ({ isOpen, onClose, title, message, supportContacts,
                             <img src={logoSrc} alt="Logo" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} />
                         </div>
                     )}
-                    <p style={{ 
-                        margin: '0 0 1.5rem', 
-                        lineHeight: '1.6', 
-                        fontSize: '1.05rem', 
-                        color: 'var(--text-main)' 
-                    }}>
-                        {message}
-                    </p>
+                    {message && (
+                        <p style={{ 
+                            margin: '0 0 1.5rem', 
+                            lineHeight: '1.6', 
+                            fontSize: '1.05rem', 
+                            color: 'var(--text-main)' 
+                        }}>
+                            {message}
+                        </p>
+                    )}
+                    {children && (
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            {children}
+                        </div>
+                    )}
 
                     {imageSrc && (
                         <div style={{ margin: '0 0 1.5rem' }}>

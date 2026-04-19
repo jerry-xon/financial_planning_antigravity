@@ -91,7 +91,7 @@ function App() {
     {
       name: '',
       dob: '',
-      occupation: '',
+      occupation: 'Salaried',
       retirementAge: 60,
       relation: 'Self',
       natureOfBusiness: '',
@@ -225,7 +225,7 @@ function App() {
       {
         name: '',
         dob: '',
-        occupation: '',
+        occupation: 'Salaried',
         retirementAge: 60,
         relation: 'Self',
         natureOfBusiness: '',
@@ -400,7 +400,7 @@ function App() {
         setPlanStartMonth(finalMonth);
         setFamilyMembers(data.family_members && data.family_members.length > 0 
           ? data.family_members.map(m => ({ ...m, mobile: m.mobile || '' })) 
-          : [{ name: '', dob: '', occupation: '', retirementAge: 60, relation: 'Self', mobile: '' }]);
+          : [{ name: '', dob: '', occupation: 'Salaried', retirementAge: 60, relation: 'Self', mobile: '' }]);
         const loadedIncome = data.income || {};
         
         // Handle migration from old flat structure to new per-person structure

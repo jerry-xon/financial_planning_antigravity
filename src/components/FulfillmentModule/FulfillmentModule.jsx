@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { Target, ChevronRight, ChevronLeft, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, Zap, Sparkles } from 'lucide-react';
+import { Target, ChevronRight, ChevronLeft, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, Zap, Sparkles, HelpCircle } from 'lucide-react';
+import ContextualHelpPopup from '../common/ContextualHelpPopup';
+import logo from '../../assets/finbrella_logo.png';
+import { useAuth } from '../../contexts/AuthContext';
+import { buildSupportEmailContextFromUser } from '../../services/supportRequestEmailService';
 import { computeSIPData } from '../Calculators/SIPCalculator';
 import { computeLumpsumData } from '../Calculators/LumpsumCalculator';
 import { computeEquityData } from '../Calculators/EquityCalculator';
@@ -18,6 +22,8 @@ const FulfillmentModule = ({
     onNext, 
     onBack 
 }) => {
+    const { user } = useAuth();
+    const [showHelpModal, setShowHelpModal] = useState(false);
     const [expandedGroups, setExpandedGroups] = useState({});
 
     const toggleGroup = (groupName) => {
@@ -156,14 +162,19 @@ const FulfillmentModule = ({
     return (
         <div className="fulfillment-module fade-in">
             <div className="card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%)', color: 'white', borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '10px', borderRadius: '12px' }}>
-                        <Target size={28} style={{ color: '#60a5fa' }} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ background: 'rgba(255,255,255,0.1)', padding: '10px', borderRadius: '12px' }}>
+                            <Target size={28} style={{ color: '#60a5fa' }} />
+                        </div>
+                        <div>
+                            <h2 style={{ margin: '0 0 0.25rem', color: '#ffffff' }}>Step 11: Goal Fulfillment Roadmap</h2>
+                            <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem' }}>Automate and assign portfolio values to fully fund your targets.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 style={{ margin: '0 0 0.25rem', color: '#ffffff' }}>Step 11: Goal Fulfillment Roadmap</h2>
-                        <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem' }}>Automate and assign portfolio values to fully fund your targets.</p>
-                    </div>
+                    <button className="btn btn-outline" onClick={() => setShowHelpModal(true)} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', borderColor: 'rgba(255,255,255,0.3)', color: '#fff', background: 'rgba(255,255,255,0.1)' }}>
+                        <HelpCircle size={16} style={{ marginRight: '6px' }} /> Need Help
+                    </button>
                 </div>
             </div>
 
@@ -385,6 +396,27 @@ const FulfillmentModule = ({
                     Proceed to Final Overview <ChevronRight size={20} />
                 </button>
             </div>
+
+            <ContextualHelpPopup 
+                isOpen={showHelpModal}
+                onClose={() => setShowHelpModal(false)}
+                title="Need Help with Goal Alignment?"
+                message={
+                    <>
+                        In this module, you can see your goals along with the current value of your investments. To achieve a goal, you can assign funds from the investments available to you. As you allocate an amount, the progress bar will move to show how much of the goal is covered.
+                        <br/><br/>
+                        On the right side of each goal, you will also see the shortfall — the remaining amount that still needs to be assigned.
+                        <br/><br/>
+                        You can also contact Finbrella for guidance on how to allocate your funds in the most effective way.
+                    </>
+                }
+                logoSrc={logo}
+                supportContacts={{
+                    email: "finbrellafpd@gmail.com",
+                    phone: ["9785895737", "7046069999"]
+                }}
+                supportEmailContext={buildSupportEmailContextFromUser(familyMembers, user, 'Roadmap/Fulfillment')}
+            />
         </div>
     );
 };

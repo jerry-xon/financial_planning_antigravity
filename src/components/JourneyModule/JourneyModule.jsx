@@ -3,6 +3,9 @@ import { createPortal } from 'react-dom';
 import { TrendingUp, PieChart, GraduationCap, Map, Plus, Trash2, Calendar, Banknote, AlertTriangle, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 import { generateProjections } from './ProjectionLogic';
 import JourneyTable from './JourneyTable';
+import ContextualHelpPopup from '../common/ContextualHelpPopup';
+import { useAuth } from '../../contexts/AuthContext';
+import { buildSupportEmailContextFromUser } from '../../services/supportRequestEmailService';
 
 import finbrellaLogo from '../../assets/finbrella_logo.png';
 import adjustmentTypeImage from '../../assets/adjustment_type.png';
@@ -21,6 +24,7 @@ const JourneyModule = ({
     onBack,
     projections: passedProjections
 }) => {
+    const { user } = useAuth();
     
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
@@ -66,7 +70,7 @@ const JourneyModule = ({
                 principal: '',
                 rate: '',
                 tenure: '',
-                loanCategory: 'personalLoan',
+                loanCategory: '',
                 emi: 0 
             }
         ]);
@@ -175,105 +179,37 @@ const JourneyModule = ({
                 document.body
             )}
 
-            {showHelpModal && createPortal(
-                <div style={{
-                    position: 'fixed',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 10000,
-                    animation: 'fadeIn 0.2s ease-out'
-                }}>
-                    <div style={{
-                        background: 'var(--bg-main)',
-                        padding: '2.5rem',
-                        borderRadius: '12px',
-                        maxWidth: '600px',
-                        width: '90%',
-                        maxHeight: '90vh',
-                        overflowY: 'auto',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                        position: 'relative'
-                    }}>
-                        <button 
-                            onClick={() => setShowHelpModal(false)}
-                            style={{
-                                position: 'absolute',
-                                top: '1rem',
-                                right: '1rem',
-                                background: 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                padding: '0.5rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'var(--text-muted)'
-                            }}
-                        >
-                            ✕
-                        </button>
+            <ContextualHelpPopup
+                isOpen={showHelpModal}
+                onClose={() => setShowHelpModal(false)}
+                title="Future Financial Adjustments"
+                logoSrc={finbrellaLogo}
+                supportContacts={{
+                    email: "finbrellafpd@gmail.com",
+                    phone: ["9785895737", "7046069999"]
+                }}
+                supportEmailContext={buildSupportEmailContextFromUser(familyMembers, user, 'Journey')}
+            >
+                <p style={{ color: 'var(--text-main)', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
+                    In this section, you can plan your future expenses and commitments. You will see two types of adjustments <img src={adjustmentTypeImage} alt="Adjustment Types" style={{ height: '26px', verticalAlign: 'middle', marginLeft: '6px' }} />
+                </p>
 
-                        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                            <img src={finbrellaLogo} alt="Finbrella Logo" style={{ height: '40px', objectFit: 'contain' }} />
-                        </div>
-                        
-                        <p style={{ color: 'var(--text-main)', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
-                            In this section, you can plan your future expenses and commitments. You will see two types of adjustments <img src={adjustmentTypeImage} alt="Adjustment Types" style={{ height: '26px', verticalAlign: 'middle', marginLeft: '6px' }} />
-                        </p>
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <strong style={{ color: 'var(--primary)', display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>A. Standard Expenses</strong>
+                    <p style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.05rem', lineHeight: '1.6' }}>
+                        These are expenses that you have not already added in the Goals section and may come up suddenly.<br/>
+                        For example: buying a new laptop for your child, paying for an online course, subscriptions, etc.<br/>
+                        These are usually one-time expenses, and you can add them here.
+                    </p>
+                </div>
 
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <strong style={{ color: 'var(--primary)', display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>A. Standard Expenses</strong>
-                            <p style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.05rem', lineHeight: '1.6' }}>
-                                These are expenses that you have not already added in the Goals section and may come up suddenly.<br/>
-                                For example: buying a new laptop for your child, paying for an online course, subscriptions, etc.<br/>
-                                These are usually one-time expenses, and you can add them here.
-                            </p>
-                        </div>
-
-                        <div style={{ marginBottom: '2rem' }}>
-                            <strong style={{ color: 'var(--primary)', display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>B. Future Loan</strong>
-                            <p style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.05rem', lineHeight: '1.6' }}>
-                                Here, you can plan any loan you may need in the future to achieve your goals, such as a personal loan, home loan, education loan, or car loan.
-                            </p>
-                        </div>
-
-                        <div style={{ 
-                            background: 'rgba(37, 99, 235, 0.05)', 
-                            padding: '1.5rem', 
-                            borderRadius: '10px', 
-                            border: '1px solid rgba(37, 99, 235, 0.2)',
-                            textAlign: 'center' 
-                        }}>
-                            <p style={{ margin: '0 0 0.75rem', fontWeight: 600, color: 'var(--text-main)', fontSize: '1.05rem' }}>
-                                If you need any help with this section, you can contact Finbrella at:
-                            </p>
-                            <p style={{ margin: 0, color: 'var(--primary)', fontWeight: 600, fontSize: '1.1rem' }}>
-                                📧 finbrellafpd@gmail.com
-                            </p>
-                            <p style={{ margin: '0.25rem 0 0', color: 'var(--primary)', fontWeight: 600, fontSize: '1.1rem' }}>
-                                📞 9785895737, 7046069999
-                            </p>
-                        </div>
-
-                        <button 
-                            className="btn btn-primary"
-                            onClick={() => setShowHelpModal(false)}
-                            style={{ 
-                                width: '100%', 
-                                padding: '0.75rem', 
-                                marginTop: '1.5rem',
-                                fontSize: '1rem' 
-                            }}
-                        >
-                            Got It
-                        </button>
-                    </div>
-                </div>,
-                document.body
-            )}
+                <div style={{ marginBottom: '0.5rem' }}>
+                    <strong style={{ color: 'var(--primary)', display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>B. Future Loan</strong>
+                    <p style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.05rem', lineHeight: '1.6' }}>
+                        Here, you can plan any loan you may need in the future to achieve your goals, such as a personal loan, home loan, education loan, or car loan.
+                    </p>
+                </div>
+            </ContextualHelpPopup>
             
             <div className="card" style={{ marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
@@ -427,7 +363,7 @@ const JourneyModule = ({
                                             <div className="input-group" style={{ marginBottom: 0 }}>
                                                 <label>Loan Category</label>
                                                 <select 
-                                                    value={adj.loanCategory || 'personalLoan'} 
+                                                    value={adj.loanCategory || ''} 
                                                     onChange={(e) => {
                                                         const catName = e.target.options[e.target.selectedIndex].text;
                                                         setJourneyAdjustments(journeyAdjustments.map(a => 
@@ -435,6 +371,7 @@ const JourneyModule = ({
                                                         ));
                                                     }}
                                                 >
+                                                    <option value="" disabled>Select Loan Type</option>
                                                     <option value="personalLoan">Personal Loan</option>
                                                     <option value="homeLoan">Home Loan</option>
                                                     <option value="educationLoan">Education Loan</option>

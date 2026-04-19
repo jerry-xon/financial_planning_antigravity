@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { PieChart, Plus, Trash2, ArrowRight, Wallet, Target, TrendingUp, ChevronDown, ChevronUp, AlertTriangle, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { PieChart, Plus, Trash2, ArrowRight, Wallet, Target, TrendingUp, ChevronDown, ChevronUp, AlertTriangle, ChevronLeft, ChevronRight, Filter, HelpCircle } from 'lucide-react';
 import CurrencyInput from '../common/CurrencyInput';
+import ContextualHelpPopup from '../common/ContextualHelpPopup';
+import logo from '../../assets/finbrella_logo.png';
+import { useAuth } from '../../contexts/AuthContext';
+import { buildSupportEmailContextFromUser } from '../../services/supportRequestEmailService';
 const AllocationModule = ({ 
     familyMembers = [],
     expenseCategories = {},
@@ -13,11 +17,13 @@ const AllocationModule = ({
     onNext, 
     onBack 
 }) => {
+    const { user } = useAuth();
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
     const [collapsedIds, setCollapsedIds] = useState(new Set());
     const [hasAcknowledgedDeficit, setHasAcknowledgedDeficit] = useState(false);
     const [viewMode, setViewMode] = useState('10');
+    const [showHelpModal, setShowHelpModal] = useState(false);
 
     const adjustedProjections = useMemo(() => {
         return projections.map((p, idx) => {
@@ -250,9 +256,14 @@ const AllocationModule = ({
             )}
             
             <div className="card" style={{ marginBottom: '1.5rem', overflowX: 'auto' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
-                    <PieChart size={24} className="text-primary" />
-                    <h2 style={{ margin: 0 }}>Step 9: Investment Allocation</h2>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <PieChart size={24} className="text-primary" />
+                        <h2 style={{ margin: 0 }}>Step 9: Investment Allocation</h2>
+                    </div>
+                    <button className="btn btn-outline" onClick={() => setShowHelpModal(true)} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}>
+                        <HelpCircle size={16} style={{ marginRight: '6px' }} /> Need Help
+                    </button>
                 </div>
 
                 <p className="text-muted" style={{ marginBottom: '2rem' }}>
@@ -660,6 +671,19 @@ const AllocationModule = ({
                     <ChevronRight size={20} />
                 </button>
             </div>
+
+            <ContextualHelpPopup 
+                isOpen={showHelpModal}
+                onClose={() => setShowHelpModal(false)}
+                title="Need Help in Allocating Surplus?"
+                message="This section of the planning report is very important and strategic. Here, you can allocate your unassigned surplus into different investment options. Since these decisions can impact your returns, choosing the wrong allocation may lead to missed opportunities. It is recommended to consult a financial planner before making any changes. You can also reach out to Finbrella for guidance on how to best allocate your surplus."
+                logoSrc={logo}
+                supportContacts={{
+                    email: "finbrellafpd@gmail.com",
+                    phone: ["9785895737", "7046069999"]
+                }}
+                supportEmailContext={buildSupportEmailContextFromUser(familyMembers, user, 'Allocation')}
+            />
         </div>
     );
 };
