@@ -5,12 +5,22 @@ import { supabase } from '../lib/supabase';
  * Handles all authentication operations using Supabase Auth
  */
 
+/**
+ * Base URL for auth redirects (OAuth return, password-reset links, etc.).
+ * Prefer the current browser origin when available so renaming the Vercel project
+ * (new *.vercel.app hostname) cannot send users to a stale VITE_SITE_URL that
+ * no longer deploys → Vercel "DEPLOYMENT_NOT_FOUND".
+ * Fall back to VITE_SITE_URL for non-browser contexts (tests, SSR).
+ */
 const resolveRedirectBaseUrl = () => {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
   const configuredSiteUrl = import.meta.env.VITE_SITE_URL;
   if (configuredSiteUrl && configuredSiteUrl.trim()) {
     return configuredSiteUrl.trim().replace(/\/+$/, '');
   }
-  return window.location.origin;
+  return '';
 };
 
 const buildRedirectUrl = (path = '/') => {
