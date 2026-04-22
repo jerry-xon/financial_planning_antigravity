@@ -25,3 +25,4 @@ const CalculatorPlaceholder = ({ name }) => {
 };
 
 export default CalculatorPlaceholder;
+//calculator placeholder
