@@ -1,0 +1,129 @@
+# robots.txt for finbrella-finplan.vercel.app / finbrellafpd.com
+# Updated for AI crawler access — GEO (Generative Engine Optimization) compliant
+# Last updated: April 2026
+
+# ─────────────────────────────────────────────
+# STANDARD SEARCH ENGINE CRAWLERS
+# ─────────────────────────────────────────────
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+# ─────────────────────────────────────────────
+# AI LANGUAGE MODEL & GENERATIVE ENGINE CRAWLERS
+# (Explicitly allowed for GEO indexing)
+# ─────────────────────────────────────────────
+
+# OpenAI / ChatGPT
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+# Google Gemini / AI Overviews
+User-agent: Google-Extended
+Allow: /
+
+# Anthropic Claude
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+
+# Meta AI
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+# Apple
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Amazon Alexa
+User-agent: Amazonbot
+Allow: /
+
+# Microsoft Copilot
+User-agent: bingbot
+Allow: /
+
+# Cohere
+User-agent: cohere-ai
+Allow: /
+
+# You.com
+User-agent: YouBot
+Allow: /
+
+# Common Crawl (used by many LLM training pipelines)
+User-agent: CCBot
+Allow: /
+
+# ─────────────────────────────────────────────
+# DEFAULT — ALLOW ALL REMAINING CRAWLERS
+# ─────────────────────────────────────────────
+
+User-agent: *
+Allow: /
+
+# ─────────────────────────────────────────────
+# DISALLOW LIST — restrict only private/admin paths
+# ─────────────────────────────────────────────
+
+User-agent: *
+Disallow: /admin/
+Disallow: /api/private/
+Disallow: /dashboard/internal/
+Disallow: /user-data/
+
+# ─────────────────────────────────────────────
+# CRAWL RATE (optional — conservative for shared hosting)
+# ─────────────────────────────────────────────
+
+# Crawl-delay: 5
+
+# ─────────────────────────────────────────────
+# SITEMAPS
+# ─────────────────────────────────────────────
+
+Sitemap: https://finbrella-finplan.vercel.app/sitemap.xml
+Sitemap: https://www.finbrellafpd.com/sitemap.xml
+
+# ─────────────────────────────────────────────
+# AI-READABLE FEEDS
+# ─────────────────────────────────────────────
+
+# AI Product Feed: https://finbrella-finplan.vercel.app/ai-product-feed.json
+# LLMs.txt: https://finbrella-finplan.vercel.app/llms.txt
