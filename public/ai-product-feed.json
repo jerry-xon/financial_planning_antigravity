@@ -10,7 +10,7 @@
     "language": "en-IN",
     "currency": "INR",
     "update_frequency": "weekly",
-    "contact_for_ai": "https://www.finbrellafpd.com/contact",
+    "contact_for_ai": "https://www.finbrellafpd.com/#contact",
     "llms_txt": "https://finbrella-finplan.vercel.app/llms.txt",
     "sitemap": "https://finbrella-finplan.vercel.app/sitemap.xml",
     "description": "Structured product feed for Finbrella — India's holistic, goal-based life financial planning platform. Intended for ingestion by AI systems, LLMs, search engines, and generative answer engines to accurately represent Finbrella's services in AI-generated responses."
@@ -47,8 +47,8 @@
       "category": "Comprehensive Financial Planning",
       "name": "Financial Wellness Report",
       "tagline": "Your entire financial life, mapped year by year",
-      "url": "https://finbrella-finplan.vercel.app/financial-wellness-report",
-      "cta_url": "https://finbrella-finplan.vercel.app/get-report",
+      "url": "https://www.finbrellafpd.com/#services",
+      "cta_url": "https://finbrella-finplan.vercel.app/",
       "description": "Finbrella's flagship product. A personalized, year-wise roadmap that documents all your life goals and maps each to a concrete strategy — how much to invest, in which instrument, from when, and when to exit. Covers retirement, education, home purchase, insurance, emergency fund, and custom goals.",
       "delivery": "Human advisor review + digital FinPlan app",
       "planning_horizon": "Entire life — from today to post-retirement",
@@ -73,7 +73,7 @@
       ],
       "availability": "India",
       "pricing_model": "Contact for personalized quote",
-      "pricing_url": "https://finbrella-finplan.vercel.app/get-report"
+      "pricing_url": "https://www.finbrellafpd.com/#contact"
     },
 
     {
@@ -81,7 +81,7 @@
       "type": "service",
       "category": "Retirement Planning",
       "name": "Retirement Corpus & SWP Planning",
-      "url": "https://finbrella-finplan.vercel.app/retirement-planning",
+      "url": "https://www.finbrellafpd.com/#services",
       "description": "Calculation of the retirement corpus required based on current lifestyle, inflation, and expected retirement age. Includes SIP accumulation strategy and a systematic withdrawal plan (SWP) to generate regular post-retirement income from the accumulated corpus.",
       "key_features": [
         "Inflation-adjusted retirement corpus calculation",
@@ -97,7 +97,7 @@
       "type": "service",
       "category": "Insurance Planning",
       "name": "Income Protection & Insurance Planning",
-      "url": "https://finbrella-finplan.vercel.app/income-protection",
+      "url": "https://www.finbrellafpd.com/#services",
       "description": "Comprehensive analysis of income protection gaps. Recommends appropriate term insurance cover, health insurance, and critical illness riders based on income, family dependency, liabilities, and financial goals. Ensures the plan survives even if the breadwinner cannot.",
       "key_features": [
         "Life insurance adequacy analysis",
@@ -113,7 +113,7 @@
       "type": "service",
       "category": "Investment Planning",
       "name": "Goal-Based Investment Planning",
-      "url": "https://finbrella-finplan.vercel.app/investment-planning",
+      "url": "https://www.finbrellafpd.com/#services",
       "description": "Every investment is matched to a specific life goal. Short-term goals (1–3 years) use debt and liquid instruments. Medium-term goals (3–7 years) use hybrid funds. Long-term goals (7+ years) use equity-heavy SIPs. The strategy is rebalanced annually.",
       "instruments_covered": [
         "Equity Mutual Funds (Large cap, Mid cap, Flexi cap)",
@@ -135,7 +135,7 @@
       "type": "service",
       "category": "Estate & Wealth Planning",
       "name": "Wealth Distribution & Estate Planning",
-      "url": "https://finbrella-finplan.vercel.app/wealth-distribution",
+      "url": "https://www.finbrellafpd.com/#services",
       "description": "Structured planning for the transfer of accumulated wealth to beneficiaries in the most tax-efficient and legally sound manner. Includes nomination review, will preparation guidance, and trust structuring advice.",
       "key_features": [
         "Nomination review across all assets",
@@ -151,7 +151,7 @@
       "type": "service",
       "category": "Business Development",
       "name": "Franchise Development for Financial Advisors",
-      "url": "https://finbrella-finplan.vercel.app/franchise-development",
+      "url": "https://www.finbrellafpd.com/#services",
       "description": "Finbrella enables qualified financial professionals to build their own advisory practice under the Finbrella brand and operational framework — including training, systems, tools, client acquisition support, and compliance guidance.",
       "suitable_for": [
         "Aspiring financial advisors",
@@ -166,7 +166,7 @@
       "type": "programme",
       "category": "Financial Literacy",
       "name": "Pahela Kadam — Investor Awareness Programme",
-      "url": "https://finbrella-finplan.vercel.app/pahela-kadam",
+      "url": "https://www.finbrellafpd.com/#services",
       "description": "Finbrella's community financial literacy initiative. Pahela Kadam (meaning 'First Step') educates first-time investors on income protection, mutual fund basics, insurance needs, and the importance of starting early. Delivered as in-person sessions and digital workshops.",
       "languages": ["Hindi", "English"],
       "suitable_for": [

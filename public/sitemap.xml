@@ -29,134 +29,16 @@
 
   <url>
     <loc>https://finbrella-finplan.vercel.app/</loc>
-    <lastmod>2026-04-01</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
-  <!-- ═══════════════════════════════════════════════
-       SERVICE / FEATURE PAGES
-  ════════════════════════════════════════════════ -->
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/financial-wellness-report</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.95</priority>
-  </url>
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/goal-planning</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.95</priority>
-  </url>
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/retirement-planning</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/income-protection</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/investment-planning</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/swp-withdrawal-planning</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/wealth-distribution</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/insurance-planning</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/tax-planning</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-  </url>
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/estate-planning</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/franchise-development</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.75</priority>
-  </url>
-
-  <!-- ═══════════════════════════════════════════════
-       EDUCATIONAL / CONTENT PAGES
-  ════════════════════════════════════════════════ -->
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/pahela-kadam</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/blog</loc>
-    <lastmod>2026-04-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.75</priority>
-  </url>
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/faq</loc>
-    <lastmod>2026-03-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- ═══════════════════════════════════════════════
-       CONVERSION PAGES
-  ════════════════════════════════════════════════ -->
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/get-report</loc>
-    <lastmod>2026-04-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.95</priority>
-  </url>
-
-  <url>
-    <loc>https://finbrella-finplan.vercel.app/contact</loc>
-    <lastmod>2026-03-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
+  <!--
+    This deployment is a single-page app (SPA): only the homepage and static
+    public files are distinct URLs. When you add real marketing routes, list
+    them here as separate <url> entries.
+  -->
 
   <!-- ═══════════════════════════════════════════════
        AI / GEO DISCOVERY FILES
@@ -164,16 +46,30 @@
 
   <url>
     <loc>https://finbrella-finplan.vercel.app/llms.txt</loc>
-    <lastmod>2026-04-22</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
     <loc>https://finbrella-finplan.vercel.app/ai-product-feed.json</loc>
-    <lastmod>2026-04-22</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://finbrella-finplan.vercel.app/json-ld-structured-data.html</loc>
+    <lastmod>2026-04-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://finbrella-finplan.vercel.app/google0a2d5d35f3a7b24d.html</loc>
+    <lastmod>2026-04-23</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.1</priority>
   </url>
 
 </urlset>

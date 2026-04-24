@@ -119,7 +119,6 @@ Disallow: /user-data/
 # ─────────────────────────────────────────────
 
 Sitemap: https://finbrella-finplan.vercel.app/sitemap.xml
-Sitemap: https://www.finbrellafpd.com/sitemap.xml
 
 # ─────────────────────────────────────────────
 # AI-READABLE FEEDS
