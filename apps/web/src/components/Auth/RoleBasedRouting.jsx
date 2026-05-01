@@ -28,12 +28,15 @@ const RoleBasedRouting = ({ children }) => {
           .from("user_profiles")
           .select("*")
           .eq("id", userId)
-          .single();
+          .maybeSingle();
 
         if (error) {
+          console.warn("Profile fetch:", error.code, error.message);
+        }
+
+        if (!data && !error) {
           console.warn(
-            "Profile fetch warning (User might be brand new):",
-            error.message,
+            "No user_profiles row for this account. If you just signed up, wait a moment or check Supabase.",
           );
         }
 
