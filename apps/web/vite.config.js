@@ -31,47 +31,14 @@ export default defineConfig({
   },
   plugins: [
     warnWeb3formsKeyOnVercel(),
-    {
-      name: 'cursor-debug-log-proxy',
-      configureServer(server) {
-        const INGEST_URL =
-          'http://127.0.0.1:7398/ingest/7af4da33-2b10-4d8a-9c6f-9c2ac5abfd00'
-        const SESSION_ID = '89950b'
-
-        server.middlewares.use('/__cursor_debug_log', (req, res) => {
-          if (req.method !== 'POST') {
-            res.statusCode = 405
-            res.end('Method Not Allowed')
-            return
-          }
-
-          let body = ''
-          req.on('data', (chunk) => {
-            body += chunk
-          })
-          req.on('end', async () => {
-            try {
-              await fetch(INGEST_URL, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'text/plain',
-                  'X-Debug-Session-Id': SESSION_ID,
-                },
-                body,
-              })
-            } catch {
-              // ignore logging failures in dev
-            }
-
-            res.statusCode = 204
-            res.end()
-          })
-        })
-      },
-    },
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Workaround: avoid SW minification crashes from workbox/terser in some environments.
+      // (We will revisit once CI/CD build is wired up.)
+      workbox: {
+        mode: 'development',
+      },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icons.svg'],
       manifest: {
         name: 'FinPlan - Financial Planning PWA',
