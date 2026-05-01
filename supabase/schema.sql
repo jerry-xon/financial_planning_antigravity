@@ -46,7 +46,14 @@ create policy "Users can insert own profile"
 create policy "Users can update own profile"
   on public.user_profiles
   for update
-  using (auth.uid() = id);
+  using (auth.uid() = id)
+  with check (
+    auth.uid() = id
+    AND email = (select up.email from public.user_profiles up where up.id = auth.uid())
+    AND role = (select up.role from public.user_profiles up where up.id = auth.uid())
+    AND is_approved = (select up.is_approved from public.user_profiles up where up.id = auth.uid())
+    AND subscription_active = (select up.subscription_active from public.user_profiles up where up.id = auth.uid())
+  );
 
 -- ============================================
 -- 3. CREATE financial_plans TABLE
@@ -87,6 +94,9 @@ drop policy if exists "Users can insert own plans" on public.financial_plans;
 drop policy if exists "Users can update own plans" on public.financial_plans;
 drop policy if exists "Users can delete own plans" on public.financial_plans;
 drop policy if exists "Agents can view their client plans" on public.financial_plans;
+drop policy if exists "Agents can insert plans for clients" on public.financial_plans;
+drop policy if exists "Agents can update client plans" on public.financial_plans;
+drop policy if exists "Agents can delete client plans" on public.financial_plans;
 
 create policy "Users can view own plans"
   on public.financial_plans
@@ -287,7 +297,16 @@ create policy "Users can insert own checkout transactions"
 -- ============================================
 -- 8. GRANTS FOR AUTHENTICATED USERS
 -- ============================================
+revoke all on schema public from authenticated;
+revoke all privileges on all tables in schema public from authenticated;
+revoke all privileges on all sequences in schema public from authenticated;
+revoke execute on all functions in schema public from authenticated;
+
 grant usage on schema public to authenticated;
-grant all privileges on all tables in schema public to authenticated;
-grant all privileges on all sequences in schema public to authenticated;
-grant execute on all functions in schema public to authenticated;
+
+-- Table-level grants (RLS still applies).
+-- Keep these intentionally narrow; do not grant blanket privileges.
+grant select, insert, update on public.user_profiles to authenticated;
+grant select, insert, update on public.financial_plans to authenticated;
+grant select, insert on public.audit_logs to authenticated;
+grant select, insert on public.checkout_transactions to authenticated;

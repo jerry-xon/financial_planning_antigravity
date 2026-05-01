@@ -1,0 +1,53 @@
+name: Deploy (staging)
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ap-south-1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Docker sanity check
+        run: docker version
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: CDK bootstrap (ap-south-1)
+        run: npx cdk bootstrap aws://903685415164/ap-south-1
+        working-directory: infra/cdk
+
+      - name: CDK bootstrap (us-east-1)
+        run: npx cdk bootstrap aws://903685415164/us-east-1
+        working-directory: infra/cdk
+
+      - name: CDK deploy (staging)
+        run: npx cdk deploy --all -c env=staging --require-approval never
+        working-directory: infra/cdk
+

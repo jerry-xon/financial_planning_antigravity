@@ -108,11 +108,6 @@ export async function submitSupportRequestViaWeb3forms({
   ].join('\n');
 
   const startedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
-  console.log('[Help & Support] network: request start', {
-    url: WEB3FORMS_URL,
-    method: 'POST',
-    moduleName: formatField(moduleName),
-  });
 
   try {
     const response = await fetch(WEB3FORMS_URL, {
@@ -140,16 +135,6 @@ export async function submitSupportRequestViaWeb3forms({
     const ok =
       response.ok &&
       (data.success === true || data?.body?.message === 'Email sent successfully!');
-
-    console.log('[Help & Support] network: response', {
-      url: WEB3FORMS_URL,
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok,
-      durationMs,
-      apiSuccess: data.success,
-      apiMessage: data?.message || data?.body?.message,
-    });
 
     if (ok) {
       return { ok: true, message: data?.message || data?.body?.message };

@@ -8,10 +8,6 @@ const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   const [authView, setAuthView] = React.useState('login'); // 'login', 'signup', 'forgot-password'
 
-  // #region agent log (debug-89950b)
-  fetch('/__cursor_debug_log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'89950b',runId:'pre-fix',hypothesisId:'H4',location:'src/components/ProtectedRoute.jsx:render',message:'ProtectedRoute render',data:{loading,hasUser:!!user,hasEmail:!!user?.email,authView},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
-
   if (loading) {
     return (
       <div className="loading-container">

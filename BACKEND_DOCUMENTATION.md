@@ -121,7 +121,7 @@ const { data, error } = await signUpWithEmail(email, password, fullName);
 const { data, error } = await signInWithEmail(email, password);
 
 // Supabase validates and returns JWT token
-// Token stored in browser (localStorage)
+// Token stored in browser (localStorage) with the current SPA-only implementation
 // All subsequent requests include token in headers
 ```
 
@@ -154,7 +154,7 @@ const { data, error } = await signInWithGoogle();
 ### Token Flow
 
 1. User authenticates → Receives JWT access token & refresh token
-2. Access token stored in browser (httpOnly cookie)
+2. Access token stored client-side by the Supabase JS client (typically localStorage in an SPA)
 3. Every API request includes access token in Authorization header
 4. Supabase validates token on every request
 5. Access token expires → Auto-refreshed using refresh token

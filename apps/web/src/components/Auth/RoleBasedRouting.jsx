@@ -13,22 +13,8 @@ const RoleBasedRouting = ({ children }) => {
   useEffect(() => {
     const userId = user?.id;
 
-    // #region agent log (debug-89950b)
-    fetch('/__cursor_debug_log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'89950b',runId:'pre-fix',hypothesisId:'H5',location:'src/components/Auth/RoleBasedRouting.jsx:13',message:'RoleBasedRouting useEffect fired',data:{hasUser:!!user,hasEmail:!!user?.email,subscriptionActiveState:subscriptionActive},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-    // FORCE ALERT FOR DEBUGGING (will fire on mount if not cached)
-    if (user) {
-      console.log("--- ROLE BASED ROUTING DEBUG ---", {
-        userEmail: user.email,
-        subscriptionActive,
-      });
-    }
-
     const fetchUserRole = async () => {
       if (!userId) {
-        // #region agent log (debug-89950b)
-        fetch('/__cursor_debug_log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'89950b',runId:'pre-fix',hypothesisId:'H1',location:'src/components/Auth/RoleBasedRouting.jsx:23',message:'No user; skipping profile fetch',data:{hasUser:false},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         setUserRole(null);
         setSubscriptionActive(false);
         setLoading(false);
@@ -38,9 +24,6 @@ const RoleBasedRouting = ({ children }) => {
       setLoading(true);
 
       try {
-        // #region agent log (debug-89950b)
-        fetch('/__cursor_debug_log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'89950b',runId:'pre-fix',hypothesisId:'H2',location:'src/components/Auth/RoleBasedRouting.jsx:28',message:'Fetching user profile',data:{hasUser:true,hasUserId:!!user?.id},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         const { data, error } = await supabase
           .from("user_profiles")
           .select("*")
@@ -57,9 +40,6 @@ const RoleBasedRouting = ({ children }) => {
         setUserRole(data?.role || "user");
         // Always mirror DB; otherwise a previous session's true sticks and skips SubscriptionGate
         setSubscriptionActive(data?.subscription_active === true);
-        // #region agent log (debug-89950b)
-        fetch('/__cursor_debug_log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'89950b',runId:'pre-fix',hypothesisId:'H2',location:'src/components/Auth/RoleBasedRouting.jsx:43',message:'Profile fetch completed',data:{hasData:!!data,hasError:!!error,role:data?.role||null,subscriptionActiveFromDb:data?.subscription_active===true},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
       } catch (error) {
         console.error("Error fetching user profile:", error);
         setUserRole("user");
@@ -87,12 +67,7 @@ const RoleBasedRouting = ({ children }) => {
     );
   }
 
-  const adminEmails = ["deepurswani@gmail.com"];
-  const userEmail = (user?.email || "").toLowerCase().trim();
-  const isAdmin =
-    (userEmail && adminEmails.includes(userEmail)) || userRole === "admin";
-
-  if (isAdmin) {
+  if (userRole === "admin") {
     return <AdminDashboard />;
   }
 

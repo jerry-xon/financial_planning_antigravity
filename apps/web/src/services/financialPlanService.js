@@ -28,11 +28,9 @@ export const getActivePlan = async () => {
 
     // If no plan exists, create one
     if (!plan) {
-      console.log('No existing plan found, creating new plan...');
       return await createFinancialPlan();
     }
 
-    console.log('Plan loaded successfully:', plan.id);
     return { data: plan, error: null };
   } catch (error) {
     console.error('Error getting active plan:', error);
@@ -132,7 +130,6 @@ export const updateFinancialPlan = async (planId, updates) => {
       .single();
 
     if (error) throw error;
-    console.log("YOUR DATA FOR THIS FUNCTION IS", data);
     return { data, error: null };
   } catch (error) {
     console.error('Error updating financial plan:', error);
