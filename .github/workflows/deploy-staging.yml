@@ -14,6 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ap-south-1
+      # Quiets Node 20 deprecation warnings on actions until they ship Node 24 runtimes.
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      EDGE_STACK: FinPlan-staging-Edge
+      EDGE_REGION: us-east-1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,7 +28,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install
@@ -40,14 +44,39 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: CDK bootstrap (ap-south-1)
-        run: npx cdk bootstrap aws://903685415164/ap-south-1
+        run: npx cdk bootstrap -c env=staging aws://903685415164/ap-south-1
         working-directory: infra/cdk
 
       - name: CDK bootstrap (us-east-1)
-        run: npx cdk bootstrap aws://903685415164/us-east-1
+        run: npx cdk bootstrap -c env=staging aws://903685415164/us-east-1
         working-directory: infra/cdk
 
       - name: CDK deploy (staging)
         run: npx cdk deploy --all -c env=staging --require-approval never
         working-directory: infra/cdk
+
+      # Infra creates the S3 bucket + CloudFront; static files are not deployed by CDK.
+      - name: Build web
+        env:
+          VITE_USE_SUPABASE: 'true'
+          VITE_SITE_URL: ${{ vars.PUBLIC_APP_URL || 'https://app.wealthmap.app' }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_RAZORPAY_KEY_ID: ${{ secrets.VITE_RAZORPAY_KEY_ID }}
+          VITE_WEB3FORMS_ACCESS_KEY: ${{ secrets.VITE_WEB3FORMS_ACCESS_KEY }}
+        run: npm run build -w @finplan/web
+
+      - name: Upload web to S3 and invalidate CloudFront
+        run: |
+          set -euo pipefail
+          BUCKET=$(aws cloudformation describe-stacks --region "$EDGE_REGION" --stack-name "$EDGE_STACK" \
+            --query "Stacks[0].Outputs[?OutputKey=='WebBucketName'].OutputValue" --output text)
+          DIST_ID=$(aws cloudformation describe-stacks --region "$EDGE_REGION" --stack-name "$EDGE_STACK" \
+            --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" --output text)
+          if [ -z "$BUCKET" ] || [ -z "$DIST_ID" ]; then
+            echo "Could not read WebBucketName / CloudFrontDistributionId from $EDGE_STACK"
+            exit 1
+          fi
+          aws s3 sync apps/web/dist/ "s3://${BUCKET}/" --delete
+          aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"
 
