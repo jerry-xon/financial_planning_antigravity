@@ -62,7 +62,13 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_RAZORPAY_KEY_ID: ${{ secrets.VITE_RAZORPAY_KEY_ID }}
           VITE_WEB3FORMS_ACCESS_KEY: ${{ secrets.VITE_WEB3FORMS_ACCESS_KEY }}
-        run: npm run build -w @finplan/web
+        run: |
+          set -euo pipefail
+          if [ -z "${VITE_SUPABASE_URL:-}" ] || [ -z "${VITE_SUPABASE_ANON_KEY:-}" ]; then
+            echo '::error::VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set as repository Actions secrets (Settings → Secrets and variables → Actions). Without them the web build embeds mock mode and login will not work.'
+            exit 1
+          fi
+          npm run build -w @finplan/web
 
       - name: Upload web to S3 and invalidate CloudFront
         run: |
