@@ -18,6 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -26,6 +29,9 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      - name: Docker sanity check
+        run: docker version
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -42,6 +48,6 @@ jobs:
         working-directory: infra/cdk
 
       - name: CDK deploy (staging)
-        run: npx cdk deploy -c env=staging --require-approval never
+        run: npx cdk deploy --all -c env=staging --require-approval never
         working-directory: infra/cdk
 
