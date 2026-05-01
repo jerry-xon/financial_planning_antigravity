@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getCurrentUser, onAuthStateChange } from '../services/authService';
+import { getSession, onAuthStateChange } from '../services/authService';
 
 const AuthContext = createContext({
   user: null,
@@ -25,8 +25,9 @@ export const AuthProvider = ({ children }) => {
     // Get initial session
     const initAuth = async () => {
       try {
-        const { user: currentUser } = await getCurrentUser();
-        setUser(currentUser);
+        const { session: initialSession } = await getSession();
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {

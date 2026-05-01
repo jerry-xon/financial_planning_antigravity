@@ -100,12 +100,12 @@ export const signOut = async () => {
   }
 };
 
-// Get current user
+// Get current user (from local session — avoids AuthSessionMissingError when logged out)
 export const getCurrentUser = async () => {
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { session }, error } = await supabase.auth.getSession();
     if (error) throw error;
-    return { user, error: null };
+    return { user: session?.user ?? null, error: null };
   } catch (error) {
     console.error('Error getting current user:', error);
     return { user: null, error };
