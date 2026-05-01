@@ -58,6 +58,7 @@ jobs:
       # Infra creates the S3 bucket + CloudFront; static files are not deployed by CDK.
       - name: Build web
         env:
+          VITE_APP_STAGE: staging
           VITE_USE_SUPABASE: 'true'
           VITE_SITE_URL: ${{ vars.PUBLIC_APP_URL || 'https://app.wealthmap.app' }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}

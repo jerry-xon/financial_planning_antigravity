@@ -17,7 +17,7 @@ create table if not exists public.user_profiles (
   email text unique not null,
   full_name text,
   avatar_url text,
-  role text not null check (role in ('agent', 'user')) default 'user',
+  role text not null check (role in ('agent', 'user', 'admin')) default 'user',
   company_name text,
   phone text,
   is_approved boolean default false,
@@ -53,6 +53,27 @@ create policy "Users can update own profile"
     AND role = (select up.role from public.user_profiles up where up.id = auth.uid())
     AND is_approved = (select up.is_approved from public.user_profiles up where up.id = auth.uid())
     AND subscription_active = (select up.subscription_active from public.user_profiles up where up.id = auth.uid())
+  );
+
+-- Admins: read all profiles (admin portal)
+drop policy if exists "Admins can select all profiles" on public.user_profiles;
+create policy "Admins can select all profiles"
+  on public.user_profiles
+  for select
+  using (
+    (select up.role from public.user_profiles up where up.id = auth.uid()) = 'admin'
+  );
+
+-- Admins: update any profile (e.g. agent approval)
+drop policy if exists "Admins can update any profile" on public.user_profiles;
+create policy "Admins can update any profile"
+  on public.user_profiles
+  for update
+  using (
+    (select up.role from public.user_profiles up where up.id = auth.uid()) = 'admin'
+  )
+  with check (
+    (select up.role from public.user_profiles up where up.id = auth.uid()) = 'admin'
   );
 
 -- ============================================
@@ -138,6 +159,14 @@ create policy "Agents can delete client plans"
   for delete
   using (auth.uid() = agent_id);
 
+drop policy if exists "Admins can select all financial plans" on public.financial_plans;
+create policy "Admins can select all financial plans"
+  on public.financial_plans
+  for select
+  using (
+    (select up.role from public.user_profiles up where up.id = auth.uid()) = 'admin'
+  );
+
 -- ============================================
 -- 4. CREATE audit_logs TABLE
 -- ============================================
@@ -171,6 +200,14 @@ create policy "Users can insert own audit logs"
   for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Admins can select all audit logs" on public.audit_logs;
+create policy "Admins can select all audit logs"
+  on public.audit_logs
+  for select
+  using (
+    (select up.role from public.user_profiles up where up.id = auth.uid()) = 'admin'
+  );
+
 -- ============================================
 -- 5. CREATE TRIGGERS FOR UPDATED_AT
 -- ============================================
@@ -195,13 +232,23 @@ create trigger financial_plans_updated_at before update on public.financial_plan
 -- ============================================
 create or replace function public.handle_new_user()
 returns trigger as $$
+declare
+  signup_role text;
 begin
+  -- Only "user" or "agent" from signup; "admin" must be set manually in SQL.
+  signup_role := coalesce(new.raw_user_meta_data->>'role', 'user');
+  if signup_role = 'agent' then
+    signup_role := 'agent';
+  else
+    signup_role := 'user';
+  end if;
+
   insert into public.user_profiles (id, email, full_name, role)
   values (
     new.id,
     new.email,
     new.raw_user_meta_data->>'full_name',
-    coalesce(new.raw_user_meta_data->>'role', 'user')
+    signup_role
   );
 
   insert into public.financial_plans (user_id, plan_name, family_members, income, expense_categories, asset_categories, liability_categories)
@@ -293,6 +340,14 @@ create policy "Users can insert own checkout transactions"
   on public.checkout_transactions
   for insert
   with check (auth.uid() = user_id);
+
+drop policy if exists "Admins can select all checkout transactions" on public.checkout_transactions;
+create policy "Admins can select all checkout transactions"
+  on public.checkout_transactions
+  for select
+  using (
+    (select up.role from public.user_profiles up where up.id = auth.uid()) = 'admin'
+  );
 
 -- ============================================
 -- 8. GRANTS FOR AUTHENTICATED USERS

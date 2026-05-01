@@ -2,7 +2,8 @@ import {
   LogOut, User, Users, ArrowRightLeft, Wallet, Target, Shield, 
   Umbrella, LifeBuoy, Map, PieChart, TrendingUp, ListChecks, 
   LayoutDashboard, Calculator, Percent, Landmark, Car, 
-  GraduationCap, LineChart, MoveDown, PiggyBank, Home, CheckCircle2 
+  GraduationCap, LineChart, MoveDown, PiggyBank, Home, CheckCircle2,
+  Copy,
 } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import AssetModule from './components/AssetModule/AssetModule';
@@ -42,6 +43,7 @@ import { useAuth } from './contexts/AuthContext';
 import { signOut } from './services/authService';
 import { getActivePlan, updateFinancialPlan } from './services/financialPlanService';
 import finbrellaLogo from './assets/finbrella_logo.png';
+import { SHOW_STAGING_USER_ID_TOOL } from '@/config/environment';
 
 /**
  * Main App Component
@@ -60,6 +62,7 @@ function App() {
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [copiedUserId, setCopiedUserId] = useState(false);
 
   // State for tracking the current navigation step (1-12)
   const [currentStep, setCurrentStep] = useState(1);
@@ -725,6 +728,17 @@ function App() {
     resetState(); // Clear data immediately after logout
   };
 
+  const copySupabaseUserId = async () => {
+    if (!user?.id) return;
+    try {
+      await navigator.clipboard.writeText(user.id);
+      setCopiedUserId(true);
+      window.setTimeout(() => setCopiedUserId(false), 2000);
+    } catch {
+      // clipboard API unavailable or denied
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -887,6 +901,29 @@ function App() {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   Saved at {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
+              ) : null}
+              {SHOW_STAGING_USER_ID_TOOL && user?.id ? (
+                <button
+                  type="button"
+                  onClick={() => { void copySupabaseUserId(); }}
+                  title="Copy your Supabase user id (staging only)"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    padding: '0.35rem 0.55rem',
+                    borderRadius: '8px',
+                    border: '1px dashed var(--border)',
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Copy size={14} />
+                  {copiedUserId ? 'Copied' : 'User id'}
+                </button>
               ) : null}
               <div style={{ position: 'relative' }}>
                 <button 
