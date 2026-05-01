@@ -21,15 +21,12 @@ const regional = new FinPlanRegionalStack(app, `FinPlan-${envName}-Regional`, {
   crossRegionReferences: true,
 })
 
-const edge = new FinPlanEdgeStack(app, `FinPlan-${envName}-Edge`, {
+new FinPlanEdgeStack(app, `FinPlan-${envName}-Edge`, {
   envName,
   domainName,
-  webBucket: regional.webBucket,
   albDnsName: regional.albDnsName,
   env: { account, region: 'us-east-1' },
   crossRegionReferences: true,
 })
-
-edge.addDependency(regional)
 
 app.synth()

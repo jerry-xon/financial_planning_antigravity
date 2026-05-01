@@ -40,11 +40,11 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: CDK bootstrap (ap-south-1)
-        run: npx cdk bootstrap aws://903685415164/ap-south-1
+        run: npx cdk bootstrap -c env=prod aws://903685415164/ap-south-1
         working-directory: infra/cdk
 
       - name: CDK bootstrap (us-east-1)
-        run: npx cdk bootstrap aws://903685415164/us-east-1
+        run: npx cdk bootstrap -c env=prod aws://903685415164/us-east-1
         working-directory: infra/cdk
 
       - name: CDK deploy (prod)

@@ -4,7 +4,6 @@ import * as ecr_assets from 'aws-cdk-lib/aws-ecr-assets'
 import * as ecs from 'aws-cdk-lib/aws-ecs'
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2'
 import * as logs from 'aws-cdk-lib/aws-logs'
-import * as s3 from 'aws-cdk-lib/aws-s3'
 import { Construct } from 'constructs'
 import * as path from 'node:path'
 
@@ -14,7 +13,6 @@ export type FinPlanRegionalStackProps = cdk.StackProps & {
 }
 
 export class FinPlanRegionalStack extends cdk.Stack {
-  public readonly webBucket: s3.IBucket
   public readonly albDnsName: string
 
   constructor(scope: Construct, id: string, props: FinPlanRegionalStackProps) {
@@ -91,18 +89,8 @@ export class FinPlanRegionalStack extends cdk.Stack {
       },
     })
 
-    const webBucket = new s3.Bucket(this, 'WebBucket', {
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      encryption: s3.BucketEncryption.S3_MANAGED,
-      enforceSSL: true,
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
-      autoDeleteObjects: false,
-    })
-
-    this.webBucket = webBucket
     this.albDnsName = alb.loadBalancerDnsName
 
-    new cdk.CfnOutput(this, 'WebBucketName', { value: webBucket.bucketName })
     new cdk.CfnOutput(this, 'AlbDnsName', { value: alb.loadBalancerDnsName })
     new cdk.CfnOutput(this, 'VpcId', { value: vpc.vpcId })
   }

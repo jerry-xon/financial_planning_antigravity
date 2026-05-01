@@ -10,7 +10,6 @@ import { Construct } from 'constructs'
 export type FinPlanEdgeStackProps = cdk.StackProps & {
   envName: 'staging' | 'prod'
   domainName: string
-  webBucket: s3.IBucket
   albDnsName: string
 }
 
@@ -24,7 +23,15 @@ export class FinPlanEdgeStack extends cdk.Stack {
       crossRegionReferences: true,
     })
 
-    const { envName, domainName, webBucket, albDnsName } = props
+    const { envName, domainName, albDnsName } = props
+
+    const webBucket = new s3.Bucket(this, 'WebBucket', {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      autoDeleteObjects: false,
+    })
 
     const appFqdn = `app.${domainName}`
     const apiFqdn = `api.${domainName}`
@@ -120,5 +127,6 @@ export class FinPlanEdgeStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'CloudFrontDistributionId', {
       value: this.distribution.distributionId,
     })
+    new cdk.CfnOutput(this, 'WebBucketName', { value: webBucket.bucketName })
   }
 }
