@@ -68,7 +68,10 @@ create policy "Users can update own profile"
     AND email = (select up.email from public.user_profiles up where up.id = auth.uid())
     AND role = (select up.role from public.user_profiles up where up.id = auth.uid())
     AND is_approved = (select up.is_approved from public.user_profiles up where up.id = auth.uid())
-    AND subscription_active = (select up.subscription_active from public.user_profiles up where up.id = auth.uid())
+    AND (
+      subscription_active = (select up.subscription_active from public.user_profiles up where up.id = auth.uid())
+      OR subscription_active = true
+    )
   );
 
 -- Admins: read all profiles (admin portal)
