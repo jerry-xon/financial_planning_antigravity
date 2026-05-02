@@ -41,7 +41,7 @@ import MobileWebComingSoon from '@/components/common/MobileWebComingSoon';
 import { useBreakpoints } from '@/hooks';
 import { useAuth } from './contexts/AuthContext';
 import { signOut } from './services/authService';
-import { getActivePlan, updateFinancialPlan } from './services/financialPlanService';
+import { createFinancialPlan, getActivePlan, updateFinancialPlan } from './services/financialPlanService';
 import finbrellaLogo from './assets/finbrella_logo.png';
 import { SHOW_STAGING_USER_ID_TOOL } from '@/config/environment';
 
@@ -63,6 +63,8 @@ function App() {
   const [lastSaved, setLastSaved] = useState(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [copiedUserId, setCopiedUserId] = useState(false);
+  const [planSyncError, setPlanSyncError] = useState(null);
+  const [planReloadToken, setPlanReloadToken] = useState(0);
 
   // State for tracking the current navigation step (1-12)
   const [currentStep, setCurrentStep] = useState(1);
@@ -310,6 +312,7 @@ function App() {
       household: Array(12).fill(0)
     });
     setCashFlowSubStep(1);
+    setPlanSyncError(null);
   };
 
   // --- Load Financial Plan from Supabase ---
@@ -325,14 +328,52 @@ function App() {
 
       setLoading(true);
       const { data, error } = await getActivePlan();
-      
+
       if (error) {
         console.error('Error loading plan from Supabase:', error);
-        console.log('Using default/cached data...');
-        // Continue without setting planId - will use default state
+        const retry = await createFinancialPlan();
+        if (retry.data) {
+          setPlanSyncError(null);
+          setPlanId(retry.data.id);
+          setCurrentStep(retry.data.current_step || 1);
+          setMaxStep(retry.data.current_step || 1);
+          setFamilyMembers(
+            retry.data.family_members && retry.data.family_members.length > 0
+              ? retry.data.family_members.map((m) => ({ ...m, mobile: m.mobile || '' }))
+              : [
+                  {
+                    name: '',
+                    dob: '',
+                    occupation: 'Salaried',
+                    retirementAge: 60,
+                    relation: 'Self',
+                    natureOfBusiness: '',
+                    organizationName: '',
+                    educationalQualification: '',
+                    mobile: '',
+                  },
+                ],
+          );
+          setLoading(false);
+          return;
+        }
+        const msg =
+          typeof error?.message === 'string'
+            ? error.message
+            : error?.code
+              ? `${error.code}: ${error.message || error.details || ''}`
+              : String(error);
+        const retryDetail = retry?.error
+          ? ` Retry failed: ${retry.error.message || retry.error.code || String(retry.error)}.`
+          : '';
+        setPlanSyncError(
+          `${msg}.${retryDetail} Profile saves go to table financial_plans (column family_members), not user_profiles.`,
+        );
         setLoading(false);
         return;
       }
+
+      setPlanSyncError(null);
 
       if (data) {
         console.log('Successfully loaded plan:', data.id);
@@ -610,7 +651,7 @@ function App() {
     };
 
     loadPlan();
-  }, [user]);
+  }, [user, planReloadToken]);
 
   const expandedGoals = useMemo(() => {
     let result = [];
@@ -756,6 +797,35 @@ function App() {
     <RoleBasedRouting>
       <ProtectedRoute>
         <div className="app-shell">
+        {planSyncError && (
+          <div
+            role="alert"
+            style={{
+              padding: '0.75rem 1rem',
+              background: 'rgba(220, 38, 38, 0.12)',
+              borderBottom: '1px solid rgba(220, 38, 38, 0.35)',
+              fontSize: '0.9rem',
+              lineHeight: 1.45,
+            }}
+          >
+            <strong>Cannot sync your plan — edits will not save.</strong>{' '}
+            <span>{planSyncError}</span>
+            <button
+              type="button"
+              onClick={() => setPlanReloadToken((t) => t + 1)}
+              style={{
+                marginLeft: '0.75rem',
+                padding: '0.25rem 0.6rem',
+                cursor: 'pointer',
+                borderRadius: '6px',
+                border: '1px solid rgba(220, 38, 38, 0.5)',
+                background: 'var(--bg-card, #fff)',
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
         {/* Left Drawer: Process Navigation */}
         <aside className="sidebar left-drawer">
           <div className="sidebar-header">

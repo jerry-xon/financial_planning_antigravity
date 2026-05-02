@@ -1,8 +1,9 @@
-import { BarChart3, CheckCircle, Copy, FileText, Link2, LogOut, Mail, Shield, Users, Tag } from 'lucide-react';
+import { BarChart3, CheckCircle, Copy, Download, FileText, Link2, LogOut, Mail, Shield, Users, Tag } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { signOut } from '../../services/authService';
 import ClientFinancialDossier from './ClientFinancialDossier';
+import { openAdminFinancialPlanPrint } from '../../utils/adminFinancialPlanPrint';
 
 const AdminDashboard = () => {
   const [clients, setClients] = useState([]);
@@ -186,7 +187,7 @@ const AdminDashboard = () => {
         ) : activeTab === 'clients' ? (
           <ClientsTab clients={clients} />
         ) : activeTab === 'reports' ? (
-          <ReportsTab reports={reports} />
+          <ReportsTab reports={reports} clients={clients} />
         ) : (
           <CouponsTab coupons={coupons} loadAdminData={loadAdminData} />
         )}
@@ -354,9 +355,34 @@ const ClientsTab = ({ clients }) => {
 };
 
 // Reports Tab Component
-const ReportsTab = ({ reports }) => {
+const ReportsTab = ({ reports, clients }) => {
   const [selectedDossier, setSelectedDossier] = useState(null);
   const [loadingDossier, setLoadingDossier] = useState(false);
+  const [pdfLoadingId, setPdfLoadingId] = useState(null);
+
+  const exportClientPdf = async (reportId) => {
+    setPdfLoadingId(reportId);
+    try {
+      const { data, error } = await supabase
+        .from('financial_plans')
+        .select('*')
+        .eq('id', reportId)
+        .single();
+
+      if (error || !data) {
+        window.alert('Could not load this plan for export. Check console for details.');
+        console.error(error);
+        return;
+      }
+      const clientMeta = (clients || []).find((c) => c.id === data.user_id) || null;
+      openAdminFinancialPlanPrint(data, clientMeta);
+    } catch (e) {
+      console.error(e);
+      window.alert('Export failed.');
+    } finally {
+      setPdfLoadingId(null);
+    }
+  };
 
   const viewDossier = async (id) => {
     setLoadingDossier(true);
@@ -419,21 +445,45 @@ const ReportsTab = ({ reports }) => {
                     Updated: {new Date(report.updated_at || report.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                <button 
-                  onClick={() => viewDossier(report.id)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: 'var(--primary)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                    fontWeight: 600
-                  }}
-                >
-                  View Client Data
-                </button>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    disabled={pdfLoadingId === report.id || loadingDossier}
+                    onClick={() => exportClientPdf(report.id)}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      background: 'var(--bg-card)',
+                      color: 'var(--text-main)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '6px',
+                      cursor: pdfLoadingId === report.id ? 'wait' : 'pointer',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                    }}
+                  >
+                    <Download size={16} aria-hidden />
+                    {pdfLoadingId === report.id ? 'Preparing…' : 'Export PDF'}
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => viewDossier(report.id)}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      background: 'var(--primary)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    View Client Data
+                  </button>
+                </div>
               </div>
             </div>
           </div>
