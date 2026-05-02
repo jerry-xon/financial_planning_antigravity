@@ -1,6 +1,7 @@
 import { AlertCircle, Briefcase, CheckCircle, Chrome, Lock, Mail, User } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { signInWithGoogle, signUpWithEmail } from '../../services/authService';
+import { getPendingCouponInvite } from '@/lib/couponInviteStorage';
 
 const Signup = ({ onSwitchToLogin }) => {
   const [role, setRole] = useState('user'); // 'agent' or 'user'
@@ -12,6 +13,11 @@ const Signup = ({ onSwitchToLogin }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    const inv = getPendingCouponInvite();
+    if (inv?.email) setEmail(inv.email);
+  }, []);
 
   const handleSignup = async (e) => {
     e.preventDefault();

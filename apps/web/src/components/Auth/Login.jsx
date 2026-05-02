@@ -1,12 +1,18 @@
 import { AlertCircle, Chrome, Lock, Mail } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { signInWithEmail, signInWithGoogle } from '../../services/authService';
+import { getPendingCouponInvite } from '@/lib/couponInviteStorage';
 
 const Login = ({ onSwitchToSignup, onForgotPassword }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const inv = getPendingCouponInvite();
+    if (inv?.email) setEmail(inv.email);
+  }, []);
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import { BarChart3, CheckCircle, FileText, LogOut, Shield, Users, Tag } from 'lucide-react';
+import { BarChart3, CheckCircle, Copy, FileText, Link2, LogOut, Mail, Shield, Users, Tag } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { signOut } from '../../services/authService';
@@ -51,7 +51,7 @@ const AdminDashboard = () => {
       setStats({
         totalClients: clientsData?.length || 0,
         totalReports: reportsData?.length || 0,
-        usedCoupons: couponsData?.filter(c => c.is_used).length || 0,
+        usedCoupons: couponsData?.filter((c) => c.is_used === true).length || 0,
       });
     } catch (error) {
       console.error('Error loading admin data:', error);
@@ -443,33 +443,87 @@ const ReportsTab = ({ reports }) => {
   );
 };
 
+const APP_BASE =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SITE_URL?.replace(/\/+$/, '')) ||
+  'https://app.wealthmap.app';
+
+const randomCouponSuffix = () => {
+  const a = new Uint8Array(6);
+  crypto.getRandomValues(a);
+  return Array.from(a, (x) => x.toString(16).padStart(2, '0')).join('').slice(0, 10).toUpperCase();
+};
+
+const buildInviteUrl = (code, targetEmail) =>
+  `${APP_BASE}/?invite=1&code=${encodeURIComponent(code)}&email=${encodeURIComponent(targetEmail)}`;
+
+async function sendCouponInvitationEmails(codes) {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error('Not signed in');
+  const res = await fetch(`${supabaseUrl}/functions/v1/send-coupon-email`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: anon,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ codes }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || res.statusText || 'Email send failed');
+  return body;
+}
+
 // Coupons Tab Component
 const CouponsTab = ({ coupons, loadAdminData }) => {
   const [email, setEmail] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [sendSesEmail, setSendSesEmail] = useState(true);
+  const [emailStatus, setEmailStatus] = useState(null);
 
   const generateCoupon = async (e) => {
     e.preventDefault();
-    if(!email) return;
+    if (!email) return;
     setGenerating(true);
-    
-    // Parse emails split by comma or newline
-    const emailsArray = email.split(/[\n,]+/).map(str => str.trim()).filter(str => str.length > 0);
-    
-    const payloads = emailsArray.map(target => ({
-        code: `FIN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-        target_email: target,
-        is_used: false,
+    setEmailStatus(null);
+
+    const emailsArray = email
+      .split(/[\n,]+/)
+      .map((str) => str.trim())
+      .filter((str) => str.length > 0);
+
+    const payloads = emailsArray.map((target) => ({
+      code: `FIN-${randomCouponSuffix()}`,
+      target_email: target,
+      is_used: false,
     }));
 
     try {
-      const { error } = await supabase.from('coupon_codes').insert(payloads);
+      const { data: inserted, error } = await supabase.from('coupon_codes').insert(payloads).select('code');
       if (error) {
-        alert("Failed to generate coupons. " + error.message);
+        alert(`Failed to generate coupons. ${error.message}`);
         console.error(error);
-      } else {
-        setEmail('');
-        loadAdminData();
+        return;
+      }
+      setEmail('');
+      await loadAdminData();
+
+      if (sendSesEmail && inserted?.length) {
+        try {
+          const result = await sendCouponInvitationEmails(inserted.map((r) => r.code));
+          const failed = (result.results || []).filter((r) => !r.ok);
+          if (failed.length) {
+            setEmailStatus(`Coupons saved. Some emails failed: ${failed.map((f) => f.code).join(', ')}`);
+          } else {
+            setEmailStatus(`Invitation email(s) sent via SES (${inserted.length}).`);
+          }
+        } catch (sendErr) {
+          console.error(sendErr);
+          setEmailStatus(
+            `Coupons saved. SES email not sent: ${sendErr.message}. Configure Edge Function secrets (AWS / SES_FROM_EMAIL).`,
+          );
+        }
       }
     } catch (err) {
       console.error(err);
@@ -477,77 +531,163 @@ const CouponsTab = ({ coupons, loadAdminData }) => {
     setGenerating(false);
   };
 
+  const copyText = async (label, text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setEmailStatus(`Copied ${label}.`);
+      window.setTimeout(() => setEmailStatus(null), 2500);
+    } catch {
+      setEmailStatus('Clipboard not available.');
+    }
+  };
+
   return (
     <div>
-      <h2>Coupon & Access Manager</h2>
-      
-      <div style={{ padding: '1.5rem', background: 'var(--bg-main)', borderRadius: '8px', marginBottom: '2rem' }}>
-        <h4 style={{ margin: '0 0 1rem 0' }}>Generate VIP Access Code</h4>
-        <form onSubmit={generateCoupon} style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <textarea 
-            placeholder="Paste multiple client emails here (separated by commas or new lines)..." 
+      <h2>Coupon & access manager</h2>
+      <p style={{ color: 'var(--text-muted)', marginBottom: '1.25rem', maxWidth: '720px' }}>
+        Each coupon works <strong>once</strong> and only for the <strong>exact email</strong> you enter. Apply the DB migration so{' '}
+        <code style={{ fontSize: '0.85rem' }}>coupon_codes</code> exists. Run the{' '}
+        <code style={{ fontSize: '0.85rem' }}>send-coupon-email</code> Edge Function with AWS SES secrets to mail invitations.
+      </p>
+
+      <div
+        style={{
+          padding: '1.5rem',
+          background: 'var(--bg-main)',
+          borderRadius: '8px',
+          marginBottom: '2rem',
+          border: '1px solid var(--border)',
+        }}
+      >
+        <h4 style={{ margin: '0 0 1rem 0' }}>Create coupons</h4>
+        <form onSubmit={generateCoupon}>
+          <textarea
+            placeholder="Client emails (comma or newline separated)…"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{ 
-              flex: 1, 
-              padding: '0.75rem 1rem', 
-              borderRadius: '8px', 
+            style={{
+              width: '100%',
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
               border: '1px solid var(--border)',
               background: 'var(--bg-card)',
               color: 'var(--text)',
-              minHeight: '80px',
+              minHeight: '100px',
               fontFamily: 'inherit',
-              resize: 'vertical'
+              resize: 'vertical',
+              marginBottom: '1rem',
             }}
             required
           />
-          <button 
-            type="submit" 
-            disabled={generating}
-            style={{ 
-              padding: '0.75rem 1.5rem', 
-              borderRadius: '8px', 
-              border: 'none', 
-              background: 'var(--primary)', 
-              color: 'white', 
-              fontWeight: 600,
-              cursor: generating ? 'not-allowed' : 'pointer'
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginBottom: '1rem',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
             }}
           >
-            {generating ? 'Generating...' : 'Generate Bypass Code'}
+            <input
+              type="checkbox"
+              checked={sendSesEmail}
+              onChange={(e) => setSendSesEmail(e.target.checked)}
+            />
+            <Mail size={16} /> Send professional invitation email (AWS SES) after create
+          </label>
+          <button
+            type="submit"
+            disabled={generating}
+            style={{
+              padding: '0.75rem 1.5rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'var(--primary)',
+              color: 'white',
+              fontWeight: 600,
+              cursor: generating ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {generating ? 'Saving…' : 'Generate coupons'}
           </button>
         </form>
+        {emailStatus && (
+          <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>{emailStatus}</p>
+        )}
       </div>
 
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border)' }}>
-              <th style={{ textAlign: 'left', padding: '1rem', fontWeight: '600' }}>Coupon Code</th>
-              <th style={{ textAlign: 'left', padding: '1rem', fontWeight: '600' }}>Target Email</th>
-              <th style={{ textAlign: 'left', padding: '1rem', fontWeight: '600' }}>Status</th>
-              <th style={{ textAlign: 'left', padding: '1rem', fontWeight: '600' }}>Created On</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: 600 }}>Code</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: 600 }}>Target email</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: 600 }}>Status</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: 600 }}>Used at</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: 600 }}>Created</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem', fontWeight: 600 }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {coupons.length === 0 ? (
-              <tr><td colSpan="4" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No coupons generated yet.</td></tr>
+              <tr>
+                <td colSpan="6" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  No coupons yet. Create some above.
+                </td>
+              </tr>
             ) : (
-              coupons.map(c => (
-                <tr key={c.id || c.code} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td style={{ padding: '1rem', fontWeight: 700, letterSpacing: '1px', color: 'var(--accent)' }}>{c.code}</td>
-                  <td style={{ padding: '1rem' }}>{c.target_email}</td>
-                  <td style={{ padding: '1rem' }}>
-                    <span style={{
-                      padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600,
-                      background: c.is_used ? '#fef08a' : '#dcfce7', color: c.is_used ? '#854d0e' : '#15803d'
-                    }}>
-                      {c.is_used ? 'Redeemed' : 'Available'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '1rem', fontSize: '0.85rem' }}>{new Date(c.created_at).toLocaleDateString()}</td>
-                </tr>
-              ))
+              coupons.map((c) => {
+                const invite = buildInviteUrl(c.code, c.target_email);
+                return (
+                  <tr key={c.id || c.code} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '0.75rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--accent)' }}>
+                      {c.code}
+                    </td>
+                    <td style={{ padding: '0.75rem' }}>{c.target_email}</td>
+                    <td style={{ padding: '0.75rem' }}>
+                      <span
+                        style={{
+                          padding: '0.2rem 0.65rem',
+                          borderRadius: '999px',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          background: c.is_used ? '#fef08a' : '#dcfce7',
+                          color: c.is_used ? '#854d0e' : '#15803d',
+                        }}
+                      >
+                        {c.is_used ? 'Redeemed' : 'Available'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                      {c.used_at ? new Date(c.used_at).toLocaleString() : '—'}
+                    </td>
+                    <td style={{ padding: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                      {c.created_at ? new Date(c.created_at).toLocaleString() : '—'}
+                    </td>
+                    <td style={{ padding: '0.75rem' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                        <button
+                          type="button"
+                          className="btn"
+                          onClick={() => copyText('code', c.code)}
+                          style={{ padding: '0.35rem 0.6rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                        >
+                          <Copy size={12} /> Code
+                        </button>
+                        <button
+                          type="button"
+                          className="btn"
+                          onClick={() => copyText('link', invite)}
+                          style={{ padding: '0.35rem 0.6rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                        >
+                          <Link2 size={12} /> Invite link
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

@@ -3,10 +3,15 @@ import ForgotPassword from '../components/Auth/ForgotPassword';
 import Login from '../components/Auth/Login';
 import Signup from '../components/Auth/Signup';
 import { useAuth } from '../contexts/AuthContext';
+import { consumeInviteParamsFromUrl } from '@/lib/couponInviteStorage';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   const [authView, setAuthView] = React.useState('login'); // 'login', 'signup', 'forgot-password'
+
+  React.useEffect(() => {
+    consumeInviteParamsFromUrl();
+  }, []);
 
   if (loading) {
     return (

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Shield, CreditCard, CheckCircle2, Ticket, Lock, Zap } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { CreditCard, CheckCircle2, Ticket, Lock, Zap } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { signOut } from '../../services/authService';
 import finbrellaLogo from '../../assets/finbrella_logo.png';
+import { clearPendingCouponInvite, getPendingCouponInvite } from '@/lib/couponInviteStorage';
 
 const SubscriptionGate = ({ onActivate }) => {
   const { user } = useAuth();
@@ -11,64 +12,92 @@ const SubscriptionGate = ({ onActivate }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const autoRedeemAttempted = useRef(false);
+
+  const redeemCoupon = useCallback(
+    async (rawCode) => {
+      const code = rawCode.trim();
+      if (!code || !user?.id) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const { data: couponData, error: couponError } = await supabase
+          .from('coupon_codes')
+          .select('*')
+          .eq('code', code)
+          .eq('is_used', false)
+          .maybeSingle();
+
+        if (couponError || !couponData) {
+          throw new Error('Invalid or already used coupon code.');
+        }
+
+        if (
+          !couponData.target_email ||
+          !user?.email ||
+          couponData.target_email.toLowerCase() !== user.email.toLowerCase()
+        ) {
+          throw new Error('This coupon is not valid for your account.');
+        }
+
+        const usedAt = new Date().toISOString();
+        const { error: updateCouponError } = await supabase
+          .from('coupon_codes')
+          .update({ is_used: true, used_at: usedAt })
+          .eq('id', couponData.id);
+
+        if (updateCouponError) {
+          throw new Error('Failed to redeem coupon. Please contact support.');
+        }
+
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .update({ subscription_active: true })
+          .eq('id', user.id);
+
+        if (profileError) {
+          console.warn(
+            'Could not update profile subscription status. It may not exist in the DB schema yet.',
+            profileError,
+          );
+        }
+
+        clearPendingCouponInvite();
+        setSuccess(true);
+        setTimeout(() => {
+          onActivate();
+        }, 1500);
+      } catch (err) {
+        console.error(err);
+        setError(err.message || 'Something went wrong.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user?.id, user?.email, onActivate],
+  );
 
   const handleApplyCoupon = async (e) => {
     e.preventDefault();
     if (!couponCode.trim()) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      // 1. Verify coupon
-      const { data: couponData, error: couponError } = await supabase
-        .from('coupon_codes')
-        .select('*')
-        .eq('code', couponCode.trim())
-        .eq('is_used', false)
-        .single();
-
-      if (couponError || !couponData) {
-        throw new Error('Invalid or already used coupon code.');
-      }
-
-      // Check target email
-      if (!couponData.target_email || !user?.email || couponData.target_email.toLowerCase() !== user.email.toLowerCase()) {
-        throw new Error('This coupon is not valid for your account.');
-      }
-
-      // 2. Mark coupon as used
-      const { error: updateCouponError } = await supabase
-        .from('coupon_codes')
-        .update({ is_used: true })
-        .eq('id', couponData.id);
-
-      if (updateCouponError) {
-        throw new Error('Failed to redeem coupon. Please contact support.');
-      }
-
-      // 3. Update user profile to active
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .update({ subscription_active: true })
-        .eq('id', user.id);
-
-      if (profileError) {
-        // Fallback UI activation if column doesn't exist yet
-        console.warn("Could not update profile subscription status. It may not exist in the DB schema yet.", profileError);
-      }
-
-      setSuccess(true);
-      setTimeout(() => {
-        onActivate();
-      }, 1500);
-
-    } catch (err) {
-      console.error(err);
-      setError(err.message);
-    }
-    setLoading(false);
+    await redeemCoupon(couponCode);
   };
+
+  useEffect(() => {
+    if (autoRedeemAttempted.current || success || !user?.email) return;
+    const inv = getPendingCouponInvite();
+    if (!inv?.code) return;
+    if (inv.email.toLowerCase() !== user.email.toLowerCase()) {
+      setError('Use the same email address this invitation was sent to, then we can apply your coupon.');
+      autoRedeemAttempted.current = true;
+      return;
+    }
+    autoRedeemAttempted.current = true;
+    setCouponCode(inv.code.toUpperCase());
+    void redeemCoupon(inv.code);
+  }, [user?.email, success, redeemCoupon]);
 
   const handleMockPayment = (plan) => {
     alert(`Redirecting to RazorPay for the ${plan} plan...\n\n(Mock Payment Gateway Integration)`);

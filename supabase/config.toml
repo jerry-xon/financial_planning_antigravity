@@ -386,3 +386,6 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # function via supabase.auth.getUser() with the caller's Bearer token.
 [functions.razorpay-checkout]
 verify_jwt = false
+
+[functions.send-coupon-email]
+verify_jwt = false
