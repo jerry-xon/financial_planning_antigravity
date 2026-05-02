@@ -50,9 +50,20 @@ jobs:
         run: npx cdk bootstrap -c env=prod aws://903685415164/us-east-1
         working-directory: infra/cdk
 
+      # Defaults to skipping ACM + Route53 + CF aliases so deploy succeeds if app.{domain} is still on another CloudFront distribution (409).
+      # After removing duplicate alternate domain names in AWS Console, set repo Actions variable EDGE_SKIP_CUSTOM_DOMAINS=false and redeploy.
       - name: CDK deploy (prod)
-        run: npx cdk deploy --all -c env=prod --require-approval never
+        env:
+          EDGE_SKIP_CUSTOM_DOMAINS: ${{ vars.EDGE_SKIP_CUSTOM_DOMAINS }}
         working-directory: infra/cdk
+        run: |
+          set -euo pipefail
+          EXTRA=""
+          if [ "${EDGE_SKIP_CUSTOM_DOMAINS:-true}" != "false" ]; then
+            EXTRA="-c skipEdgeCustomDomains=true"
+            echo "::notice::Edge stack: deploying without custom domain names (default until EDGE_SKIP_CUSTOM_DOMAINS=false). Use CloudFront domain output for smoke tests."
+          fi
+          npx cdk deploy --all -c env=prod --require-approval never ${EXTRA}
 
       - name: Build web
         env:

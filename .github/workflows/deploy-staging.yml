@@ -52,8 +52,17 @@ jobs:
         working-directory: infra/cdk
 
       - name: CDK deploy (staging)
-        run: npx cdk deploy --all -c env=staging --require-approval never
+        env:
+          EDGE_SKIP_CUSTOM_DOMAINS: ${{ vars.EDGE_SKIP_CUSTOM_DOMAINS }}
         working-directory: infra/cdk
+        run: |
+          set -euo pipefail
+          EXTRA=""
+          if [ "${EDGE_SKIP_CUSTOM_DOMAINS:-true}" != "false" ]; then
+            EXTRA="-c skipEdgeCustomDomains=true"
+            echo "::notice::Edge stack: deploying without custom domain names (default until EDGE_SKIP_CUSTOM_DOMAINS=false)."
+          fi
+          npx cdk deploy --all -c env=staging --require-approval never ${EXTRA}
 
       # Infra creates the S3 bucket + CloudFront; static files are not deployed by CDK.
       - name: Build web

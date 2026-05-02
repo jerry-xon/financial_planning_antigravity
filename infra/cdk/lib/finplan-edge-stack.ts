@@ -11,6 +11,8 @@ export type FinPlanEdgeStackProps = cdk.StackProps & {
   envName: 'staging' | 'prod'
   domainName: string
   albDnsName: string
+  /** Deploy CF + S3 only (default CloudFront domain). Skips ACM + Route53 when hostnames are blocked (409). */
+  skipCustomDomains?: boolean
 }
 
 export class FinPlanEdgeStack extends cdk.Stack {
@@ -23,7 +25,7 @@ export class FinPlanEdgeStack extends cdk.Stack {
       crossRegionReferences: true,
     })
 
-    const { envName, domainName, albDnsName } = props
+    const { envName, domainName, albDnsName, skipCustomDomains = false } = props
 
     // Prod and staging cannot share the same CloudFront alternate domain names (CNAMEs).
     // Staging uses dedicated hostnames so prod can attach app.{domain} / api.{domain}.
@@ -38,15 +40,20 @@ export class FinPlanEdgeStack extends cdk.Stack {
       autoDeleteObjects: false,
     })
 
-    const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
-      domainName,
-    })
+    const hostedZone = skipCustomDomains
+      ? undefined
+      : route53.HostedZone.fromLookup(this, 'HostedZone', {
+          domainName,
+        })
 
-    const cert = new acm.Certificate(this, 'CloudFrontCert', {
-      domainName: appFqdn,
-      subjectAlternativeNames: [apiFqdn],
-      validation: acm.CertificateValidation.fromDns(hostedZone),
-    })
+    const cert =
+      skipCustomDomains || !hostedZone
+        ? undefined
+        : new acm.Certificate(this, 'CloudFrontCert', {
+            domainName: appFqdn,
+            subjectAlternativeNames: [apiFqdn],
+            validation: acm.CertificateValidation.fromDns(hostedZone),
+          })
 
     const oac = new cloudfront.S3OriginAccessControl(this, 'WebOAC', {
       signing: cloudfront.Signing.SIGV4_ALWAYS,
@@ -64,8 +71,12 @@ export class FinPlanEdgeStack extends cdk.Stack {
     this.distribution = new cloudfront.Distribution(this, 'Distribution', {
       comment: `finplan-${envName}`,
       defaultRootObject: 'index.html',
-      domainNames: [appFqdn, apiFqdn],
-      certificate: cert,
+      ...(skipCustomDomains || !cert
+        ? {}
+        : {
+            domainNames: [appFqdn, apiFqdn],
+            certificate: cert,
+          }),
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
       defaultBehavior: {
         origin: s3Origin,
@@ -101,34 +112,45 @@ export class FinPlanEdgeStack extends cdk.Stack {
       ],
     })
 
-    new route53.ARecord(this, 'AppAliasV4', {
-      zone: hostedZone,
-      recordName: appFqdn,
-      target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
-    })
+    if (!skipCustomDomains && hostedZone) {
+      new route53.ARecord(this, 'AppAliasV4', {
+        zone: hostedZone,
+        recordName: appFqdn,
+        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
+      })
 
-    new route53.AaaaRecord(this, 'AppAliasV6', {
-      zone: hostedZone,
-      recordName: appFqdn,
-      target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
-    })
+      new route53.AaaaRecord(this, 'AppAliasV6', {
+        zone: hostedZone,
+        recordName: appFqdn,
+        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
+      })
 
-    new route53.ARecord(this, 'ApiAliasV4', {
-      zone: hostedZone,
-      recordName: apiFqdn,
-      target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
-    })
+      new route53.ARecord(this, 'ApiAliasV4', {
+        zone: hostedZone,
+        recordName: apiFqdn,
+        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
+      })
 
-    new route53.AaaaRecord(this, 'ApiAliasV6', {
-      zone: hostedZone,
-      recordName: apiFqdn,
-      target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
-    })
+      new route53.AaaaRecord(this, 'ApiAliasV6', {
+        zone: hostedZone,
+        recordName: apiFqdn,
+        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
+      })
+    }
 
     new cdk.CfnOutput(this, 'CloudFrontDomain', { value: this.distribution.distributionDomainName })
     new cdk.CfnOutput(this, 'CloudFrontDistributionId', {
       value: this.distribution.distributionId,
     })
     new cdk.CfnOutput(this, 'WebBucketName', { value: webBucket.bucketName })
+    new cdk.CfnOutput(this, 'SkipEdgeCustomDomains', {
+      value: skipCustomDomains ? 'true' : 'false',
+      description:
+        'When true, attach app/api hostnames in Console after removing them from any other distribution, then cdk deploy without skipEdgeCustomDomains.',
+    })
+    if (!skipCustomDomains) {
+      new cdk.CfnOutput(this, 'EdgeAppFqdn', { value: appFqdn })
+      new cdk.CfnOutput(this, 'EdgeApiFqdn', { value: apiFqdn })
+    }
   }
 }
