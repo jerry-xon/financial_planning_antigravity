@@ -25,6 +25,11 @@ export class FinPlanEdgeStack extends cdk.Stack {
 
     const { envName, domainName, albDnsName } = props
 
+    // Prod and staging cannot share the same CloudFront alternate domain names (CNAMEs).
+    // Staging uses dedicated hostnames so prod can attach app.{domain} / api.{domain}.
+    const appFqdn = envName === 'prod' ? `app.${domainName}` : `app-staging.${domainName}`
+    const apiFqdn = envName === 'prod' ? `api.${domainName}` : `api-staging.${domainName}`
+
     const webBucket = new s3.Bucket(this, 'WebBucket', {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -32,9 +37,6 @@ export class FinPlanEdgeStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
       autoDeleteObjects: false,
     })
-
-    const appFqdn = `app.${domainName}`
-    const apiFqdn = `api.${domainName}`
 
     const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
       domainName,

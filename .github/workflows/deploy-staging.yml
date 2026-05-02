@@ -60,7 +60,8 @@ jobs:
         env:
           VITE_APP_STAGE: staging
           VITE_USE_SUPABASE: 'true'
-          VITE_SITE_URL: ${{ vars.PUBLIC_APP_URL || 'https://app.wealthmap.app' }}
+          # Must match CloudFront aliases for FinPlan-staging-Edge (app-staging.{domain}).
+          VITE_SITE_URL: ${{ vars.PUBLIC_APP_URL_STAGING || 'https://app-staging.wealthmap.app' }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_RAZORPAY_KEY_ID: ${{ secrets.VITE_RAZORPAY_KEY_ID }}
