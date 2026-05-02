@@ -26,6 +26,22 @@ create table if not exists public.user_profiles (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- RLS helper: check admin without subquery recursion on user_profiles policies
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.user_profiles
+    where id = auth.uid()
+      and role = 'admin'
+  );
+$$;
+
 -- Set up RLS for user_profiles
 alter table public.user_profiles enable row level security;
 
@@ -60,21 +76,15 @@ drop policy if exists "Admins can select all profiles" on public.user_profiles;
 create policy "Admins can select all profiles"
   on public.user_profiles
   for select
-  using (
-    (select up.role from public.user_profiles up where up.id = auth.uid()) = 'admin'
-  );
+  using (public.is_admin());
 
 -- Admins: update any profile (e.g. agent approval)
 drop policy if exists "Admins can update any profile" on public.user_profiles;
 create policy "Admins can update any profile"
   on public.user_profiles
   for update
-  using (
-    (select up.role from public.user_profiles up where up.id = auth.uid()) = 'admin'
-  )
-  with check (
-    (select up.role from public.user_profiles up where up.id = auth.uid()) = 'admin'
-  );
+  using (public.is_admin())
+  with check (public.is_admin());
 
 -- ============================================
 -- 3. CREATE financial_plans TABLE
@@ -163,9 +173,7 @@ drop policy if exists "Admins can select all financial plans" on public.financia
 create policy "Admins can select all financial plans"
   on public.financial_plans
   for select
-  using (
-    (select up.role from public.user_profiles up where up.id = auth.uid()) = 'admin'
-  );
+  using (public.is_admin());
 
 -- ============================================
 -- 4. CREATE audit_logs TABLE
@@ -204,9 +212,7 @@ drop policy if exists "Admins can select all audit logs" on public.audit_logs;
 create policy "Admins can select all audit logs"
   on public.audit_logs
   for select
-  using (
-    (select up.role from public.user_profiles up where up.id = auth.uid()) = 'admin'
-  );
+  using (public.is_admin());
 
 -- ============================================
 -- 5. CREATE TRIGGERS FOR UPDATED_AT
@@ -345,9 +351,7 @@ drop policy if exists "Admins can select all checkout transactions" on public.ch
 create policy "Admins can select all checkout transactions"
   on public.checkout_transactions
   for select
-  using (
-    (select up.role from public.user_profiles up where up.id = auth.uid()) = 'admin'
-  );
+  using (public.is_admin());
 
 -- ============================================
 -- 8. GRANTS FOR AUTHENTICATED USERS
@@ -358,6 +362,8 @@ revoke all privileges on all sequences in schema public from authenticated;
 revoke execute on all functions in schema public from authenticated;
 
 grant usage on schema public to authenticated;
+
+grant execute on function public.is_admin() to authenticated;
 
 -- Table-level grants (RLS still applies).
 -- Keep these intentionally narrow; do not grant blanket privileges.
