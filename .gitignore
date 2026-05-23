@@ -12,9 +12,6 @@ dist
 dist-ssr
 *.local
 
-# CDK
-**/cdk.out
-
 # Cursor local project files
 .cursor/
 

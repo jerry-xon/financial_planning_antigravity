@@ -1,4 +1,4 @@
-import { BarChart3, CheckCircle, Copy, Download, FileText, Link2, LogOut, Mail, Shield, Users, Tag } from 'lucide-react';
+import { BarChart3, CheckCircle, Copy, Download, FileText, Link2, LogOut, Shield, Users, Tag } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { signOut } from '../../services/authService';
@@ -495,7 +495,7 @@ const ReportsTab = ({ reports, clients }) => {
 
 const APP_BASE =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SITE_URL?.replace(/\/+$/, '')) ||
-  'https://app.wealthmap.app';
+  (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173');
 
 const randomCouponSuffix = () => {
   const a = new Uint8Array(6);
@@ -506,30 +506,10 @@ const randomCouponSuffix = () => {
 const buildInviteUrl = (code, targetEmail) =>
   `${APP_BASE}/?invite=1&code=${encodeURIComponent(code)}&email=${encodeURIComponent(targetEmail)}`;
 
-async function sendCouponInvitationEmails(codes) {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) throw new Error('Not signed in');
-  const res = await fetch(`${supabaseUrl}/functions/v1/send-coupon-email`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-      apikey: anon,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ codes }),
-  });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.error || res.statusText || 'Email send failed');
-  return body;
-}
-
 // Coupons Tab Component
 const CouponsTab = ({ coupons, loadAdminData }) => {
   const [email, setEmail] = useState('');
   const [generating, setGenerating] = useState(false);
-  const [sendSesEmail, setSendSesEmail] = useState(true);
   const [emailStatus, setEmailStatus] = useState(null);
 
   const generateCoupon = async (e) => {
@@ -558,22 +538,8 @@ const CouponsTab = ({ coupons, loadAdminData }) => {
       }
       setEmail('');
       await loadAdminData();
-
-      if (sendSesEmail && inserted?.length) {
-        try {
-          const result = await sendCouponInvitationEmails(inserted.map((r) => r.code));
-          const failed = (result.results || []).filter((r) => !r.ok);
-          if (failed.length) {
-            setEmailStatus(`Coupons saved. Some emails failed: ${failed.map((f) => f.code).join(', ')}`);
-          } else {
-            setEmailStatus(`Invitation email(s) sent via SES (${inserted.length}).`);
-          }
-        } catch (sendErr) {
-          console.error(sendErr);
-          setEmailStatus(
-            `Coupons saved. SES email not sent: ${sendErr.message}. Configure Edge Function secrets (AWS / SES_FROM_EMAIL).`,
-          );
-        }
+      if (inserted?.length) {
+        setEmailStatus(`Generated ${inserted.length} coupon${inserted.length === 1 ? '' : 's'}. Copy the invite link from the table below to share with each client.`);
       }
     } catch (err) {
       console.error(err);
@@ -596,8 +562,7 @@ const CouponsTab = ({ coupons, loadAdminData }) => {
       <h2>Coupon & access manager</h2>
       <p style={{ color: 'var(--text-muted)', marginBottom: '1.25rem', maxWidth: '720px' }}>
         Each coupon works <strong>once</strong> and only for the <strong>exact email</strong> you enter. Apply the DB migration so{' '}
-        <code style={{ fontSize: '0.85rem' }}>coupon_codes</code> exists. Run the{' '}
-        <code style={{ fontSize: '0.85rem' }}>send-coupon-email</code> Edge Function with AWS SES secrets to mail invitations.
+        <code style={{ fontSize: '0.85rem' }}>coupon_codes</code> exists. After generating, use the &ldquo;Invite link&rdquo; button in the table below to copy a personalized signup URL and share it with the client.
       </p>
 
       <div
@@ -629,23 +594,6 @@ const CouponsTab = ({ coupons, loadAdminData }) => {
             }}
             required
           />
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              marginBottom: '1rem',
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={sendSesEmail}
-              onChange={(e) => setSendSesEmail(e.target.checked)}
-            />
-            <Mail size={16} /> Send professional invitation email (AWS SES) after create
-          </label>
           <button
             type="submit"
             disabled={generating}

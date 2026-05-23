@@ -387,20 +387,25 @@ await updateModule(planId, 'family_members', familyMembers);
 
 ## Deployment Considerations
 
+The project deploys to **Vercel** (frontend) and **Render** (Fastify API). See the
+"Deployment" section of [README.md](README.md) for the full step-by-step guide.
+
 ### Environment Variables
 ```env
 # Production
 VITE_SUPABASE_URL=https://prod-project.supabase.co
 VITE_SUPABASE_ANON_KEY=prod-anon-key
+VITE_API_URL=https://finplan-api.onrender.com
 
 # Staging
 VITE_SUPABASE_URL=https://staging-project.supabase.co
 VITE_SUPABASE_ANON_KEY=staging-anon-key
+VITE_API_URL=https://finplan-api-staging.onrender.com
 ```
 
 ### Database Migrations
-- Schema changes tracked in `supabase/schema.sql`
-- Apply migrations via Supabase dashboard
+- Schema changes tracked in `supabase/schema.sql` and `supabase/migrations/`
+- Apply migrations via Supabase dashboard or the Supabase CLI
 - Test in staging before production
 
 ## Monitoring

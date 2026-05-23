@@ -24,3 +24,6 @@ export const IS_STAGING = APP_STAGE === 'staging'
 
 /** Show staging-only UI (e.g. copy Supabase user id). Hidden on prod builds. */
 export const SHOW_STAGING_USER_ID_TOOL = IS_STAGING
+
+
+//This has errors

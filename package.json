@@ -3,15 +3,19 @@
   "private": true,
   "version": "0.0.0",
   "workspaces": [
-    "apps/*",
-    "infra/cdk"
+    "apps/*"
   ],
   "scripts": {
-    "dev": "npm -w @finplan/web run dev",
+    "dev": "concurrently -k -n web,api -c blue,magenta \"npm:dev:web\" \"npm:dev:api\"",
+    "dev:web": "npm -w @finplan/web run dev",
+    "dev:api": "npm -w @finplan/api run dev",
     "build": "npm -w @finplan/web run build",
+    "start:api": "npm -w @finplan/api run start",
     "lint": "npm -w @finplan/web run lint",
     "preview": "npm -w @finplan/web run preview",
-    "test": "npm -w @finplan/web run test",
-    "cdk": "npm -w @finplan/infra-cdk run cdk"
+    "test": "npm -w @finplan/web run test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
   }
 }
