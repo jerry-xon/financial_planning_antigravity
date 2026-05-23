@@ -24,6 +24,9 @@ function warnWeb3formsKeyOnVercel() {
 }
 
 export default defineConfig({
+  // Load .env / .env.local from the repo root (one level up from apps/web).
+  // Vercel sets VERCEL=1 and injects env vars directly, so this only matters locally.
+  envDir: path.resolve(__dirname, '..', '..'),
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
