@@ -66,49 +66,40 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here
 
 **Running without Supabase (e.g. during DB migration):** You can run the app without a live database by setting `VITE_USE_SUPABASE=false` or by leaving `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` unset. The app will use a mock client (no persistence; you will see the login screen).
 
-5. Start the development servers:
+5. Start the development server:
 ```bash
-# Frontend only (most common during dev)
-npm run dev:web
-
-# Or run frontend + backend API together
 npm run dev
 ```
 
-6. Open [http://localhost:5173](http://localhost:5173) in your browser. The Fastify API (when started) listens on [http://localhost:8080/api/health](http://localhost:8080/api/health).
+6. Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+> This repository is **frontend only**. The standalone backend service lives in a separate repository and is consumed via `VITE_API_URL` (see [Deployment](#deployment)).
 
 ## Project Structure
 
 ```
 financial_planning_antigravity/
 ├── apps/
-│   ├── web/                 # React + Vite frontend (deploys to Vercel)
-│   │   ├── public/          # Static assets
-│   │   ├── src/             # Application source
-│   │   └── vite.config.js
-│   └── api/                 # Fastify backend (deploys to Render)
-│       ├── src/server.js
-│       └── package.json
+│   └── web/                 # React + Vite frontend (deploys to Vercel)
+│       ├── public/          # Static assets
+│       ├── src/             # Application source
+│       └── vite.config.js
 ├── supabase/
 │   ├── schema.sql           # Database schema
 │   ├── migrations/          # SQL migrations
 │   └── functions/           # Supabase Edge Functions (razorpay-checkout)
-├── render.yaml              # Render Blueprint for the API service
 ├── vercel.json              # Vercel build + headers for the web app
 ├── .env.example             # Environment variables template
 ├── SUPABASE_SETUP.md        # Detailed Supabase setup guide
-└── BACKEND_DOCUMENTATION.md # Backend architecture docs
+└── BACKEND_DOCUMENTATION.md # Backend architecture docs (Supabase)
 ```
 
 ## Available Scripts
 
 ```bash
-npm run dev          # Run web + api together (concurrently)
-npm run dev:web      # Web (Vite) only — http://localhost:5173
-npm run dev:api      # API (Fastify, --watch) only — http://localhost:8080
+npm run dev          # Web (Vite) — http://localhost:5173
 npm run build        # Build the web app for production
-npm run start:api    # Start the API in production mode
-npm run preview      # Preview production build of the web app
+npm run preview      # Preview production build
 npm run test         # Run tests
 npm run lint         # Run ESLint
 ```
@@ -234,22 +225,20 @@ Current test coverage:
 | `VITE_SUPABASE_URL` | Your Supabase project URL | If `VITE_USE_SUPABASE=true` |
 | `VITE_SUPABASE_ANON_KEY` | Your Supabase anon/public key | If `VITE_USE_SUPABASE=true` |
 | `VITE_SITE_URL` | Public URL of the web app (Vercel URL or `http://localhost:5173`) | Recommended |
-| `VITE_API_URL` | URL of the Render-hosted Fastify API (e.g. `https://finplan-api.onrender.com`) | Only if you call the API from the web app |
+| `VITE_API_URL` | URL of the standalone backend API (e.g. `https://finplan-api.onrender.com`) | Only if the app calls the backend repo |
 | `VITE_RAZORPAY_KEY_ID` | Razorpay public key (test or live) | Only for payments |
 | `VITE_WEB3FORMS_ACCESS_KEY` | Web3Forms key for the support form | Only for support form |
-| `PORT` / `HOST` | API listen port/host (defaults `8080` / `0.0.0.0`) | API only |
-| `CORS_ORIGIN` | Comma-separated allowed origins for the API | API in production |
 
 **Important**: Never commit `.env` to version control!
 
 ## Deployment
 
-The app is split into two free-tier deployments:
+This repo is **frontend only**. The standalone backend service lives in a separate repository and is deployed independently (e.g. Render).
 
 | Piece                | Hosting                   | Config file    |
 |----------------------|---------------------------|----------------|
 | React/Vite frontend  | **Vercel** (Hobby plan)   | `vercel.json`  |
-| Fastify API backend  | **Render** (Free plan)    | `render.yaml`  |
+| Backend API          | separate repo (e.g. Render) | n/a in this repo |
 | Database / Auth      | Supabase (free tier)      | `supabase/`    |
 
 ### Local production build
@@ -258,7 +247,7 @@ The app is split into two free-tier deployments:
 npm run build   # builds apps/web → apps/web/dist
 ```
 
-### 1. Frontend → Vercel
+### Frontend → Vercel
 
 1. Push your branch to GitHub.
 2. In Vercel: **Add New → Project → Import** this repo.
@@ -270,30 +259,22 @@ npm run build   # builds apps/web → apps/web/dist
    - `VITE_SITE_URL` = your Vercel production URL (e.g. `https://your-app.vercel.app`)
    - `VITE_RAZORPAY_KEY_ID` (if using Razorpay)
    - `VITE_WEB3FORMS_ACCESS_KEY` (if using support form)
-   - `VITE_API_URL` = your Render API URL once it exists (e.g. `https://finplan-api.onrender.com`)
+   - `VITE_API_URL` = your deployed backend URL (e.g. `https://finplan-api.onrender.com`) — only if the app calls the backend
 5. Click **Deploy**. Subsequent pushes to the branch will redeploy automatically.
 
-### 2. Backend → Render
+### Backend
 
-1. Push the same branch to GitHub (the `render.yaml` is at the repo root).
-2. In Render: **New + → Blueprint → Connect** this repository.
-3. Render reads `render.yaml` and provisions the `finplan-api` Web Service.
-4. After the first successful deploy, copy the service URL (`https://finplan-api.onrender.com`).
-5. Open the Render service → **Environment** and set `CORS_ORIGIN` to the comma-separated list of origins that may call the API, e.g.:
-   ```
-   http://localhost:5173,https://your-app.vercel.app
-   ```
-6. Back in Vercel, set `VITE_API_URL` to the Render URL and trigger a redeploy of the frontend.
+The backend is in a separate repository and deploys independently. Once it's deployed, make sure:
 
-> ⚠️ Render's free tier sleeps the service after ~15 minutes of inactivity; the first request after a sleep can take ~30 seconds to wake. For always-on hosting, upgrade to "Starter".
+- Its `CORS_ORIGIN` (or equivalent) includes your Vercel production URL (and `http://localhost:5173` for local dev).
+- You set `VITE_API_URL` in Vercel to the backend's public URL.
 
 ### Quick deploy checklist
 
 - [ ] Supabase project provisioned (`SUPABASE_SETUP.md`)
-- [ ] Backend deployed to Render → `https://finplan-api.onrender.com` reachable
-- [ ] Render `CORS_ORIGIN` includes the Vercel URL
+- [ ] Backend (separate repo) deployed and reachable
+- [ ] Backend CORS includes the Vercel URL
 - [ ] Frontend deployed to Vercel with all `VITE_*` env vars set
-- [ ] `https://your-app.vercel.app/api/health` (proxied) or direct Render health check returns `{ ok: true }`
 
 ## Troubleshooting
 

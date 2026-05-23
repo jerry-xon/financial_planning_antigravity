@@ -387,8 +387,10 @@ await updateModule(planId, 'family_members', familyMembers);
 
 ## Deployment Considerations
 
-The project deploys to **Vercel** (frontend) and **Render** (Fastify API). See the
-"Deployment" section of [README.md](README.md) for the full step-by-step guide.
+The frontend deploys to **Vercel** from this repo. The backend service lives in a
+separate repository and is deployed independently (e.g. on Render); the frontend
+connects to it via `VITE_API_URL`. See the "Deployment" section of
+[README.md](README.md) for the full guide.
 
 ### Environment Variables
 ```env
