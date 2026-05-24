@@ -1,18 +1,31 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import ProgressiveQuestionLayout from './ProgressiveQuestionLayout';
 
 const SummaryCashFlow = () => {
-    const navigate = useNavigate();
-    return (
-        <div className="card fade-in" style={{ padding: '2rem', maxWidth: '800px', margin: '4rem auto', textAlign: 'center' }}>
-            <h2>Summary Flow: Cash Flow</h2>
-            <p className="text-muted">Placeholder for Cash Flow data collection.</p>
-            <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                <button className="btn btn-secondary" onClick={() => navigate('/summary-flow/profile')}>Back</button>
-                <button className="btn btn-primary" onClick={() => navigate('/summary-flow/savings')}>Next: Savings</button>
-            </div>
-        </div>
-    );
+    const questions = [
+        {
+            id: 'q1',
+            content: (
+                <div className="card" style={{ padding: '3rem', textAlign: 'center', background: 'var(--bg-card)' }}>
+                    <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>What is your total monthly household income?</h3>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Including your spouse's income if applicable.</p>
+                    <input type="number" className="form-input" placeholder="₹ Amount" style={{ maxWidth: '300px', margin: '0 auto', fontSize: '1.2rem', padding: '1rem', width: '100%', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                </div>
+            )
+        },
+        {
+            id: 'q2',
+            content: (
+                <div className="card" style={{ padding: '3rem', textAlign: 'center', background: 'var(--bg-card)' }}>
+                    <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>What are your total monthly expenses?</h3>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>A rough ballpark figure is fine for now.</p>
+                    <input type="number" className="form-input" placeholder="₹ Amount" style={{ maxWidth: '300px', margin: '0 auto', fontSize: '1.2rem', padding: '1rem', width: '100%', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                </div>
+            )
+        }
+    ];
+
+    return <ProgressiveQuestionLayout currentStepId="cashflow" stepName="Cash Flow" questions={questions} />;
 };
 
 export default SummaryCashFlow;

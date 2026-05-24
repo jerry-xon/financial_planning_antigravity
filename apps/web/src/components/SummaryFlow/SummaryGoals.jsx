@@ -1,18 +1,22 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import ProgressiveQuestionLayout from './ProgressiveQuestionLayout';
 
 const SummaryGoals = () => {
-    const navigate = useNavigate();
-    return (
-        <div className="card fade-in" style={{ padding: '2rem', maxWidth: '800px', margin: '4rem auto', textAlign: 'center' }}>
-            <h2>Summary Flow: Goals</h2>
-            <p className="text-muted">Placeholder for Goals data collection.</p>
-            <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                <button className="btn btn-secondary" onClick={() => navigate('/summary-flow/liabilities')}>Back</button>
-                <button className="btn btn-primary" onClick={() => navigate('/summary-report')}>Generate Summary Report</button>
-            </div>
-        </div>
-    );
+    const questions = [
+        {
+            id: 'q1',
+            content: (
+                <div className="card" style={{ padding: '3rem', textAlign: 'center', background: 'var(--bg-card)' }}>
+                    <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>What is your single most important financial goal?</h3>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>E.g. Child's Education, Home Purchase.</p>
+                    <input type="text" className="form-input" placeholder="Goal Name" style={{ maxWidth: '300px', margin: '0 auto 1rem auto', fontSize: '1.2rem', padding: '1rem', width: '100%', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                    <input type="number" className="form-input" placeholder="Target Amount" style={{ maxWidth: '300px', margin: '0 auto', fontSize: '1.2rem', padding: '1rem', width: '100%', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                </div>
+            )
+        }
+    ];
+
+    return <ProgressiveQuestionLayout currentStepId="goals" stepName="Goals" questions={questions} />;
 };
 
 export default SummaryGoals;
