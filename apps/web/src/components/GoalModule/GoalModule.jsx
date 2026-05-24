@@ -4,8 +4,10 @@ import GoalInput from './GoalInput';
 import GoalOutput from './GoalOutput';
 import { categorizeGoals, getPredefinedGoals } from './GoalLogic';
 import { calculateAge } from '../ProfileModule/ProfileLogic';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
-const GoalModule = ({ familyMembers, goals, setGoals, onNext, onBack }) => {
+const GoalModule = ({ onNext, onBack }) => {
+    const { familyMembers, goals, setGoals } = useFinancialPlan();
     const [results, setResults] = useState(null);
 
     // Sync goals with family members whenever they change

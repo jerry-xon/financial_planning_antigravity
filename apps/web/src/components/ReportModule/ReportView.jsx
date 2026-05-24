@@ -12,23 +12,10 @@ import { calculateProtectionGap } from '../ProtectionGapModule/ProtectionGapLogi
 import IncomeTaxModule from '../IncomeTaxModule/IncomeTaxModule';
 import JourneyTable from '../JourneyModule/JourneyTable';
 import GrowthModule from '../GrowthModule/GrowthModule';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
-const ReportView = ({ 
-    familyMembers, 
-    income, 
-    expenseCategories, 
-    assetCategories, 
-    liabilityCategories, 
-    goals, 
-    policies,
-    allocations = [],
-    goalMappings = {},
-    contingencyFund,
-    journeyAdjustments = [],
-    projections = [],
-    calculatorInputs = {},
-    onBack
-}) => {
+const ReportView = ({ onBack }) => {
+    const { familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, investmentAllocations: allocations, goalMappings, contingencyFund, journeyAdjustments, journeyProjections: projections, calculatorInputs } = useFinancialPlan();
     const [isDashboardMode, setIsDashboardMode] = useState(true);
     const [activeGoalTab, setActiveGoalTab] = useState('short'); // For goal tabs
 

@@ -9,19 +9,10 @@ import { computeLumpsumData } from '../Calculators/LumpsumCalculator';
 import { computeEquityData } from '../Calculators/EquityCalculator';
 import { computeFDData } from '../Calculators/FDCalculator';
 import { computeRDData } from '../Calculators/RDCalculator';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
-const FulfillmentModule = ({ 
-    familyMembers = [],
-    calculatorInputs = {},
-    expenseCategories = {},
-    assetCategories = {},
-    goals, 
-    allocations, 
-    goalMappings, 
-    setGoalMappings, 
-    onNext, 
-    onBack 
-}) => {
+const FulfillmentModule = ({ onNext, onBack }) => {
+    const { familyMembers, calculatorInputs, expenseCategories, assetCategories, goals, investmentAllocations: allocations, goalMappings, setGoalMappings } = useFinancialPlan();
     const { user } = useAuth();
     const [showHelpModal, setShowHelpModal] = useState(false);
     const [expandedGroups, setExpandedGroups] = useState({});

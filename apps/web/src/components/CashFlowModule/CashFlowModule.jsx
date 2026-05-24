@@ -4,8 +4,10 @@ import { ChevronRight, ChevronLeft, AlertTriangle } from 'lucide-react';
 import CashFlowInput from './CashFlowInput';
 import CashFlowOutput from './CashFlowOutput';
 import { calculateCashFlow } from './CashFlowLogic';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
-const CashFlowModule = ({ familyMembers, income, setIncome, expenseCategories, setExpenseCategories, currentYearLedger, setCurrentYearLedger, cashFlowSubStep, setCashFlowSubStep, planStartMonth, onNext, onBack, setCurrentStep }) => {
+const CashFlowModule = ({ onNext, onBack, setCurrentStep }) => {
+    const { familyMembers, income, setIncome, expenseCategories, setExpenseCategories, currentYearLedger, setCurrentYearLedger, cashFlowSubStep, setCashFlowSubStep, planStartMonth } = useFinancialPlan();
     const [results, setResults] = useState(null);
     const [showWarning, setShowWarning] = useState(false);
 

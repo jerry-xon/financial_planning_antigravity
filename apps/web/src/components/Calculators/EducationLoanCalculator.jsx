@@ -258,7 +258,13 @@ const EducationLoanEngine = ({
     );
 };
 
-const EducationLoanCalculator = ({ data, setData, expenseCategories, journeyAdjustments = [], loanProposals = [] }) => {
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
+
+const EducationLoanCalculator = ({ calculatorKey = "edu_loan" }) => {
+    const { expenseCategories, journeyAdjustments = [], calculatorInputs, setCalculatorInputs } = useFinancialPlan();
+    const data = calculatorInputs[calculatorKey] || {};
+    const setData = (newData) => setCalculatorInputs(prev => ({ ...prev, [calculatorKey]: typeof newData === 'function' ? newData(prev[calculatorKey] || {}) : newData }));
+    const loanProposals = [];
     const loansToRender = [];
 
     // 1. Check for Active Cash Flow Loan

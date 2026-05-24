@@ -67,7 +67,13 @@ export const computeSIPData = (currentYear, monthlySIP, expectedReturns, tenureY
     return results;
 };
 
-const SIPCalculator = ({ expenseCategories, assetCategories, familyMembers = [], proposedSIPs = [], goalMappings = {}, goals = [], data, setData }) => {
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
+
+const SIPCalculator = ({ calculatorKey = "sip" }) => {
+    const { expenseCategories, assetCategories, familyMembers = [], investmentAllocations = [], goalMappings = {}, goals = [], calculatorInputs, setCalculatorInputs } = useFinancialPlan();
+    const data = calculatorInputs[calculatorKey] || {};
+    const setData = (newData) => setCalculatorInputs(prev => ({ ...prev, [calculatorKey]: typeof newData === 'function' ? newData(prev[calculatorKey] || {}) : newData }));
+    const proposedSIPs = investmentAllocations.filter(a => a.type === 'SIP');
     const currentYear = new Date().getFullYear();
     
     // ... logic to get years to retire ...

@@ -97,7 +97,13 @@ export const computeEquityData = (currentValue, expectedReturns, tenureYears, st
     return results;
 };
 
-const EquityCalculator = ({ assetCategories = {}, familyMembers = [], proposedEquities = [], goalMappings = {}, goals = [], data, setData }) => {
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
+
+const EquityCalculator = ({ calculatorKey = "equity" }) => {
+    const { assetCategories = {}, familyMembers = [], investmentAllocations = [], goalMappings = {}, goals = [], calculatorInputs, setCalculatorInputs } = useFinancialPlan();
+    const data = calculatorInputs[calculatorKey] || {};
+    const setData = (newData) => setCalculatorInputs(prev => ({ ...prev, [calculatorKey]: typeof newData === 'function' ? newData(prev[calculatorKey] || {}) : newData }));
+    const proposedEquities = investmentAllocations.filter(a => a.type === 'Direct Equity & ETFs');
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
 

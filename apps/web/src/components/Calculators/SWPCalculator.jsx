@@ -1,7 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { Calculator, Calendar, DollarSign, TrendingUp, Clock, Plus, Trash2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
-const SWPCalculator = ({ data, setData }) => {
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
+
+const SWPCalculator = ({ calculatorKey = "swp" }) => {
+    const { calculatorInputs, setCalculatorInputs } = useFinancialPlan();
+    const data = calculatorInputs[calculatorKey] || {};
+    const setData = (newData) => setCalculatorInputs(prev => ({ ...prev, [calculatorKey]: typeof newData === 'function' ? newData(prev[calculatorKey] || {}) : newData }));
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
 

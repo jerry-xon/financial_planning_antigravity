@@ -340,7 +340,12 @@ const FDEngine = ({
     );
 };
 
-const FDCalculator = ({ allocations = [], assetCategories = {}, data, setData }) => {
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
+
+const FDCalculator = ({ calculatorKey = "fd" }) => {
+    const { investmentAllocations: allocations = [], assetCategories = {}, calculatorInputs, setCalculatorInputs } = useFinancialPlan();
+    const data = calculatorInputs[calculatorKey] || {};
+    const setData = (newData) => setCalculatorInputs(prev => ({ ...prev, [calculatorKey]: typeof newData === 'function' ? newData(prev[calculatorKey] || {}) : newData }));
     const fdsToRender = [];
 
     // 1. Check for Active Baseline FD

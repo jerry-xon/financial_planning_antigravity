@@ -3,8 +3,10 @@ import { ChevronRight } from 'lucide-react';
 import ProfileInput from './ProfileInput';
 import ProfileOutput from './ProfileOutput';
 import { calculateFamilyProfile } from './ProfileLogic';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
-const ProfileModule = ({ members, setMembers, onNext }) => {
+const ProfileModule = ({ onNext }) => {
+    const { familyMembers: members, setFamilyMembers: setMembers } = useFinancialPlan();
     const [results, setResults] = React.useState(null);
     const [error, setError] = React.useState('');
 

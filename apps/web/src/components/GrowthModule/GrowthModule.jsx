@@ -9,21 +9,10 @@ import { computeNPSData } from '../Calculators/NPSCalculator';
 import { computeFDData } from '../Calculators/FDCalculator';
 import { computeRDData } from '../Calculators/RDCalculator';
 import { calculateYearlyInsuranceSummary } from '../InsuranceModule/InsuranceLogic';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
-const GrowthModule = ({ 
-    familyMembers = [], 
-    assetCategories = {}, 
-    expenseCategories = {},
-    allocations = [], 
-    calculatorInputs = {},
-    journeyProjections = [],
-    policies = [],
-    goalMappings = {},
-    goals = [],
-    onNext, 
-    onBack,
-    isReadOnlyMode = false
-}) => {
+const GrowthModule = ({ onNext, onBack, isReadOnlyMode = false }) => {
+    const { familyMembers, assetCategories, expenseCategories, investmentAllocations: allocations, calculatorInputs, journeyProjections, policies, goalMappings, goals } = useFinancialPlan();
     // 1. Identify Target Timeline
     const self = familyMembers.find(m => m.relation?.toLowerCase() === 'self') || familyMembers[0];
     const currentYear = new Date().getFullYear();

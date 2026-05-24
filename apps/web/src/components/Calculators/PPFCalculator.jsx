@@ -89,7 +89,12 @@ export const computePPFData = (proposedPPFs, expectedReturns, defaultPPFObj = {}
     return { results, startString, endString };
 };
 
-const PPFCalculator = ({ allocations = [], expenseCategories = {}, data, setData }) => {
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
+
+const PPFCalculator = ({ calculatorKey = "ppf" }) => {
+    const { investmentAllocations: allocations = [], expenseCategories = {}, calculatorInputs, setCalculatorInputs } = useFinancialPlan();
+    const data = calculatorInputs[calculatorKey] || {};
+    const setData = (newData) => setCalculatorInputs(prev => ({ ...prev, [calculatorKey]: typeof newData === 'function' ? newData(prev[calculatorKey] || {}) : newData }));
     const expectedReturns = data?.rate ?? 7.10;
     const setExpectedReturns = (val) => setData({ ...data, rate: val });
 

@@ -94,7 +94,13 @@ export const computeLumpsumData = (investmentAmount, expectedReturns, tenureYear
     return results;
 };
 
-const LumpsumCalculator = ({ familyMembers = [], proposedLumpsums = [], goalMappings = {}, goals = [], data, setData }) => {
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
+
+const LumpsumCalculator = ({ calculatorKey = "lumpsum" }) => {
+    const { familyMembers = [], investmentAllocations = [], goalMappings = {}, goals = [], calculatorInputs, setCalculatorInputs } = useFinancialPlan();
+    const data = calculatorInputs[calculatorKey] || {};
+    const setData = (newData) => setCalculatorInputs(prev => ({ ...prev, [calculatorKey]: typeof newData === 'function' ? newData(prev[calculatorKey] || {}) : newData }));
+    const proposedLumpsums = investmentAllocations.filter(a => a.type === 'Lumpsum' || a.type === 'Lump Sum');
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
 

@@ -305,7 +305,12 @@ const RDEngine = ({
     );
 };
 
-const RDCalculator = ({ allocations = [], expenseCategories = {}, data, setData }) => {
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
+
+const RDCalculator = ({ calculatorKey = "rd" }) => {
+    const { investmentAllocations: allocations = [], expenseCategories = {}, calculatorInputs, setCalculatorInputs } = useFinancialPlan();
+    const data = calculatorInputs[calculatorKey] || {};
+    const setData = (newData) => setCalculatorInputs(prev => ({ ...prev, [calculatorKey]: typeof newData === 'function' ? newData(prev[calculatorKey] || {}) : newData }));
     const rdsToRender = [];
 
     // 1. Check for Active Baseline RD

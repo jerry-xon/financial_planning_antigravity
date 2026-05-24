@@ -126,7 +126,12 @@ export const computeNPSData = (proposedNPS, expectedReturns, annuityPercent, ann
     };
 };
 
-const NPSCalculator = ({ allocations = [], familyMembers = [], expenseCategories = {}, assetCategories = {}, data, setData }) => {
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
+
+const NPSCalculator = ({ calculatorKey = "nps" }) => {
+    const { investmentAllocations: allocations = [], familyMembers = [], expenseCategories = {}, assetCategories = {}, calculatorInputs, setCalculatorInputs } = useFinancialPlan();
+    const data = calculatorInputs[calculatorKey] || {};
+    const setData = (newData) => setCalculatorInputs(prev => ({ ...prev, [calculatorKey]: typeof newData === 'function' ? newData(prev[calculatorKey] || {}) : newData }));
     const expectedReturns = data?.rate ?? 10.00;
     const annuityPercent = data?.annuity ?? 40;
     const annuityRate = data?.annuityRate ?? 6.00;

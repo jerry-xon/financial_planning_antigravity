@@ -326,7 +326,12 @@ const HomeLoanEngine = ({
     );
 };
 
-const HomeLoanCalculator = ({ data, setData, expenseCategories, journeyAdjustments }) => {
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
+
+const HomeLoanCalculator = ({ calculatorKey = "home_loan" }) => {
+    const { expenseCategories, journeyAdjustments = [], calculatorInputs, setCalculatorInputs } = useFinancialPlan();
+    const data = calculatorInputs[calculatorKey] || {};
+    const setData = (newData) => setCalculatorInputs(prev => ({ ...prev, [calculatorKey]: typeof newData === 'function' ? newData(prev[calculatorKey] || {}) : newData }));
     const loansToRender = [];
     const eventMaps = data?.eventMaps || {};
     

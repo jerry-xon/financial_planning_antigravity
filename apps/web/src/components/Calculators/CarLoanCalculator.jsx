@@ -258,7 +258,12 @@ const CarLoanEngine = ({
     );
 };
 
-const CarLoanCalculator = ({ data, setData, expenseCategories, journeyAdjustments }) => {
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
+
+const CarLoanCalculator = ({ calculatorKey = "car_loan" }) => {
+    const { expenseCategories, journeyAdjustments = [], calculatorInputs, setCalculatorInputs } = useFinancialPlan();
+    const data = calculatorInputs[calculatorKey] || {};
+    const setData = (newData) => setCalculatorInputs(prev => ({ ...prev, [calculatorKey]: typeof newData === 'function' ? newData(prev[calculatorKey] || {}) : newData }));
     const loansToRender = [];
 
     // 1. Check for Active Cash Flow Loan

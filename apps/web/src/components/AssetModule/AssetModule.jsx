@@ -3,8 +3,10 @@ import { ChevronRight, ChevronLeft } from 'lucide-react';
 import AssetInput from './AssetInput';
 import AssetOutput from './AssetOutput';
 import { calculateNetWorth } from './AssetLogic';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
-const AssetModule = ({ assetCategories, setAssetCategories, liabilityCategories, setLiabilityCategories, onNext, onBack }) => {
+const AssetModule = ({ onNext, onBack }) => {
+    const { assetCategories, setAssetCategories, liabilityCategories, setLiabilityCategories } = useFinancialPlan();
     const [results, setResults] = useState(null);
 
     const handleCalculate = () => {

@@ -10,8 +10,10 @@ import ContextualHelpPopup from '../common/ContextualHelpPopup';
 import logo from '../../assets/finbrella_logo.png';
 import { useAuth } from '../../contexts/AuthContext';
 import { buildSupportEmailContextFromUser } from '../../services/supportRequestEmailService';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
-const InsuranceModule = ({ familyMembers, policies, setPolicies, expenseCategories, setExpenseCategories, investmentAllocations = [], onNext, onBack, setCurrentStep }) => {
+const InsuranceModule = ({ onNext, onBack, setCurrentStep }) => {
+    const { familyMembers, policies, setPolicies, expenseCategories, setExpenseCategories, investmentAllocations } = useFinancialPlan();
     const { user } = useAuth();
     const [results, setResults] = useState(null);
     const [showMismatchModal, setShowMismatchModal] = useState(false);

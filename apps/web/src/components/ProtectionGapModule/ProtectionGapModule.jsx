@@ -3,20 +3,10 @@ import { ChevronRight, ChevronLeft } from 'lucide-react';
 import ProtectionGapOutput from './ProtectionGapOutput';
 import FinancialPyramid from './FinancialPyramid';
 import { calculateProtectionGap } from './ProtectionGapLogic';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
-const ProtectionGapModule = ({ 
-    familyMembers, 
-    expenseCategories, 
-    policies, 
-    assetCategories,
-    calculatorInputs,
-    proposedSIPs,
-    proposedEquities,
-    goals,
-    goalMappings,
-    onNext, 
-    onBack 
-}) => {
+const ProtectionGapModule = ({ onNext, onBack }) => {
+    const { familyMembers, expenseCategories, policies, assetCategories, calculatorInputs, proposedSIPs, proposedEquities, goals, goalMappings } = useFinancialPlan();
     const [results, setResults] = useState(null);
 
     useEffect(() => {

@@ -3,8 +3,10 @@ import { ChevronRight, ChevronLeft, ShieldAlert, HelpCircle } from 'lucide-react
 import ContingencyOutput from './ContingencyOutput';
 import { calculateContingencyFund } from './ContingencyLogic';
 import CurrencyInput from '../common/CurrencyInput';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
-const ContingencyModule = ({ expenseCategories, contingencyFund, setContingencyFund, onNext, onBack }) => {
+const ContingencyModule = ({ onNext, onBack }) => {
+    const { expenseCategories, contingencyFund, setContingencyFund } = useFinancialPlan();
     const [results, setResults] = useState(null);
 
     useEffect(() => {

@@ -9,21 +9,10 @@ import { buildSupportEmailContextFromUser } from '../../services/supportRequestE
 
 import finbrellaLogo from '../../assets/finbrella_logo.png';
 import adjustmentTypeImage from '../../assets/adjustment_type.png';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
-const JourneyModule = ({ 
-    familyMembers, 
-    income, 
-    expenseCategories, 
-    goals, 
-    inflationRates, 
-    setInflationRates,
-    journeyAdjustments = [],
-    setJourneyAdjustments,
-    policies = [],
-    onNext,
-    onBack,
-    projections: passedProjections
-}) => {
+const JourneyModule = ({ onNext, onBack }) => {
+    const { familyMembers, income, expenseCategories, goals, inflationRates, setInflationRates, journeyAdjustments, setJourneyAdjustments, policies, journeyProjections: passedProjections } = useFinancialPlan();
     const { user } = useAuth();
     
     const currentYear = new Date().getFullYear();

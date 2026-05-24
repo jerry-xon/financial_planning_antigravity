@@ -6,17 +6,11 @@ import ContextualHelpPopup from '../common/ContextualHelpPopup';
 import logo from '../../assets/finbrella_logo.png';
 import { useAuth } from '../../contexts/AuthContext';
 import { buildSupportEmailContextFromUser } from '../../services/supportRequestEmailService';
-const AllocationModule = ({ 
-    familyMembers = [],
-    expenseCategories = {},
-    netInvestibleSurplus, 
-    allocations, 
-    setAllocations, 
-    projections = [],
-    planStartMonth = 0,
-    onNext, 
-    onBack 
-}) => {
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
+
+const AllocationModule = ({ onNext, onBack }) => {
+    const { familyMembers, expenseCategories, investmentAllocations: allocations, setInvestmentAllocations: setAllocations, journeyProjections: projections, planStartMonth } = useFinancialPlan();
+    const netInvestibleSurplus = (projections?.find(p => p.year === new Date().getFullYear()))?.netInvestibleSurplus || 0;
     const { user } = useAuth();
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
