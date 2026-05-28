@@ -12,9 +12,18 @@ const DetailedPlaceholder = () => {
             <p className="text-muted" style={{ marginTop: '1rem' }}>
                 As requested, this deep-dive flow is currently a blank placeholder. The full UI with all detailed bifurcated fields will be built in upcoming chats.
             </p>
-            <div style={{ marginTop: '3rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                <button className="btn btn-secondary" onClick={() => navigate('/summary-report')}>Back to Summary Report</button>
-                <button className="btn btn-primary" onClick={() => navigate('/detailed-flow/next-step')}>Next Step</button>
+            <div style={{ marginTop: '3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button className="btn btn-secondary" onClick={() => navigate('/summary-report')}>Back to Summary Report</button>
+                    <button className="btn btn-primary" onClick={() => navigate('/detailed-flow/next-step')}>Next Step</button>
+                </div>
+                <button 
+                    className="btn btn-secondary" 
+                    onClick={() => navigate('/detailed-flow/existing-app')}
+                    style={{ padding: '0.8rem 2rem', fontSize: '1rem', borderRadius: '50px', background: 'transparent', border: '1px solid var(--primary)', color: 'var(--primary)' }}
+                >
+                    Legacy Existing App Flow (Temporary)
+                </button>
             </div>
         </div>
     );

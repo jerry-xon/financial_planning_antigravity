@@ -1,31 +1,215 @@
 import React from 'react';
 import ProgressiveQuestionLayout from './ProgressiveQuestionLayout';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
 const SummaryCashFlow = () => {
+    const { 
+        income, setIncome, 
+        expenseCategories, setExpenseCategories,
+        hasEMI, setHasEMI,
+        hasSpouseIncome, setHasSpouseIncome
+    } = useFinancialPlan();
+
+    const handleIncomeChange = (field, value) => {
+        setIncome(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const handleExpenseChange = (category, field, value) => {
+        setExpenseCategories(prev => ({
+            ...prev,
+            [category]: {
+                ...prev[category],
+                [field]: value
+            }
+        }));
+    };
+
+    const formatInr = (val) => {
+        if (!val || isNaN(val)) return '₹0';
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0
+        }).format(val);
+    };
+
+    const narrative = "Great. I now understand the rhythm of your monthly cash flow. Let's see how much of it is helping you build future wealth.";
+
     const questions = [
+        // Q1: Monthly Household Income
         {
-            id: 'q1',
+            id: 'household-income',
             content: (
-                <div className="card" style={{ padding: '3rem', textAlign: 'center', background: 'var(--bg-card)' }}>
-                    <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>What is your total monthly household income?</h3>
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Including your spouse's income if applicable.</p>
-                    <input type="number" className="form-input" placeholder="₹ Amount" style={{ maxWidth: '300px', margin: '0 auto', fontSize: '1.2rem', padding: '1rem', width: '100%', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                <div className="question-container">
+                    <p className="question-narrative">
+                        Let me understand the monthly inflow of your household.
+                    </p>
+                    <h2 className="question-title">What is your total monthly household income?</h2>
+
+                    <div className="question-fields" style={{ maxWidth: '420px', margin: '0 auto' }}>
+                        <div className="currency-input-wrapper">
+                            <span className="currency-symbol">₹</span>
+                            <input
+                                type="number"
+                                className="conversational-input"
+                                placeholder="e.g. 100000"
+                                value={income.self || ''}
+                                onChange={(e) => handleIncomeChange('self', e.target.value)}
+                            />
+                        </div>
+                        {income.self && (
+                            <div className="currency-display">{formatInr(income.self)} / month</div>
+                        )}
+
+                        <div style={{ marginTop: '1.5rem' }}>
+                            <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 500, marginBottom: '0.75rem' }}>
+                                Does your spouse also contribute to the household income?
+                            </p>
+                            <div className="yes-no-toggle">
+                                <button
+                                    type="button"
+                                    className={`yes-no-btn ${hasSpouseIncome ? 'active-yes' : ''}`}
+                                    onClick={() => setHasSpouseIncome(true)}
+                                >
+                                    Yes
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`yes-no-btn ${hasSpouseIncome === false ? 'active-no' : ''}`}
+                                    onClick={() => {
+                                        setHasSpouseIncome(false);
+                                        handleIncomeChange('spouse', '');
+                                    }}
+                                >
+                                    No
+                                </button>
+                            </div>
+
+                            <div className={`conditional-field ${hasSpouseIncome ? 'visible' : ''}`}>
+                                <label style={{ fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
+                                    Spouse's Monthly Income (₹)
+                                </label>
+                                <div className="currency-input-wrapper">
+                                    <span className="currency-symbol">₹</span>
+                                    <input
+                                        type="number"
+                                        className="conversational-input"
+                                        placeholder="e.g. 75000"
+                                        value={income.spouse || ''}
+                                        onChange={(e) => handleIncomeChange('spouse', e.target.value)}
+                                    />
+                                </div>
+                                {income.spouse && (
+                                    <div className="currency-display">{formatInr(income.spouse)} / month</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )
         },
+        // Q2: Monthly Expenses
         {
-            id: 'q2',
+            id: 'monthly-expenses',
             content: (
-                <div className="card" style={{ padding: '3rem', textAlign: 'center', background: 'var(--bg-card)' }}>
-                    <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>What are your total monthly expenses?</h3>
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>A rough ballpark figure is fine for now.</p>
-                    <input type="number" className="form-input" placeholder="₹ Amount" style={{ maxWidth: '300px', margin: '0 auto', fontSize: '1.2rem', padding: '1rem', width: '100%', borderRadius: '8px', border: '1px solid var(--border)' }} />
+                <div className="question-container">
+                    <p className="question-narrative">
+                        Every lifestyle has its own rhythm of expenses.
+                    </p>
+                    <h2 className="question-title">
+                        Approximately how much does your household spend every month?
+                    </h2>
+                    <p className="question-helper">
+                        Including groceries, utilities, lifestyle, travel, medical, etc.
+                    </p>
+
+                    <div className="question-fields" style={{ maxWidth: '420px', margin: '0 auto' }}>
+                        <div className="currency-input-wrapper">
+                            <span className="currency-symbol">₹</span>
+                            <input
+                                type="number"
+                                className="conversational-input"
+                                placeholder="e.g. 50000"
+                                value={expenseCategories.household.lifestyle || ''}
+                                onChange={(e) => handleExpenseChange('household', 'lifestyle', e.target.value)}
+                            />
+                        </div>
+                        {expenseCategories.household.lifestyle && (
+                            <div className="currency-display">
+                                {formatInr(expenseCategories.household.lifestyle)} / month
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )
+        },
+        // Q3: EMI Commitments
+        {
+            id: 'emi-commitments',
+            content: (
+                <div className="question-container">
+                    <h2 className="question-title">
+                        Do you currently have any ongoing EMI commitments?
+                    </h2>
+
+                    <div className="yes-no-toggle" style={{ marginBottom: '1rem' }}>
+                        <button
+                            type="button"
+                            className={`yes-no-btn ${hasEMI ? 'active-yes' : ''}`}
+                            onClick={() => setHasEMI(true)}
+                        >
+                            Yes
+                        </button>
+                        <button
+                            type="button"
+                            className={`yes-no-btn ${hasEMI === false ? 'active-no' : ''}`}
+                            onClick={() => {
+                                setHasEMI(false);
+                                handleExpenseChange('emi', 'homeLoan', '');
+                                handleExpenseChange('emi', 'personalLoan', '');
+                            }}
+                        >
+                            No
+                        </button>
+                    </div>
+
+                    <div className={`conditional-field ${hasEMI ? 'visible' : ''}`}>
+                        <div className="question-fields" style={{ maxWidth: '420px', margin: '0 auto' }}>
+                            <label style={{ fontSize: '0.92rem', fontWeight: 500, color: 'var(--text-main)', textAlign: 'center', display: 'block' }}>
+                                What is your total monthly EMI burden?
+                            </label>
+                            <div className="currency-input-wrapper">
+                                <span className="currency-symbol">₹</span>
+                                <input
+                                    type="number"
+                                    className="conversational-input"
+                                    placeholder="e.g. 35000"
+                                    value={expenseCategories.emi.homeLoan || ''}
+                                    onChange={(e) => handleExpenseChange('emi', 'homeLoan', e.target.value)}
+                                />
+                            </div>
+                            {expenseCategories.emi.homeLoan && (
+                                <div className="currency-display">
+                                    {formatInr(expenseCategories.emi.homeLoan)} / month
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )
         }
     ];
 
-    return <ProgressiveQuestionLayout currentStepId="cashflow" stepName="Cash Flow" questions={questions} />;
+    return (
+        <ProgressiveQuestionLayout
+            currentStepId="cashflow"
+            questions={questions}
+            narrative={narrative}
+        />
+    );
 };
 
 export default SummaryCashFlow;

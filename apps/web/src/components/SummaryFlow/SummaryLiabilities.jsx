@@ -1,30 +1,155 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ProgressiveQuestionLayout from './ProgressiveQuestionLayout';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
 const SummaryLiabilities = () => {
-    const questions = [
-        {
-            id: 'q1',
-            content: (
-                <div className="card" style={{ padding: '3rem', textAlign: 'center', background: 'var(--bg-card)' }}>
-                    <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>What are your total outstanding loans?</h3>
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Home loans, personal loans, etc.</p>
-                    <input type="number" className="form-input" placeholder="₹ Total Outstanding" style={{ maxWidth: '300px', margin: '0 auto', fontSize: '1.2rem', padding: '1rem', width: '100%', borderRadius: '8px', border: '1px solid var(--border)' }} />
-                </div>
-            )
-        },
-        {
-            id: 'q2',
-            content: (
-                <div className="card" style={{ padding: '3rem', textAlign: 'center', background: 'var(--bg-card)' }}>
-                    <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>What is your total monthly EMI burden?</h3>
-                    <input type="number" className="form-input" placeholder="₹ Total EMI" style={{ maxWidth: '300px', margin: '0 auto', fontSize: '1.2rem', padding: '1rem', width: '100%', borderRadius: '8px', border: '1px solid var(--border)' }} />
-                </div>
-            )
-        }
-    ];
+    const { liabilityCategories, setLiabilityCategories, hasEMI } = useFinancialPlan();
 
-    return <ProgressiveQuestionLayout currentStepId="liabilities" stepName="Liabilities" questions={questions} />;
+    const handleLiabilityChange = (category, field, value) => {
+        setLiabilityCategories(prev => ({
+            ...prev,
+            [category]: {
+                ...prev[category],
+                [field]: value
+            }
+        }));
+    };
+
+    const formatInr = (val) => {
+        if (!val || isNaN(val)) return '₹0';
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0
+        }).format(val);
+    };
+
+    const narrative = "Great. Your financial reality is now understood. Let's move toward the future you want to build.";
+
+    // Build questions array conditionally based on EMI status
+    const questions = useMemo(() => {
+        const qList = [];
+
+        // Q1: Outstanding Loans — ONLY if user said Yes to EMI in Cash Flow
+        if (hasEMI) {
+            qList.push({
+                id: 'outstanding-loans',
+                content: (
+                    <div className="question-container">
+                        <p className="question-narrative">
+                            To understand your financial commitments better,
+                        </p>
+                        <h2 className="question-title">
+                            What is your total outstanding loan amount today?
+                        </h2>
+                        <p className="question-helper">
+                            Home Loan, Personal Loan, Vehicle Loan, Education Loan, etc.
+                        </p>
+
+                        <div className="question-fields" style={{ maxWidth: '420px', margin: '0 auto' }}>
+                            <label style={{ fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.2rem', display: 'block' }}>
+                                Outstanding Loans
+                            </label>
+                            <div className="currency-input-wrapper">
+                                <span className="currency-symbol">₹</span>
+                                <input
+                                    type="number"
+                                    className="conversational-input"
+                                    placeholder="e.g. 3500000"
+                                    value={liabilityCategories.loans.home || ''}
+                                    onChange={(e) => handleLiabilityChange('loans', 'home', e.target.value)}
+                                />
+                            </div>
+                            {liabilityCategories.loans.home && (
+                                <div className="currency-display">
+                                    {formatInr(liabilityCategories.loans.home)}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )
+            });
+        }
+
+        // Q2: Credit Card Outstanding
+        qList.push({
+            id: 'credit-card',
+            content: (
+                <div className="question-container">
+                    <h2 className="question-title">
+                        Do you currently have any pending credit card dues?
+                    </h2>
+
+                    <div className="question-fields" style={{ maxWidth: '420px', margin: '0 auto' }}>
+                        <label style={{ fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.2rem', display: 'block' }}>
+                            Credit Card Outstanding
+                        </label>
+                        <div className="currency-input-wrapper">
+                            <span className="currency-symbol">₹</span>
+                            <input
+                                type="number"
+                                className="conversational-input"
+                                placeholder="e.g. 45000"
+                                value={liabilityCategories.loans.creditCard || ''}
+                                onChange={(e) => handleLiabilityChange('loans', 'creditCard', e.target.value)}
+                            />
+                        </div>
+                        {liabilityCategories.loans.creditCard && (
+                            <div className="currency-display">
+                                {formatInr(liabilityCategories.loans.creditCard)}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )
+        });
+
+        // Q3: Other Payables
+        qList.push({
+            id: 'other-payables',
+            content: (
+                <div className="question-container">
+                    <h2 className="question-title">
+                        Apart from formal loans, is there any other amount that you may need to repay to someone?
+                    </h2>
+                    <p className="question-helper">
+                        Borrowed funds from family, friends, business obligations, etc.
+                    </p>
+
+                    <div className="question-fields" style={{ maxWidth: '420px', margin: '0 auto' }}>
+                        <label style={{ fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.2rem', display: 'block' }}>
+                            Other Payables
+                        </label>
+                        <div className="currency-input-wrapper">
+                            <span className="currency-symbol">₹</span>
+                            <input
+                                type="number"
+                                className="conversational-input"
+                                placeholder="e.g. 100000"
+                                value={liabilityCategories.loans.personal || ''}
+                                onChange={(e) => handleLiabilityChange('loans', 'personal', e.target.value)}
+                            />
+                        </div>
+                        {liabilityCategories.loans.personal && (
+                            <div className="currency-display">
+                                {formatInr(liabilityCategories.loans.personal)}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )
+        });
+
+        return qList;
+    }, [hasEMI, liabilityCategories, handleLiabilityChange, formatInr]);
+
+    return (
+        <ProgressiveQuestionLayout
+            currentStepId="liabilities"
+            questions={questions}
+            narrative={narrative}
+        />
+    );
 };
 
 export default SummaryLiabilities;

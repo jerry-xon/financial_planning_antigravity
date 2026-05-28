@@ -57,6 +57,8 @@ export const FinancialPlanProvider = ({ children }) => {
   const [goals, setGoals] = useState([]);
   const [policies, setPolicies] = useState([]);
   const [contingencyFund, setContingencyFund] = useState('');
+  const [hasEMI, setHasEMI] = useState(false);
+  const [hasSpouseIncome, setHasSpouseIncome] = useState(false);
 
   const [inflationRates, setInflationRates] = useState({
     incomeIncrement: 10, householdInflation: 6, educationInflation: 8
@@ -239,7 +241,7 @@ export const FinancialPlanProvider = ({ children }) => {
             health: loadedInsurance.health || { value: loadedExpenseCategories.emi?.healthInsurance || '', frequency: 'Annual' }, car: loadedInsurance.car || { value: loadedExpenseCategories.emi?.carInsurance || '', frequency: 'Annual' }, bike: loadedInsurance.bike || { value: loadedExpenseCategories.emi?.bikeInsurance || '', frequency: 'Annual' }, life: migratedLife, others: loadedInsurance.others || { value: loadedExpenseCategories.emi?.otherInsurance || '', frequency: 'Annual' }
           },
           savings: { 
-            sip: '', ppf: '', nps: '', rd: '', otherSaving: '', ...(loadedExpenseCategories.savings || {}), sip: loadedExpenseCategories.savings?.sip || loadedExpenseCategories.savings?.mfSip || ''
+            ppf: '', nps: '', rd: '', otherSaving: '', ...(loadedExpenseCategories.savings || {}), sip: loadedExpenseCategories.savings?.sip || loadedExpenseCategories.savings?.mfSip || ''
           }
         });
 
@@ -380,6 +382,7 @@ export const FinancialPlanProvider = ({ children }) => {
       calculatorInputs, setCalculatorInputs, updateCalculatorData,
       currentYearLedger, setCurrentYearLedger,
       cashFlowSubStep, setCashFlowSubStep,
+      hasEMI, setHasEMI, hasSpouseIncome, setHasSpouseIncome,
       journeyProjections, proposedSIPs, proposedLumpsums, proposedEquities,
       handleLogoutCleanup, savePlanData
     }}>

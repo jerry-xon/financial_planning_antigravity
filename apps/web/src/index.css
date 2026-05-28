@@ -14,7 +14,7 @@
   --primary-hover: #1e3a8a;
   --primary-light: #eff6ff;
   
-  --bg-main: #f8fafc;
+  --bg-main: #ffffff;
   --bg-card: #ffffff;
   
   --text-main: #0f172a;
@@ -479,4 +479,715 @@ input:focus, select:focus, textarea:focus {
 .profile-icon-btn:hover {
   background: var(--primary) !important;
   color: white !important;
+}
+
+/* ============================================================
+   SUMMARY FLOW — Immersive Conversational Layout
+   ============================================================ */
+
+/* --- Shell Layout --- */
+.summary-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg-main);
+}
+
+.summary-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* --- Sticky Header --- */
+.summary-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2.5rem;
+  height: var(--header-height);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+}
+
+.summary-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.summary-header-logo img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+
+.summary-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.summary-save-indicator {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  opacity: 0.7;
+}
+
+.summary-profile-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.summary-profile-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* --- Horizontal Step Navigation (below header) --- */
+.summary-horizontal-nav {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.6rem 2.5rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  flex-shrink: 0;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.summary-horizontal-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.summary-step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.summary-step-item:hover {
+  background: rgba(23, 45, 157, 0.04);
+  color: var(--text-main);
+}
+
+.summary-step-item.active {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+
+.summary-step-item.completed {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.summary-step-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.summary-step-item.active .summary-step-icon {
+  color: white;
+}
+
+.summary-step-item.completed .summary-step-icon {
+  color: var(--positive);
+}
+
+.summary-step-complete-arrow {
+  color: var(--positive);
+  display: flex;
+  align-items: center;
+  animation: fadeSlideIn 0.3s ease forwards;
+}
+
+.summary-step-separator {
+  color: var(--border);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  margin: 0 0.15rem;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* --- Main Content Area --- */
+.summary-content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem 3rem;
+  min-height: calc(100vh - var(--header-height) - 52px);
+}
+
+/* --- Conversational Question Styles --- */
+.question-container {
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+}
+
+.question-narrative {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  letter-spacing: 0.01em;
+}
+
+.question-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.35;
+  margin-bottom: 0.75rem;
+}
+
+.question-helper {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 2.5rem;
+  line-height: 1.5;
+}
+
+.question-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  text-align: left;
+}
+
+.question-fields .field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Clean field styling for conversational layout */
+.conversational-input {
+  width: 100%;
+  padding: 0.9rem 1.1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 1.05rem;
+  outline: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.conversational-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(23, 45, 157, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.conversational-input::placeholder {
+  color: #b0bec5;
+}
+
+.currency-input-wrapper {
+  position: relative;
+}
+
+.currency-input-wrapper .currency-symbol {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 1.05rem;
+  pointer-events: none;
+}
+
+.currency-input-wrapper .conversational-input {
+  padding-left: 2.25rem;
+  font-weight: 600;
+}
+
+.currency-display {
+  font-size: 0.82rem;
+  color: var(--primary);
+  font-weight: 600;
+  margin-top: 0.35rem;
+}
+
+/* Radio/Toggle cards for conversational layout */
+.option-cards {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.option-card {
+  flex: 1;
+  min-width: 140px;
+  max-width: 220px;
+  padding: 1.5rem 1.25rem;
+  border-radius: 14px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: center;
+}
+
+.option-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(23, 45, 157, 0.08);
+}
+
+.option-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(23, 45, 157, 0.1);
+}
+
+.option-card-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.option-card.selected .option-card-title {
+  color: var(--primary);
+}
+
+.option-card-desc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Yes/No Toggle */
+.yes-no-toggle {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin: 1.25rem 0;
+}
+
+.yes-no-btn {
+  padding: 0.65rem 2rem;
+  border-radius: 50px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.yes-no-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.yes-no-btn.active-yes {
+  border-color: var(--positive);
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--positive);
+}
+
+.yes-no-btn.active-no {
+  border-color: var(--text-muted);
+  background: rgba(100, 116, 139, 0.06);
+  color: var(--text-main);
+}
+
+/* Conditional field reveal */
+.conditional-field {
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+.conditional-field.visible {
+  max-height: 200px;
+  opacity: 1;
+  margin-top: 1.25rem;
+}
+
+/* --- Floating Chevron Arrows (Intra-Step Navigation) --- */
+.nav-chevron {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(23, 45, 157, 0.06);
+  color: var(--primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+
+.nav-chevron:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 16px rgba(23, 45, 157, 0.2);
+}
+
+.nav-chevron:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.nav-chevron-left {
+  left: 1.5rem;
+}
+
+.nav-chevron-right {
+  right: 1.5rem;
+}
+
+.nav-chevron.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- Step Navigation Buttons (Inter-Step) --- */
+.step-nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+}
+
+.step-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: 50px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.step-nav-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 2px 8px rgba(23, 45, 157, 0.1);
+}
+
+.step-nav-btn.primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(23, 45, 157, 0.2);
+}
+
+.step-nav-btn.primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(23, 45, 157, 0.25);
+}
+
+/* --- Narrative Screen (Between Steps) --- */
+.narrative-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(23, 45, 157, 0.03) 0%, rgba(120, 124, 254, 0.05) 100%);
+  backdrop-filter: blur(8px);
+  padding: 3rem;
+}
+
+.narrative-card {
+  max-width: 620px;
+  text-align: center;
+  animation: narrativeFadeIn 0.6s ease forwards;
+}
+
+.narrative-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-light) 0%, rgba(120, 124, 254, 0.12) 100%);
+  color: var(--primary);
+  margin-bottom: 2rem;
+}
+
+.narrative-text {
+  font-size: 1.35rem;
+  line-height: 1.75;
+  color: var(--text-main);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0.01em;
+  margin-bottom: 2.5rem;
+}
+
+.narrative-text .typewriter-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.3em;
+  background: var(--primary);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blinkCursor 0.7s infinite;
+}
+
+@keyframes blinkCursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes narrativeFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.narrative-continue-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 2rem;
+  border-radius: 50px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(23, 45, 157, 0.25);
+}
+
+.narrative-continue-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(23, 45, 157, 0.3);
+}
+
+/* --- Goals Step Specific --- */
+.goal-summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  margin-bottom: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.goal-summary-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.goal-summary-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.goal-summary-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.goal-summary-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text-main);
+}
+
+.goal-summary-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.goal-remove-btn {
+  background: transparent;
+  border: none;
+  color: var(--negative);
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.goal-remove-btn:hover {
+  background: rgba(244, 63, 94, 0.08);
+}
+
+.add-goal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  border: 2px dashed var(--primary);
+  background: transparent;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+
+.add-goal-btn:hover {
+  background: var(--primary-light);
+  border-style: solid;
+}
+
+/* --- Slider Styling for Summary Flow --- */
+.summary-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--border) 0%);
+  border-radius: 4px;
+  outline: none;
+  transition: background 0.15s ease;
+}
+
+.summary-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(23, 45, 157, 0.3);
+  transition: transform 0.15s ease;
+}
+
+.summary-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.summary-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(23, 45, 157, 0.3);
+}
+
+/* Prevent card hover lift in summary flow */
+.summary-content-area .card:hover {
+  transform: none;
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- Question Progress Dots --- */
+.question-dots {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.question-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.3s ease;
+}
+
+.question-dot.active {
+  background: var(--primary);
+  width: 24px;
+  border-radius: 4px;
+}
+
+.question-dot.completed {
+  background: var(--positive);
 }

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
 
 const steps = [
     { id: 'profile', label: 'Profile', path: '/summary-flow/profile' },
@@ -12,159 +12,239 @@ const steps = [
     { id: 'goals', label: 'Goals', path: '/summary-flow/goals' }
 ];
 
+// Typewriter effect hook
+const useTypewriter = (text, speed = 30) => {
+    const [displayed, setDisplayed] = useState('');
+    const [isComplete, setIsComplete] = useState(false);
+
+    useEffect(() => {
+        setDisplayed('');
+        setIsComplete(false);
+        if (!text) return;
+
+        let i = 0;
+        const timer = setInterval(() => {
+            setDisplayed(text.slice(0, i + 1));
+            i++;
+            if (i >= text.length) {
+                clearInterval(timer);
+                setIsComplete(true);
+            }
+        }, speed);
+
+        return () => clearInterval(timer);
+    }, [text, speed]);
+
+    return { displayed, isComplete };
+};
+
+// Narrative transition overlay component
+const NarrativeScreen = ({ text, onContinue }) => {
+    const { displayed, isComplete } = useTypewriter(text, 25);
+
+    return (
+        <div className="narrative-overlay">
+            <div className="narrative-card">
+                <div className="narrative-icon">
+                    <Sparkles size={28} />
+                </div>
+                <p className="narrative-text">
+                    "{displayed}"
+                    {!isComplete && <span className="typewriter-cursor" />}
+                </p>
+                {isComplete && (
+                    <motion.button
+                        className="narrative-continue-btn"
+                        onClick={onContinue}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                    >
+                        Continue <ArrowRight size={18} />
+                    </motion.button>
+                )}
+            </div>
+        </div>
+    );
+};
+
 const ProgressiveQuestionLayout = ({ 
     currentStepId, 
-    stepName, 
     questions = [], 
+    narrative,
     onComplete 
 }) => {
     const navigate = useNavigate();
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [direction, setDirection] = useState(1); // 1 for forward, -1 for backward
+    const [direction, setDirection] = useState(1);
+    const [showNarrative, setShowNarrative] = useState(false);
 
     const currentGlobalIndex = steps.findIndex(s => s.id === currentStepId);
 
-    const handleNext = () => {
+    // Handle intra-step navigation (chevron arrows)
+    const handleNextQuestion = useCallback(() => {
         if (currentIndex < questions.length - 1) {
             setDirection(1);
             setCurrentIndex(prev => prev + 1);
-        } else {
-            if (onComplete) {
-                onComplete();
-            } else {
-                const nextStep = steps[currentGlobalIndex + 1];
-                if (nextStep) {
-                    navigate(nextStep.path);
-                } else {
-                    navigate('/summary-report');
-                }
-            }
         }
-    };
+    }, [currentIndex, questions.length]);
 
-    const handleBack = () => {
+    const handlePrevQuestion = useCallback(() => {
         if (currentIndex > 0) {
             setDirection(-1);
             setCurrentIndex(prev => prev - 1);
+        }
+    }, [currentIndex]);
+
+    // Handle inter-step navigation (Next Section / Previous Section buttons)
+    const handleNextStep = () => {
+        if (narrative) {
+            setShowNarrative(true);
         } else {
-            const prevStep = steps[currentGlobalIndex - 1];
-            if (prevStep) {
-                navigate(prevStep.path);
+            navigateToNextStep();
+        }
+    };
+
+    const navigateToNextStep = () => {
+        if (onComplete) {
+            onComplete();
+        } else {
+            const nextStep = steps[currentGlobalIndex + 1];
+            if (nextStep) {
+                navigate(nextStep.path);
+            } else {
+                navigate('/summary-report');
             }
         }
     };
 
-    // Animation variants for Framer Motion
+    const handlePrevStep = () => {
+        const prevStep = steps[currentGlobalIndex - 1];
+        if (prevStep) {
+            navigate(prevStep.path);
+        }
+    };
+
+    const handleNarrativeContinue = () => {
+        setShowNarrative(false);
+        navigateToNextStep();
+    };
+
+    // Keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (showNarrative) return;
+            if (e.key === 'ArrowRight' && currentIndex < questions.length - 1) {
+                handleNextQuestion();
+            } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                handlePrevQuestion();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [currentIndex, questions.length, showNarrative, handleNextQuestion, handlePrevQuestion]);
+
+    // PAN transition effect — PowerPoint-style horizontal slide
     const variants = {
         enter: (direction) => ({
-            x: direction > 0 ? 100 : -100,
+            x: direction > 0 ? '100%' : '-100%',
             opacity: 0,
-            scale: 0.95
         }),
         center: {
             x: 0,
             opacity: 1,
-            scale: 1
         },
         exit: (direction) => ({
-            x: direction < 0 ? 100 : -100,
+            x: direction < 0 ? '100%' : '-100%',
             opacity: 0,
-            scale: 0.95
         })
     };
 
+    const isFirstQuestion = currentIndex === 0;
+    const isLastQuestion = currentIndex === questions.length - 1;
+    const isFirstStep = currentGlobalIndex === 0;
+    const isLastStep = currentGlobalIndex === steps.length - 1;
+
     return (
-        <div className="progressive-layout" style={{ maxWidth: '800px', margin: '2rem auto', padding: '0 1rem' }}>
-            {/* Top Breadcrumb Navigation */}
-            <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '3rem' }}>
-                {steps.map((step, idx) => {
-                    const isActive = step.id === currentStepId;
-                    const isPassed = idx < currentGlobalIndex;
-                    return (
-                        <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span 
-                                style={{ 
-                                    color: isActive ? 'var(--primary)' : isPassed ? 'var(--text-main)' : 'var(--text-muted)',
-                                    fontWeight: isActive ? '600' : 'normal',
-                                    cursor: 'pointer',
-                                    transition: 'color 0.2s',
-                                    fontSize: '0.9rem'
-                                }} 
-                                onClick={() => navigate(step.path)}
-                            >
-                                {step.label}
-                            </span>
-                            {idx < steps.length - 1 && <span style={{ color: 'var(--border)', fontSize: '0.9rem' }}>→</span>}
-                        </div>
-                    );
-                })}
-            </div>
+        <>
+            {/* Narrative overlay */}
+            <AnimatePresence>
+                {showNarrative && narrative && (
+                    <NarrativeScreen 
+                        text={narrative} 
+                        onContinue={handleNarrativeContinue} 
+                    />
+                )}
+            </AnimatePresence>
 
-            {/* Step Header */}
-            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-                <h1 style={{ fontSize: '2rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}>
-                    {stepName} <span style={{ fontSize: '1.2rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>({questions.length} Questions)</span>
-                </h1>
-                <p style={{ color: 'var(--primary)', fontWeight: 'bold', letterSpacing: '0.5px' }}>
-                    QUESTION {currentIndex + 1} OF {questions.length}
-                </p>
-            </div>
+            {/* Floating chevron arrows for intra-step navigation */}
+            <button 
+                className={`nav-chevron nav-chevron-left ${isFirstQuestion ? 'hidden' : ''}`}
+                onClick={handlePrevQuestion}
+                aria-label="Previous question"
+            >
+                <ChevronLeft size={24} />
+            </button>
 
-            {/* Question Body with Animation */}
-            <div style={{ position: 'relative', minHeight: '350px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <button 
+                className={`nav-chevron nav-chevron-right ${isLastQuestion ? 'hidden' : ''}`}
+                onClick={handleNextQuestion}
+                aria-label="Next question"
+            >
+                <ChevronRight size={24} />
+            </button>
+
+            {/* Question content area */}
+            <div style={{ width: '100%', maxWidth: '650px', position: 'relative', minHeight: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                 <AnimatePresence mode="wait" custom={direction}>
                     <motion.div
-                        key={currentStepId + '-' + currentIndex} // Key must change to trigger animation
+                        key={currentStepId + '-' + currentIndex}
                         custom={direction}
                         variants={variants}
                         initial="enter"
                         animate="center"
                         exit="exit"
-                        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1.0] }} // Smooth ease similar to PowerPoint
-                        style={{ width: '100%', position: 'absolute' }}
+                        transition={{ 
+                            duration: 0.5, 
+                            ease: [0.45, 0, 0.15, 1] // PowerPoint pan-like easing
+                        }}
+                        style={{ width: '100%' }}
                     >
                         {questions[currentIndex]?.content}
                     </motion.div>
                 </AnimatePresence>
-            </div>
 
-            {/* Dot Pagination */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginTop: '2rem' }}>
-                {questions.map((_, idx) => (
-                    <div 
-                        key={idx} 
-                        style={{ 
-                            width: '10px', height: '10px', borderRadius: '50%',
-                            background: idx === currentIndex ? 'var(--primary)' : 'var(--border)',
-                            transition: 'background 0.3s, transform 0.3s',
-                            transform: idx === currentIndex ? 'scale(1.2)' : 'scale(1)'
-                        }} 
-                    />
-                ))}
-            </div>
+                {/* Question dots */}
+                {questions.length > 1 && (
+                    <div className="question-dots">
+                        {questions.map((_, idx) => (
+                            <div 
+                                key={idx}
+                                className={`question-dot ${idx === currentIndex ? 'active' : ''} ${idx < currentIndex ? 'completed' : ''}`}
+                            />
+                        ))}
+                    </div>
+                )}
 
-            {/* Bottom Actions */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3rem' }}>
-                <button 
-                    className="btn btn-secondary" 
-                    onClick={handleBack}
-                    style={{ 
-                        visibility: (currentGlobalIndex === 0 && currentIndex === 0) ? 'hidden' : 'visible', 
-                        display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        padding: '0.75rem 1.5rem', borderRadius: '50px'
-                    }}
-                >
-                    <ArrowLeft size={18} /> Back
-                </button>
-                <button 
-                    className="btn btn-primary" 
-                    onClick={handleNext}
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', borderRadius: '50px' }}
-                >
-                    {(currentIndex === questions.length - 1 && currentGlobalIndex === steps.length - 1) ? 'Finish' : 'Next'} <ArrowRight size={18} />
-                </button>
+                {/* Inter-step navigation buttons */}
+                <div className="step-nav-bar">
+                    <div>
+                        {isFirstQuestion && !isFirstStep && (
+                            <button className="step-nav-btn" onClick={handlePrevStep}>
+                                <ArrowLeft size={16} /> Previous Section
+                            </button>
+                        )}
+                    </div>
+                    <div>
+                        {isLastQuestion && (
+                            <button className="step-nav-btn primary" onClick={handleNextStep}>
+                                {isLastStep ? 'View Summary' : 'Next Section'} <ArrowRight size={16} />
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
-        </div>
+        </>
     );
 };
 
