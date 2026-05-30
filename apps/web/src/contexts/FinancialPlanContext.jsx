@@ -59,6 +59,10 @@ export const FinancialPlanProvider = ({ children }) => {
   const [contingencyFund, setContingencyFund] = useState('');
   const [hasEMI, setHasEMI] = useState(false);
   const [hasSpouseIncome, setHasSpouseIncome] = useState(false);
+  const [hasLifeInsurance, setHasLifeInsurance] = useState(null);
+  const [hasHealthInsurance, setHasHealthInsurance] = useState(null);
+  const [summaryLifeCover, setSummaryLifeCover] = useState('');
+  const [summaryHealthCover, setSummaryHealthCover] = useState('');
 
   const [inflationRates, setInflationRates] = useState({
     incomeIncrement: 10, householdInflation: 6, educationInflation: 8
@@ -130,6 +134,10 @@ export const FinancialPlanProvider = ({ children }) => {
     setGoals([]);
     setPolicies([]);
     setContingencyFund('');
+    setHasLifeInsurance(null);
+    setHasHealthInsurance(null);
+    setSummaryLifeCover('');
+    setSummaryHealthCover('');
     setInflationRates({ incomeIncrement: 10, householdInflation: 6, educationInflation: 8 });
     setJourneyAdjustments([]);
     setInvestmentAllocations([]);
@@ -269,6 +277,10 @@ export const FinancialPlanProvider = ({ children }) => {
         setGoals(data.goals || []);
         setPolicies(data.policies || []);
         setContingencyFund(data.contingency_fund || '');
+        setHasLifeInsurance(data.has_life_insurance ?? null);
+        setHasHealthInsurance(data.has_health_insurance ?? null);
+        setSummaryLifeCover(data.summary_life_cover || '');
+        setSummaryHealthCover(data.summary_health_cover || '');
         setInflationRates(data.inflation_rates || { incomeIncrement: 10, householdInflation: 6, educationInflation: 8 });
         setJourneyAdjustments(data.journey_adjustments || []);
         setInvestmentAllocations(data.investment_allocations || []);
@@ -299,7 +311,7 @@ export const FinancialPlanProvider = ({ children }) => {
     if (!planId) return;
     try {
       const { error } = await updateFinancialPlan(planId, {
-        current_step: currentStep, family_members: familyMembers, income, expense_categories: expenseCategories, asset_categories: assetCategories, liability_categories: liabilityCategories, goals, policies, contingency_fund: parseFloat(contingencyFund) || 0, inflation_rates: inflationRates, journey_adjustments: journeyAdjustments, investment_allocations: investmentAllocations, loan_proposals: loanProposals, allocation_plans: allocationPlans, goal_mappings: goalMappings, insurance_mode: insuranceMode, calculator_inputs: calculatorInputs, current_year_ledger: currentYearLedger, plan_start_month: planStartMonth
+        current_step: currentStep, family_members: familyMembers, income, expense_categories: expenseCategories, asset_categories: assetCategories, liability_categories: liabilityCategories, goals, policies, contingency_fund: parseFloat(contingencyFund) || 0, has_life_insurance: hasLifeInsurance, has_health_insurance: hasHealthInsurance, summary_life_cover: summaryLifeCover, summary_health_cover: summaryHealthCover, inflation_rates: inflationRates, journey_adjustments: journeyAdjustments, investment_allocations: investmentAllocations, loan_proposals: loanProposals, allocation_plans: allocationPlans, goal_mappings: goalMappings, insurance_mode: insuranceMode, calculator_inputs: calculatorInputs, current_year_ledger: currentYearLedger, plan_start_month: planStartMonth
       });
       if (error) console.error('Save failed:', error);
     } catch (err) { console.error('Save crashed:', err); }
@@ -314,7 +326,7 @@ export const FinancialPlanProvider = ({ children }) => {
       setLastSaved(new Date());
     }, 1000);
     return () => clearTimeout(timeoutId);
-  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, inflationRates, journeyAdjustments, investmentAllocations, loanProposals, allocationPlans, goalMappings, insuranceMode, calculatorInputs, currentYearLedger, planStartMonth]);
+  }, [planId, loading, currentStep, familyMembers, income, expenseCategories, assetCategories, liabilityCategories, goals, policies, contingencyFund, hasLifeInsurance, hasHealthInsurance, summaryLifeCover, summaryHealthCover, inflationRates, journeyAdjustments, investmentAllocations, loanProposals, allocationPlans, goalMappings, insuranceMode, calculatorInputs, currentYearLedger, planStartMonth]);
 
   const expandedGoals = useMemo(() => {
     let result = [];
@@ -383,6 +395,8 @@ export const FinancialPlanProvider = ({ children }) => {
       currentYearLedger, setCurrentYearLedger,
       cashFlowSubStep, setCashFlowSubStep,
       hasEMI, setHasEMI, hasSpouseIncome, setHasSpouseIncome,
+      hasLifeInsurance, setHasLifeInsurance, hasHealthInsurance, setHasHealthInsurance,
+      summaryLifeCover, setSummaryLifeCover, summaryHealthCover, setSummaryHealthCover,
       journeyProjections, proposedSIPs, proposedLumpsums, proposedEquities,
       handleLogoutCleanup, savePlanData
     }}>

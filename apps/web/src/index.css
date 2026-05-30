@@ -491,13 +491,13 @@ input:focus, select:focus, textarea:focus {
   flex-direction: column;
   min-height: 100vh;
   background: var(--bg-main);
+  overflow-x: hidden;
 }
 
 .summary-body {
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow: hidden;
 }
 
 /* --- Sticky Header --- */
@@ -662,9 +662,7 @@ input:focus, select:focus, textarea:focus {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   position: relative;
-  overflow: hidden;
   padding: 2rem 3rem;
   min-height: calc(100vh - var(--header-height) - 52px);
 }
@@ -862,7 +860,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .conditional-field.visible {
-  max-height: 200px;
+  max-height: 800px;
   opacity: 1;
   margin-top: 1.25rem;
 }

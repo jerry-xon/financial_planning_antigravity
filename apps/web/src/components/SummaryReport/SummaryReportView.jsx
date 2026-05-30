@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import MoneyStorySection from './MoneyStorySection';
+import SafetyNetSection from './SafetyNetSection';
 
 const SummaryReportView = () => {
     const navigate = useNavigate();
@@ -13,7 +15,7 @@ const SummaryReportView = () => {
     ];
 
     return (
-        <div className="fade-in" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+        <div className="fade-in" style={{ padding: (activeTab === 'money-story' || activeTab === 'safety-net') ? '0' : '2rem', maxWidth: (activeTab === 'money-story' || activeTab === 'safety-net') ? '100%' : '1200px', margin: '0 auto' }}>
             <div style={{ marginBottom: '1rem' }}>
                 <button 
                     className="btn btn-secondary" 
@@ -48,10 +50,16 @@ const SummaryReportView = () => {
                 ))}
             </div>
 
-            <div className="card" style={{ minHeight: '400px', padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                <h2 style={{ color: 'var(--text-main)', marginBottom: '1rem' }}>{tabs.find(t => t.id === activeTab)?.label}</h2>
-                <p className="text-muted">Report content placeholder...</p>
-            </div>
+            {activeTab === 'money-story' ? (
+                <MoneyStorySection />
+            ) : activeTab === 'safety-net' ? (
+                <SafetyNetSection />
+            ) : (
+                <div className="card" style={{ minHeight: '400px', padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                    <h2 style={{ color: 'var(--text-main)', marginBottom: '1rem' }}>{tabs.find(t => t.id === activeTab)?.label}</h2>
+                    <p className="text-muted">Report content coming soon...</p>
+                </div>
+            )}
 
             <div style={{ marginTop: '3rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                 <button 

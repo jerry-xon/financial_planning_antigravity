@@ -195,7 +195,7 @@ const ProgressiveQuestionLayout = ({
             </button>
 
             {/* Question content area */}
-            <div style={{ width: '100%', maxWidth: '650px', position: 'relative', minHeight: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '100%', maxWidth: '650px', position: 'relative', minHeight: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '3rem auto' }}>
                 <AnimatePresence mode="wait" custom={direction}>
                     <motion.div
                         key={currentStepId + '-' + currentIndex}

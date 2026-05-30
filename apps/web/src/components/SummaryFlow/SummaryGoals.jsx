@@ -112,13 +112,21 @@ const SummaryGoals = () => {
     /* ── Goal CRUD ── */
     const addGoalFromTemplate = (tmpl) => {
         setSelectedTemplateId(tmpl.id);
+
+        // If user already selected a template on this screen, replace it instead of adding another
+        if (editingGoalIndex !== null && screen === SELECT) {
+            const updated = [...goals];
+            updated[editingGoalIndex] = { ...updated[editingGoalIndex], name: tmpl.label, inflationRate: tmpl.defaultInflation };
+            setGoals(updated);
+            return;
+        }
+
         const id = `goal_${Date.now()}`;
         const newGoal = { id, name: tmpl.label, presentValue: '', yearsToGoal: '', inflationRate: tmpl.defaultInflation, courseDuration: 1 };
         const updated = [...goals, newGoal];
         setGoals(updated);
         setEditingGoalIndex(updated.length - 1);
-        // Brief visual feedback, then advance
-        setTimeout(() => { setSelectedTemplateId(null); goTo(YEARS); }, 450);
+        // Stay on SELECT — user advances via right chevron
     };
 
     const addCustomGoal = () => {
@@ -165,6 +173,7 @@ const SummaryGoals = () => {
 
     const canGoLeft  = screen > INTRO;
     const canGoRight = screen === INTRO ||
+                       (screen === SELECT && editingGoalIndex !== null) ||
                        (screen === YEARS && editingGoal?.yearsToGoal);
 
     const handleLeft = () => {
@@ -182,6 +191,7 @@ const SummaryGoals = () => {
     const handleRight = () => {
         if (!canGoRight) return;
         if (screen === INTRO) goTo(SELECT);
+        if (screen === SELECT && editingGoalIndex !== null) { setSelectedTemplateId(null); goTo(YEARS); }
         if (screen === YEARS && editingGoal?.yearsToGoal) goTo(VALUE);
     };
 
@@ -272,7 +282,7 @@ const SummaryGoals = () => {
                                                 key={tmpl.id}
                                                 className={`option-card ${isSelected ? 'selected' : ''}`}
                                                 style={{ padding: '1.15rem 0.75rem', minWidth: 'auto', maxWidth: 'none', position: 'relative' }}
-                                                onClick={() => !selectedTemplateId && addGoalFromTemplate(tmpl)}
+                                                onClick={() => addGoalFromTemplate(tmpl)}
                                             >
                                                 {isSelected && (
                                                     <div style={{
