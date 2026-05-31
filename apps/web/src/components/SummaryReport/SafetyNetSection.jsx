@@ -194,7 +194,8 @@ const SafetyNetSection = () => {
         familyMembers,
         expenseCategories,
         summaryLifeCover,
-        contingencyFund
+        contingencyFund,
+        assetCategories
     } = useFinancialPlan();
 
     // ── Derived Calculations ──
@@ -203,10 +204,10 @@ const SafetyNetSection = () => {
         [expenseCategories, summaryLifeCover]
     );
 
-    const contingencyData = useMemo(
-        () => calculateContingencyData(expenseCategories, contingencyFund),
-        [expenseCategories, contingencyFund]
-    );
+    const contingencyData = useMemo(() => {
+        const emergencyCash = assetCategories?.cash?.savings || contingencyFund;
+        return calculateContingencyData(expenseCategories, emergencyCash);
+    }, [expenseCategories, contingencyFund, assetCategories]);
 
     const crisisTimeline = useMemo(
         () => buildCrisisTimeline(contingencyData, protectionData),

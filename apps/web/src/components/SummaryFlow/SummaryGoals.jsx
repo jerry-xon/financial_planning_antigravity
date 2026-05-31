@@ -178,9 +178,7 @@ const SummaryGoals = () => {
     const editingGoal = editingGoalIndex !== null ? goals[editingGoalIndex] : null;
 
     const canGoLeft  = screen > INTRO;
-    const canGoRight = screen === INTRO ||
-                       (screen === SELECT && editingGoalIndex !== null) ||
-                       (screen === YEARS && editingGoal?.yearsToGoal);
+    const canGoRight = screen < SUMMARY;
 
     const handleLeft = () => {
         if (!canGoLeft) return;
@@ -197,8 +195,18 @@ const SummaryGoals = () => {
     const handleRight = () => {
         if (!canGoRight) return;
         if (screen === INTRO) goTo(SELECT);
-        if (screen === SELECT && editingGoalIndex !== null) { setSelectedTemplateId(null); goTo(YEARS); }
-        if (screen === YEARS && editingGoal?.yearsToGoal) goTo(VALUE);
+        if (screen === SELECT) {
+            if (editingGoalIndex !== null) {
+                setSelectedTemplateId(null);
+                goTo(YEARS);
+            } else {
+                goTo(SUMMARY);
+            }
+        }
+        if (screen === YEARS) goTo(VALUE);
+        if (screen === VALUE) {
+            handleSaveGoal();
+        }
     };
 
     /* ── Keyboard nav ── */
@@ -504,9 +512,9 @@ const SummaryGoals = () => {
                         )}
                     </div>
                     <div>
-                        {screen === SUMMARY && goals.length > 0 && (
+                        {screen === SUMMARY && (
                             <button className="step-nav-btn primary" onClick={handleViewSummary}>
-                                View Summary <ArrowRight size={16} />
+                                {goals.length > 0 ? 'View Summary' : 'Skip & View Report'} <ArrowRight size={16} />
                             </button>
                         )}
                     </div>
