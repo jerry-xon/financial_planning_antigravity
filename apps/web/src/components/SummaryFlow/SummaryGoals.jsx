@@ -91,7 +91,7 @@ const NarrativeOverlay = ({ text, onContinue }) => {
    MAIN COMPONENT
    ═══════════════════════════════════════════════════ */
 const SummaryGoals = () => {
-    const { goals, setGoals } = useFinancialPlan();
+    const { goals, setGoals, savePlanData } = useFinancialPlan();
     const navigate = useNavigate();
 
     // Always start at INTRO when entering the Goals step
@@ -166,7 +166,13 @@ const SummaryGoals = () => {
     };
 
     const handleViewSummary = () => { setShowNarrative(true); };
-    const handleNarrativeDone = () => { setShowNarrative(false); navigate('/summary-report'); };
+    const handleNarrativeDone = async () => {
+        if (savePlanData) {
+            try { await savePlanData(); } catch (e) { console.error('Save failed on nav', e); }
+        }
+        setShowNarrative(false);
+        navigate('/summary-report');
+    };
 
     /* ── Chevron logic ── */
     const editingGoal = editingGoalIndex !== null ? goals[editingGoalIndex] : null;
@@ -487,7 +493,12 @@ const SummaryGoals = () => {
                 <div className="step-nav-bar">
                     <div>
                         {screen === INTRO && (
-                            <button className="step-nav-btn" onClick={() => navigate('/summary-flow/liabilities')}>
+                            <button className="step-nav-btn" onClick={async () => {
+                                if (savePlanData) {
+                                    try { await savePlanData(); } catch (e) { console.error('Save failed on nav', e); }
+                                }
+                                navigate('/summary-flow/liabilities');
+                            }}>
                                 <ArrowLeft size={16} /> Previous Section
                             </button>
                         )}

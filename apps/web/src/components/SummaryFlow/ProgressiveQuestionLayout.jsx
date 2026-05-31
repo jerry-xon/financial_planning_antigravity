@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
+import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 
 const steps = [
     { id: 'profile', label: 'Profile', path: '/summary-flow/profile' },
@@ -75,6 +76,8 @@ const ProgressiveQuestionLayout = ({
     onComplete 
 }) => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { savePlanData } = useFinancialPlan();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [direction, setDirection] = useState(1);
     const [showNarrative, setShowNarrative] = useState(false);
@@ -105,7 +108,10 @@ const ProgressiveQuestionLayout = ({
         }
     };
 
-    const navigateToNextStep = () => {
+    const navigateToNextStep = async () => {
+        if (savePlanData) {
+            try { await savePlanData(); } catch (e) { console.error('Save failed on nav', e); }
+        }
         if (onComplete) {
             onComplete();
         } else {
@@ -118,7 +124,10 @@ const ProgressiveQuestionLayout = ({
         }
     };
 
-    const handlePrevStep = () => {
+    const handlePrevStep = async () => {
+        if (savePlanData) {
+            try { await savePlanData(); } catch (e) { console.error('Save failed on nav', e); }
+        }
         const prevStep = steps[currentGlobalIndex - 1];
         if (prevStep) {
             navigate(prevStep.path);

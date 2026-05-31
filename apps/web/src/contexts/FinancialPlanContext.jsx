@@ -221,8 +221,12 @@ export const FinancialPlanProvider = ({ children }) => {
         setIncome({
             self: loadedIncome.self ?? loadedIncome.family ?? '', selfBonus: loadedIncome.selfBonus ?? loadedIncome.bonus ?? '', selfPassive: loadedIncome.selfPassive ?? loadedIncome.passive ?? '', selfOther: loadedIncome.selfOther ?? loadedIncome.other ?? '', spouse: loadedIncome.spouse ?? '', spouseBonus: loadedIncome.spouseBonus ?? '', spousePassive: loadedIncome.spousePassive ?? '', spouseOther: loadedIncome.spouseOther ?? ''
         });
+        setHasSpouseIncome(!!(loadedIncome.spouse && Number(loadedIncome.spouse) > 0));
 
         const loadedExpenseCategories = data.expense_categories || {};
+        const emiObj = loadedExpenseCategories.emi || {};
+        const hasAnyEmi = Object.values(emiObj).some(val => val && Number(val) > 0);
+        setHasEMI(hasAnyEmi);
         const loadedInsurance = loadedExpenseCategories.insurance || {};
         let migratedLife = {};
         const selfMember = (data.family_members || []).find(m => m.relation === 'Self') || { name: '', relation: 'Self' };
@@ -310,11 +314,50 @@ export const FinancialPlanProvider = ({ children }) => {
   const savePlanData = async () => {
     if (!planId) return;
     try {
-      const { error } = await updateFinancialPlan(planId, {
-        current_step: currentStep, family_members: familyMembers, income, expense_categories: expenseCategories, asset_categories: assetCategories, liability_categories: liabilityCategories, goals, policies, contingency_fund: parseFloat(contingencyFund) || 0, has_life_insurance: hasLifeInsurance, has_health_insurance: hasHealthInsurance, summary_life_cover: summaryLifeCover, summary_health_cover: summaryHealthCover, inflation_rates: inflationRates, journey_adjustments: journeyAdjustments, investment_allocations: investmentAllocations, loan_proposals: loanProposals, allocation_plans: allocationPlans, goal_mappings: goalMappings, insurance_mode: insuranceMode, calculator_inputs: calculatorInputs, current_year_ledger: currentYearLedger, plan_start_month: planStartMonth
-      });
-      if (error) console.error('Save failed:', error);
-    } catch (err) { console.error('Save crashed:', err); }
+      const payload = {
+        current_step: currentStep,
+        family_members: familyMembers,
+        income,
+        expense_categories: expenseCategories,
+        asset_categories: assetCategories,
+        liability_categories: liabilityCategories,
+        goals,
+        policies,
+        contingency_fund: parseFloat(contingencyFund) || 0,
+        has_life_insurance: hasLifeInsurance,
+        has_health_insurance: hasHealthInsurance,
+        summary_life_cover: summaryLifeCover,
+        summary_health_cover: summaryHealthCover,
+        inflation_rates: inflationRates,
+        journey_adjustments: journeyAdjustments,
+        investment_allocations: investmentAllocations,
+        loan_proposals: loanProposals,
+        allocation_plans: allocationPlans,
+        goal_mappings: goalMappings,
+        insurance_mode: insuranceMode,
+        calculator_inputs: calculatorInputs,
+        current_year_ledger: currentYearLedger,
+        plan_start_month: planStartMonth
+      };
+      
+      const { error } = await updateFinancialPlan(planId, payload);
+      
+      if (error) {
+        console.warn('Save failed, trying fallback without summary insurance columns:', error);
+        const fallbackPayload = { ...payload };
+        delete fallbackPayload.has_life_insurance;
+        delete fallbackPayload.has_health_insurance;
+        delete fallbackPayload.summary_life_cover;
+        delete fallbackPayload.summary_health_cover;
+        
+        const { error: fallbackError } = await updateFinancialPlan(planId, fallbackPayload);
+        if (fallbackError) {
+          console.error('Fallback save also failed:', fallbackError);
+        }
+      }
+    } catch (err) {
+      console.error('Save crashed:', err);
+    }
   };
 
   useEffect(() => {
