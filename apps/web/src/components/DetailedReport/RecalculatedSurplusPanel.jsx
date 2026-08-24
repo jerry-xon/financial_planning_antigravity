@@ -20,15 +20,44 @@ const RecalculatedSurplusPanel = ({
     const remaining = currentCard.deployableSurplus || 0;
     const monthLabel = currentCard.monthLabel || 'this month';
 
-    const formulaCards = outlook.map((card) => ({
-        ...card,
-        calculationLines: [
-            `Surplus before ${formatCurrency(card.ledgerUnallocated || 0)}`,
-            `− Protection ${formatCurrency(card.protectionImpact || 0)}`,
-            `− Future financial adjustments ${formatCurrency(card.journeyImpact || 0)}`,
-            `= Remaining ${formatCurrency(card.deployableSurplus || 0)}`,
-        ],
-    }));
+    const formulaCards = outlook.map((card) => {
+        const lines = [];
+        lines.push(`Surplus before ${formatCurrency(card.ledgerUnallocated || 0)}`);
+        
+        if (card.carryFromPrior > 0) {
+            lines.push(`+ Carry over ${formatCurrency(card.carryFromPrior)}`);
+        }
+
+        const items = [...(card.recurringFromPriorMonths || []), ...(card.allocationsInMonth || [])];
+        if (items.length > 0) {
+            items.forEach((item) => {
+                lines.push(`− ${item.label || item.type} ${formatCurrency(item.amount)}`);
+            });
+        } 
+        
+        if (card.activeProtections && card.activeProtections.length > 0) {
+            card.activeProtections.forEach((item) => {
+                lines.push(`− ${item.label || item.type} ${formatCurrency(item.amount)}`);
+            });
+        } else if (card.protectionImpact > 0) {
+            lines.push(`− Protection ${formatCurrency(card.protectionImpact)}`);
+        } 
+        
+        if (card.allocImpact > 0) {
+            lines.push(`− Allocations ${formatCurrency(card.allocImpact)}`);
+        }
+
+        if (card.journeyImpact > 0) {
+            lines.push(`− Future adjustments ${formatCurrency(card.journeyImpact)}`);
+        }
+
+        lines.push(`= Remaining ${formatCurrency(card.deployableSurplus || 0)}`);
+
+        return {
+            ...card,
+            calculationLines: lines,
+        };
+    });
 
     return (
         <div className="card pymtw-recalculated-surplus-card" style={{ padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--border)', background: 'var(--card-bg, #fff)' }}>
@@ -71,10 +100,49 @@ const RecalculatedSurplusPanel = ({
                             <span>Surplus before plan</span>
                             <strong>{formatCurrency(ledger)}</strong>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', color: '#dc2626' }}>
-                            <span>− Protection allocations</span>
-                            <strong>−{formatCurrency(protection)}</strong>
-                        </div>
+                        {currentCard.carryFromPrior > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', color: 'var(--primary, #0f766e)' }}>
+                                <span>+ Carry over from prior month</span>
+                                <strong>{formatCurrency(currentCard.carryFromPrior)}</strong>
+                            </div>
+                        )}
+
+                        {(() => {
+                            const items = [...(currentCard.recurringFromPriorMonths || []), ...(currentCard.allocationsInMonth || [])];
+                            const elements = [];
+
+                            if (items.length > 0) {
+                                items.forEach((item, idx) => {
+                                    elements.push(
+                                        <div key={`item-${idx}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', color: '#dc2626' }}>
+                                            <span>− {item.label || item.type}</span>
+                                            <strong>−{formatCurrency(item.amount)}</strong>
+                                        </div>
+                                    );
+                                });
+                            }
+
+                            if (currentCard.activeProtections && currentCard.activeProtections.length > 0) {
+                                currentCard.activeProtections.forEach((item, idx) => {
+                                    elements.push(
+                                        <div key={`prot-${idx}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', color: '#dc2626' }}>
+                                            <span>− {item.label || item.type}</span>
+                                            <strong>−{formatCurrency(item.amount)}</strong>
+                                        </div>
+                                    );
+                                });
+                            } else if (protection > 0) {
+                                elements.push(
+                                    <div key="prot-generic" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', color: '#dc2626' }}>
+                                        <span>− Protection allocations</span>
+                                        <strong>−{formatCurrency(protection)}</strong>
+                                    </div>
+                                );
+                            }
+
+                            return elements;
+                        })()}
+
                         {ffa > 0 && (
                             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', color: '#dc2626' }}>
                                 <span>− Future financial adjustments</span>

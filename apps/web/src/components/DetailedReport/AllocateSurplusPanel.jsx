@@ -428,40 +428,6 @@ const AllocateSurplusPanel = ({
                 </div>
             </div>
 
-            <div className="pymtw-allocate-actions">
-                <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={onDiscard}
-                    disabled={!isDirty}
-                >
-                    Discard Changes
-                </button>
-                <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={onSave}
-                    disabled={!canSave}
-                >
-                    {saveLabel}
-                </button>
-            </div>
-            {statusHint && <p className="pymtw-sticky-hint">{statusHint}</p>}
-            {applyError && (
-                <div className="pymtw-apply-error" role="alert">{applyError}</div>
-            )}
-            {saveSuccessMessage && (
-                <div className="pymtw-save-success" role="status">{saveSuccessMessage}</div>
-            )}
-            {isDirty && (
-                <div className="pymtw-unsaved-banner" role="status">
-                    You have unsaved changes. Save Plan to update your monthly allocation.
-                </div>
-            )}
-
-            {monthSwitchConfirm}
-            {replaceConfirm}
-
             <div className="pymtw-avenues-block">
                 <h4 className="pymtw-avenues-title">Investment Avenues</h4>
                 <p className="pymtw-zone-sub">
@@ -546,6 +512,47 @@ const AllocateSurplusPanel = ({
                         );
                     })}
                 </div>
+
+                <div className="pymtw-post-avenues-actions">
+                    <div className="pymtw-post-avenues-remaining">
+                        <span>Remaining to allocate:</span>
+                        <strong>{formatCurrency(remaining)}</strong>
+                    </div>
+                    <div className="pymtw-allocate-actions">
+                        <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={onDiscard}
+                            disabled={!isDirty}
+                        >
+                            Discard Changes
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={onSave}
+                            disabled={!canSave}
+                        >
+                            {saveLabel}
+                        </button>
+                    </div>
+                </div>
+
+                {statusHint && <p className="pymtw-sticky-hint">{statusHint}</p>}
+                {applyError && (
+                    <div className="pymtw-apply-error" role="alert">{applyError}</div>
+                )}
+                {saveSuccessMessage && (
+                    <div className="pymtw-save-success" role="status">{saveSuccessMessage}</div>
+                )}
+                {isDirty && (
+                    <div className="pymtw-unsaved-banner" role="status">
+                        You have unsaved changes. Save Plan to update your monthly allocation.
+                    </div>
+                )}
+
+                {monthSwitchConfirm}
+                {replaceConfirm}
             </div>
         </div>
     );

@@ -342,7 +342,7 @@ const PutYourMoneyToWorkSection = ({ mode = 'pymtw' }) => {
         planKey
         && (
             hasScopedMonthPlan
-            || allocationPlans[planKey]?.status === 'applied'
+            || (allocationPlans[planKey]?.scope === reportScope && allocationPlans[planKey]?.status === 'applied')
             || appliedPlanKey === planKey
         ),
     );
@@ -411,33 +411,25 @@ const PutYourMoneyToWorkSection = ({ mode = 'pymtw' }) => {
     const totalAllocated = scopedDraftTotal(
         isEditingMonth ? draftAllocations : (hasAppliedMonthPlan ? appliedBaseline : draftAllocations),
     );
-    const editingStudioImpact = useMemo(() => {
-        if (!studio.meta?.hasData || !planKey) return 0;
-        if (avenuesMode !== 'manual_edit' && !hasAppliedMonthPlan && !isGaps) return 0;
-        const monthRows = (investmentAllocations || []).filter((a) => a.studioPlanKey === planKey);
-        const scopedRows = monthRows.filter((a) => {
-            const type = normalizeAllocType(a.type) || a.type;
-            return replaceTypes.includes(type);
-        });
-        return computeAllocationImpactForMonth(
-            scopedRows,
-            studio.meta.calendarYear,
-            effectiveMonth,
-        );
-    }, [
-        avenuesMode,
-        hasAppliedMonthPlan,
-        investmentAllocations,
-        planKey,
-        studio.meta,
-        effectiveMonth,
-        replaceTypes,
-        isGaps,
-    ]);
-    // Gaps: Protection claims surplus before FFA — add journey deduction back into the draft ceiling.
-    const availableSurplus = (studio.hero?.deployableSurplus || 0)
-        + editingStudioImpact
-        + (isGaps ? (studio.hero?.journeyMonthDeduction || 0) : 0);
+    const currentMonthOutlook = useMemo(() => (
+        studio.hero?.threeMonthOutlook?.find((m) => m.monthIndex === effectiveMonth)
+        || studio.hero?.threeMonthOutlook?.[0]
+    ), [studio.hero?.threeMonthOutlook, effectiveMonth]);
+
+    const availableSurplus = useMemo(() => {
+        if (!studio.hero) return 0;
+        if (isGaps) {
+            return (currentMonthOutlook?.ledgerUnallocated || 0) + (currentMonthOutlook?.carryFromPrior || 0);
+        }
+        const ledger = currentMonthOutlook?.ledgerUnallocated ?? studio.hero.monthlyFreeCash ?? 0;
+        const carry = currentMonthOutlook?.carryFromPrior ?? 0;
+        const prot = currentMonthOutlook?.protectionImpact ?? 0;
+        const journey = currentMonthOutlook?.journeyImpact ?? 0;
+        const recurringPrior = (currentMonthOutlook?.recurringFromPriorMonths || [])
+            .filter((item) => !isProtectionAllocationType(item.type))
+            .reduce((sum, item) => sum + (item.amount || 0), 0);
+        return Math.max(0, ledger + carry - prot - journey - recurringPrior);
+    }, [studio.hero, currentMonthOutlook, isGaps]);
     const remaining = availableSurplus - totalAllocated;
     const ppfMaxByCap = useMemo(
         () => getMonthlyPpfCap(
@@ -515,6 +507,7 @@ const PutYourMoneyToWorkSection = ({ mode = 'pymtw' }) => {
             policies,
             inflationRates,
             ppfMaxMonthly: ppfMaxByCap,
+            skipProtection: !isGaps,
         }),
         [
             studio.hero,
@@ -547,6 +540,7 @@ const PutYourMoneyToWorkSection = ({ mode = 'pymtw' }) => {
             expenseCategories,
             investmentAllocations,
             excludePlanKey: avenuesMode === 'manual_edit' ? planKey : null,
+            replaceTypes,
         });
     }, [
         draftAllocations,
@@ -589,8 +583,9 @@ const PutYourMoneyToWorkSection = ({ mode = 'pymtw' }) => {
             deployableSurplus: studio.hero?.deployableSurplus || 0,
             activeBundleId,
             scenarioComparison,
+            baseLines: studio.briefing?.lines || [],
         }),
-        [validation, growthPreview, goals, totalAllocated, studio.hero, activeBundleId, scenarioComparison],
+        [validation, growthPreview, goals, totalAllocated, studio.hero, activeBundleId, scenarioComparison, studio.briefing],
     );
 
     const enhancedBriefingLines = useMemo(
@@ -672,9 +667,7 @@ const PutYourMoneyToWorkSection = ({ mode = 'pymtw' }) => {
                 studio.meta?.calendarYear,
                 effectiveMonth,
             );
-            const avail = (studio.hero?.deployableSurplus || 0)
-                + impact
-                + (isGaps ? (studio.hero?.journeyMonthDeduction || 0) : 0);
+            const avail = availableSurplus + impact;
             const others = scopedDraftTotal(base) - getDraftTypeAmount(base, instrumentType);
             maxAllowed = Math.max(getDraftTypeAmount(base, instrumentType), avail - others);
             if (instrumentType === 'PPF') {
@@ -775,6 +768,7 @@ const PutYourMoneyToWorkSection = ({ mode = 'pymtw' }) => {
             expenseCategories,
             investmentAllocations,
             excludePlanKey: planKey,
+            replaceTypes,
         });
         if (!planValidation.canApply) {
             const firstError = planValidation.issues.find((issue) => issue.severity === 'error');
@@ -813,6 +807,7 @@ const PutYourMoneyToWorkSection = ({ mode = 'pymtw' }) => {
                 growthPreview: preview,
             }),
             status: 'applied',
+            scope: reportScope,
             appliedAt: new Date().toISOString(),
         };
         setAllocationPlans({ ...allocationPlans, [planKey]: applied });
@@ -1678,7 +1673,7 @@ const PutYourMoneyToWorkSection = ({ mode = 'pymtw' }) => {
                 <>
                     <AllocateSurplusPanel
                         editingMonthLabel={editingMonthLabel}
-                        totalSurplus={studio.hero?.deployableSurplus || 0}
+                        totalSurplus={availableSurplus}
                         allocatedAmount={stickyTotalAllocation}
                         remainingSurplus={remaining}
                         isDirty={isDirty}
@@ -1731,23 +1726,15 @@ const PutYourMoneyToWorkSection = ({ mode = 'pymtw' }) => {
                         monthChipsAriaLabel="Investment allocation months"
                     />
 
-                    <AllocationStudioHero hero={studio.hero} />
-
                     {(avenuesMode === 'ai_applied' || avenuesMode === 'manual_applied' || hasAppliedMonthPlan) && (
                         <GrowthPreviewStrip growthPreview={appliedGrowthPreview || growthPreview} />
                     )}
 
-                    <div className="card pymtw-analysis-summary">
-                        <h3 className="pymtw-zone-title">{studio.briefing?.headline || 'Allocation Studio analysis'}</h3>
-                        <p className="pymtw-zone-sub">{studio.briefing?.greeting}</p>
-                        <div className="pymtw-briefing-lines">
-                            {enhancedBriefingLines.map((line) => (
-                                <p key={line} className="pymtw-briefing-line">{line}</p>
-                            ))}
-                        </div>
-                    </div>
-
-                    <StudioInsightsRail insights={studioInsights} />
+                    <StudioInsightsRail
+                        insights={studioInsights}
+                        greeting={studio.briefing?.greeting}
+                        headline="AI Insights"
+                    />
                 </>
             )}
 
@@ -1832,6 +1819,27 @@ const PutYourMoneyToWorkSection = ({ mode = 'pymtw' }) => {
                     display: flex;
                     gap: 0.75rem;
                     flex-wrap: wrap;
+                }
+                .pymtw-post-avenues-actions {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 1rem;
+                    flex-wrap: wrap;
+                    margin-top: 1.25rem;
+                    padding-top: 1rem;
+                    border-top: 1px dashed var(--border-color, #e2e8f0);
+                }
+                .pymtw-post-avenues-remaining {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    font-size: 0.95rem;
+                    color: var(--text-muted, #64748b);
+                }
+                .pymtw-post-avenues-remaining strong {
+                    font-size: 1.1rem;
+                    color: var(--text-main, #0f172a);
                 }
                 .pymtw-avenues-block {
                     margin-top: 0.5rem;

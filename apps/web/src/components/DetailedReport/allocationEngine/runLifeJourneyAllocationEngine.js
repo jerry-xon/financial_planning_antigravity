@@ -51,6 +51,7 @@ export function runLifeJourneyAllocationEngine({
     ppfMaxMonthly = STATUTORY_LIMITS.ppfMaxMonthly,
     currentYear = new Date().getFullYear(),
     policyOverrides = {},
+    skipProtection = false,
 } = {}) {
     const surplus = Math.max(0, Math.round(parseAmount(deployableSurplus)));
     const policy = resolveAllocationPolicy(policyOverrides);
@@ -84,11 +85,11 @@ export function runLifeJourneyAllocationEngine({
         summaryHealthCover,
         hasHealthInsurance,
         policies,
-        deployableSurplus: surplus,
+        deployableSurplus: skipProtection ? 0 : surplus,
         policyOverrides,
     });
 
-    const goalSurplus = Math.max(0, protection.residualSurplus);
+    const goalSurplus = skipProtection ? surplus : Math.max(0, protection.residualSurplus);
 
     // STEP 2–3 – Goal funding deficits + priority selection (top 1–2)
     const goalFunding = buildGoalFundingPlan({

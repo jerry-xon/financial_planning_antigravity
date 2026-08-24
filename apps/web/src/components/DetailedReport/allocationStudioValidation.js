@@ -10,9 +10,12 @@ import { MONTH_LABELS_LONG } from './moneyFlowLedgerLogic';
 const parseAmount = (value) => parseFloat(value) || 0;
 const PPF_ANNUAL_CAP = 150000;
 
-export function computeDraftYearImpact(draftAllocations = {}, startMonth) {
+export function computeDraftYearImpact(draftAllocations = {}, startMonth, calendarYear, replaceTypes = null) {
+    const types = Array.isArray(replaceTypes) && replaceTypes.length > 0
+        ? replaceTypes
+        : Object.keys(draftAllocations);
     let impact = 0;
-    Object.keys(draftAllocations).forEach((type) => {
+    types.forEach((type) => {
         const monthlyOrLump = getDraftTypeAmount(draftAllocations, type);
         if (!monthlyOrLump) return;
         const def = INSTRUMENT_REGISTRY[type];
@@ -46,9 +49,12 @@ export function validateDraftPlan({
     expenseCategories = {},
     investmentAllocations = [],
     excludePlanKey = null,
+    replaceTypes = null,
 }) {
     const issues = [];
-    const totalDraft = getTotalDraftAllocated(draftAllocations);
+    const totalDraft = Array.isArray(replaceTypes) && replaceTypes.length > 0
+        ? replaceTypes.reduce((sum, type) => sum + getDraftTypeAmount(draftAllocations, type), 0)
+        : getTotalDraftAllocated(draftAllocations);
     const startMonth = monthIndex + 1;
     const monthLabel = MONTH_LABELS_LONG[monthIndex] || 'Month';
 
@@ -79,8 +85,40 @@ export function validateDraftPlan({
     const year1 = journeyProjections.find((p) => p.year === calendarYear) || journeyProjections[0];
     if (year1 && totalDraft > 0) {
         const proratedSurplus = getProratedYearSurplus(year1, planStartMonth, calendarYear);
-        const currentAlloc = year1.yearAllocationsTotal || 0;
-        const draftImpact = computeDraftYearImpact(draftAllocations, startMonth, calendarYear);
+        let currentAlloc = year1.yearAllocationsTotal || 0;
+        if (excludePlanKey && Array.isArray(investmentAllocations) && investmentAllocations.length > 0) {
+            const excludedRows = investmentAllocations.filter((a) => a.studioPlanKey === excludePlanKey);
+            let excludedImpact = 0;
+            excludedRows.forEach((alloc) => {
+                const allocStartYear = parseInt(alloc.startYear, 10);
+                const allocStartMonth = parseInt(alloc.startMonth, 10) || 1;
+                const type = alloc.type;
+                const isRecurring = [
+                    'SIP', 'PPF', 'NPS', 'Life Insurance', 'Term Insurance',
+                    'Health Insurance', 'Life Insurance Saving Plans', 'Recurring Deposit', 'RD',
+                ].includes(type);
+
+                const amount = parseAmount(alloc.amount);
+                if (isRecurring) {
+                    const isInstallment = (
+                        (type === 'Life Insurance' && !alloc.studioPlanKey)
+                        || ((type === 'Life Insurance Saving Plans' || type === 'Term Insurance') && alloc.insuredMember)
+                    );
+                    const annualAmount = isInstallment ? amount * 12 : amount;
+                    const monthlyAmount = annualAmount / 12;
+                    if (allocStartYear === calendarYear) {
+                        const monthsActive = Math.max(0, 13 - allocStartMonth);
+                        excludedImpact += monthlyAmount * monthsActive;
+                    } else if (allocStartYear < calendarYear) {
+                        excludedImpact += annualAmount;
+                    }
+                } else if (allocStartYear === calendarYear) {
+                    excludedImpact += amount;
+                }
+            });
+            currentAlloc = Math.max(0, currentAlloc - Math.round(excludedImpact));
+        }
+        const draftImpact = computeDraftYearImpact(draftAllocations, startMonth, calendarYear, replaceTypes);
         const unallocatedAfter = proratedSurplus - currentAlloc - draftImpact;
 
         if (unallocatedAfter < 0) {
@@ -226,6 +264,7 @@ export function buildStudioInsights({
     deployableSurplus,
     activeBundleId,
     scenarioComparison,
+    baseLines = [],
 }) {
     const insights = [];
 
@@ -237,13 +276,16 @@ export function buildStudioInsights({
         });
     });
 
-    if (deployableSurplus > 0 && totalAllocated === 0) {
-        insights.push({
-            id: 'start-allocating',
-            tone: 'accent',
-            text: `₹${Math.round(deployableSurplus).toLocaleString('en-IN')} is ready — pick an AI bundle or adjust instrument sliders to begin.`,
-        });
-    }
+    baseLines.forEach((line, idx) => {
+        const isReadyLine = line.includes('ready to deploy after existing commitments');
+        if (!isReadyLine || totalAllocated === 0) {
+            insights.push({
+                id: `base-line-${idx}`,
+                tone: (line.toLowerCase().includes('gap') || line.toLowerCase().includes('deficit') || line.toLowerCase().includes('alert')) ? 'warning' : 'neutral',
+                text: line,
+            });
+        }
+    });
 
     if (growthPreview?.totalDelta > 0 && totalAllocated > 0) {
         insights.push({
