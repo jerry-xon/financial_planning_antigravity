@@ -84,6 +84,50 @@ describe('allocationStudioValidation', () => {
         expect(result.canApply).toBe(true);
     });
 
+    it('allows SIP allocation up to full deployable residual surplus when replacing existing plan key', () => {
+        const result = validateDraftPlan({
+            draftAllocations: { SIP: 8000 },
+            deployableSurplus: 10000,
+            journeyProjections: [{
+                year: 2026,
+                netInvestibleSurplus: 156000,
+                yearAllocationsTotal: 50000,
+                yearHasDeficit: false,
+            }],
+            planStartMonth: 7,
+            calendarYear: 2026,
+            monthIndex: 7,
+            investmentAllocations: [
+                { id: 1, type: 'Term Insurance', amount: 36000, studioPlanKey: '2026-7', startMonth: 8, startYear: 2026 },
+                { id: 2, type: 'SIP', amount: 84000, studioPlanKey: '2026-7', startMonth: 8, startYear: 2026 },
+            ],
+            excludePlanKey: '2026-7',
+        });
+        expect(result.canApply).toBe(true);
+        expect(result.hasBlockingErrors).toBe(false);
+    });
+
+    it('scopes totalDraft to replaceTypes so protection amounts in draftAllocations do not inflate PYMTW total', () => {
+        const PYMTW_TYPES = ['SIP', 'Lumpsum', 'Direct Equity & ETFs', 'Fixed Deposit', 'Recurring Deposit', 'Life Insurance Saving Plans', 'PPF', 'NPS'];
+        const result = validateDraftPlan({
+            draftAllocations: { 'Term Insurance': { premium: 3000, insuredMember: 'Self' }, SIP: 7001 },
+            deployableSurplus: 10000,
+            journeyProjections: [{
+                year: 2026,
+                netInvestibleSurplus: 156000,
+                yearAllocationsTotal: 0,
+                yearHasDeficit: false,
+            }],
+            planStartMonth: 7,
+            calendarYear: 2026,
+            monthIndex: 7,
+            replaceTypes: PYMTW_TYPES,
+        });
+        expect(result.totalDraft).toBe(7001);
+        expect(result.canApply).toBe(true);
+        expect(result.issues.some((i) => i.id === 'surplus-exceeded')).toBe(false);
+    });
+
     it('blocks apply when year deficit projected', () => {
         const result = validateDraftPlan({
             draftAllocations: { SIP: 50000 },

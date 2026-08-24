@@ -12,15 +12,20 @@ const InsightIcon = ({ tone }) => {
     return <Lightbulb size={16} className="pymtw-insight-icon" />;
 };
 
-const StudioInsightsRail = ({ insights }) => {
+const StudioInsightsRail = ({ insights, greeting, headline }) => {
     if (!insights?.length) return null;
 
     return (
         <ReportReveal className="pymtw-insights-rail card">
             <h3 className="pymtw-zone-title">
                 <Sparkles size={18} />
-                Allocation intelligence
+                {headline || 'AI Insights'}
             </h3>
+            {greeting && (
+                <p className="pymtw-zone-sub" style={{ margin: '0.25rem 0 0.85rem', color: 'var(--text-muted, #64748b)', fontSize: '0.95rem' }}>
+                    {greeting}
+                </p>
+            )}
             <ul className="pymtw-insights-list">
                 {insights.map((item) => (
                     <li key={item.id} className={`pymtw-insight pymtw-insight-${item.tone}`}>

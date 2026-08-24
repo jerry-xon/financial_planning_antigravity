@@ -761,6 +761,38 @@ describe('putYourMoneyToWorkLogic', () => {
         expect(grouped[1].label).toBe('August');
     });
 
+    it('calculates full residual surplus for PYMTW growth allocations after deducting protection', () => {
+        const ctx = buildAllocationStudioContext({
+            moneyFlowReport: {
+                ...moneyFlowReport,
+                meta: { ...moneyFlowReport.meta, planStartMonth: 7, currentMonth: 7 },
+                ledger: {
+                    unallocatedSurplus: [0, 0, 0, 0, 0, 0, 0, 13000, 0, 0, 0, 0],
+                },
+            },
+            familyMembers: [{ relation: 'Self', name: 'Priya', dob: '1990-01-01', retirementAge: 60 }],
+            expenseCategories: {},
+            assetCategories: {},
+            journeyAdjustments: [],
+            journeyProjections: [],
+            investmentAllocations: [
+                { id: 1, type: 'Term Insurance', amount: '36000', startMonth: 8, startYear: 2026, studioPlanKey: '2026-7' },
+            ],
+            goals: [],
+            selectedMonthIndex: 7,
+            reportScope: 'pymtw',
+        });
+
+        const currentMonthOutlook = ctx.hero.threeMonthOutlook.find((m) => m.monthIndex === 7);
+        const ledger = currentMonthOutlook.ledgerUnallocated;
+        const prot = currentMonthOutlook.protectionImpact;
+        const netSurplusForGrowth = ledger - prot;
+
+        expect(ledger).toBe(13000);
+        expect(prot).toBe(3000);
+        expect(netSurplusForGrowth).toBe(10000);
+    });
+
     it('builds draft allocation plan snapshot', () => {
         const draft = buildDraftAllocationPlan({
             planKey: '2026-6',
