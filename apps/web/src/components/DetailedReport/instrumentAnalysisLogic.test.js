@@ -283,4 +283,39 @@ describe('instrumentAnalysisLogic', () => {
             showInvestmentAvenues: true,
         });
     });
+
+    it('correctly calculates baseline, scenario total, and net uplift for an 11,000 SIP allocation before and after applying', () => {
+        const draft = { ...createEmptyDraftAllocations(), SIP: 11000 };
+        const previewBeforeApply = buildGrowthPreview({
+            ...baseParams,
+            draftAllocations: draft,
+            monthIndex: 5,
+        });
+
+        expect(previewBeforeApply.scenarioTotal).toBeGreaterThan(previewBeforeApply.baselineTotal);
+        expect(previewBeforeApply.totalDelta).toBeGreaterThan(0);
+
+        // Apply allocation plan to investmentAllocations (stores annual amount = 132000)
+        const appliedAllocations = applyAllocationPlan({
+            investmentAllocations: baseParams.investmentAllocations,
+            draftAllocations: draft,
+            calendarYear: 2026,
+            monthIndex: 5,
+        });
+
+        expect(appliedAllocations.find((a) => a.type === 'SIP')?.amount).toBe(132000);
+
+        // When evaluating the month preview after applying into investmentAllocations
+        const previewAfterApply = buildGrowthPreview({
+            ...baseParams,
+            investmentAllocations: appliedAllocations,
+            draftAllocations: draft,
+            monthIndex: 5,
+        });
+
+        expect(previewAfterApply.baselineTotal).toBe(previewBeforeApply.baselineTotal);
+        expect(previewAfterApply.scenarioTotal).toBe(previewBeforeApply.scenarioTotal);
+        expect(previewAfterApply.totalDelta).toBe(previewBeforeApply.totalDelta);
+        expect(previewAfterApply.totalDelta).toBeGreaterThan(0);
+    });
 });

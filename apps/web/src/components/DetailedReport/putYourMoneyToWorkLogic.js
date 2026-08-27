@@ -9,10 +9,11 @@ import {
     createEmptyDraftAllocations,
     draftAllocationsToItems,
     getTotalDraftAllocated,
+    getRecurringMonthlyAmount,
 } from './instrumentAnalysisLogic';
 import { runLifeJourneyAllocationEngine } from './allocationEngine';
 
-export { INSTRUMENT_REGISTRY, createEmptyDraftAllocations, getTotalDraftAllocated, draftAllocationsToItems };
+export { INSTRUMENT_REGISTRY, createEmptyDraftAllocations, getTotalDraftAllocated, draftAllocationsToItems, getRecurringMonthlyAmount };
 
 const parseAmount = (value) => parseFloat(value) || 0;
 
@@ -40,28 +41,6 @@ function allocationMatchesProtectionFilter(alloc, { protectionOnly = false, excl
     if (protectionOnly) return isProtection;
     if (excludeProtection) return !isProtection;
     return true;
-}
-
-/** Studio apply stores recurring amounts as annual totals; convert to monthly. */
-export function getRecurringMonthlyAmount(alloc = {}) {
-    const amount = parseAmount(alloc.amount);
-    const type = alloc.type;
-    const freq = String(alloc.frequency || 'Monthly').toLowerCase();
-
-    // Legacy Life Insurance OR new LISP / Term Insurance installment+member rows: amount is installment premium.
-    const isInstallmentLife = (
-        (type === 'Life Insurance' && !alloc.studioPlanKey)
-        || ((type === 'Life Insurance Saving Plans' || type === 'Term Insurance') && alloc.insuredMember)
-    );
-    if (isInstallmentLife) {
-        if (freq === 'quarterly') return amount / 3;
-        if (freq === 'half-yearly' || freq === 'half yearly') return amount / 6;
-        if (freq === 'annual' || freq === 'annually') return amount / 12;
-        return amount; // Monthly installment
-    }
-
-    // Studio rows (SIP, Term/Health, legacy annual LISP, etc.): annual ÷ 12
-    return amount / 12;
 }
 
 export function allocationHasStartedByMonth(alloc = {}, calendarYear, monthIndex) {
@@ -809,7 +788,7 @@ function toCalculatorProposedSips(allocations = [], extraScenario = null) {
         .filter((a) => a.type === 'SIP')
         .map((a) => ({
             ...a,
-            amount: parseAmount(a.amount) * 12,
+            amount: getRecurringMonthlyAmount(a) * 12,
         }));
 
     if (extraScenario && extraScenario.additionalMonthly > 0) {
@@ -1085,6 +1064,7 @@ export function buildDraftAllocationPlan({
             retirementYear: growthPreview?.retirementYear || null,
             goalDeltas: goalDeltas?.filter((g) => g.projectedFundedDelta !== 0).slice(0, 6) || [],
             growthPreview: growthPreview?.rows || [],
+            marginalImpacts: growthPreview?.marginalImpacts || [],
         },
         updatedAt: new Date().toISOString(),
     };
