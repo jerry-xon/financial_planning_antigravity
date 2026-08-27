@@ -31,6 +31,11 @@ import {
 } from './trackSurplusAllocationLogic';
 import ReportReveal from './ReportReveal';
 import CurrencyInput from '../common/CurrencyInput';
+import ExecutiveKpiDashboard from './ExecutiveKpiDashboard';
+import NetWorthTrajectoryChart from './NetWorthTrajectoryChart';
+import AssetCompositionBar from './AssetCompositionBar';
+import SensitivityControlRail from './SensitivityControlRail';
+import GoalProgressDonut from './GoalProgressDonut';
 
 /** Winding route across a 640×220 map canvas. */
 const ROUTE_PATH = 'M 48 168 C 110 40, 170 200, 240 112 S 340 36, 400 128 S 470 210, 592 72';
@@ -328,6 +333,9 @@ const CompositionBar = ({ composition, accent }) => {
 
 const WealthMilestone = ({ scenario, accent }) => {
     const covered = scenario.remainingGap <= 0;
+    const poolAvailable = scenario.totalPoolAvailable || scenario.projectedWealth;
+    const surplusRemaining = scenario.surplusRemaining || 0;
+
     return (
         <div className="ymm-milestone">
             <div className="ymm-milestone-rail">
@@ -338,15 +346,25 @@ const WealthMilestone = ({ scenario, accent }) => {
             </div>
             <div className="ymm-milestone-body">
                 <div className="ymm-milestone-label">{scenario.label}</div>
-                <div className="ymm-milestone-figures">
+                <div className="ymm-milestone-figures" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
                     <div>
-                        <span>Projected wealth</span>
-                        <strong style={{ color: accent.ink }}>{formatCurrency(scenario.projectedWealth)}</strong>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>Total Surplus Pool</span>
+                        <strong style={{ color: 'var(--text-main, #0f172a)', fontVariantNumeric: 'tabular-nums' }}>
+                            {formatCurrency(poolAvailable)}
+                        </strong>
                     </div>
                     <div>
-                        <span>Shortfall</span>
-                        <strong className={covered ? 'ymm-gap-clear' : 'ymm-gap-open'}>
-                            {covered ? 'Nothing more needed' : formatCurrency(scenario.remainingGap)}
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>Allocated to Goal</span>
+                        <strong style={{ color: accent.ink, fontVariantNumeric: 'tabular-nums' }}>
+                            {formatCurrency(scenario.projectedWealth)}
+                        </strong>
+                    </div>
+                    <div>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>
+                            {covered ? 'Surplus Remaining After Goal' : 'Remaining Shortfall'}
+                        </span>
+                        <strong className={covered ? 'ymm-gap-clear' : 'ymm-gap-open'} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                            {covered ? formatCurrency(surplusRemaining) : formatCurrency(scenario.remainingGap)}
                         </strong>
                     </div>
                 </div>
@@ -355,72 +373,147 @@ const WealthMilestone = ({ scenario, accent }) => {
     );
 };
 
-const CalculationDetails = ({ audit, accent }) => {
-    const [open, setOpen] = useState(false);
-    if (!audit?.length) return null;
-
-    return (
-        <div className="ymm-calc-details">
-            <button
-                type="button"
-                className="ymm-calc-toggle"
-                onClick={() => setOpen((value) => !value)}
-                style={{ color: accent.ink }}
-            >
-                How this was calculated
-                {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            {open && (
-                <div className="ymm-calc-table">
-                    <div className="ymm-calc-row ymm-calc-head">
-                        <span>Avenue</span>
-                        <span>Available</span>
-                        <span>Allocated</span>
-                        <span>Remaining</span>
-                    </div>
-                    {audit.map((row) => (
-                        <div key={row.id} className="ymm-calc-row">
-                            <span>{row.label}</span>
-                            <span>{formatCurrency(row.availableBefore)}</span>
-                            <span>{formatCurrency(row.allocated)}</span>
-                            <span>{formatCurrency(row.remainingAfter)}</span>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
-
-const ResidualExpandable = ({ breakdown }) => {
-    const [open, setOpen] = useState(false);
+const SurplusMathRibbon = ({ breakdown }) => {
     if (!breakdown) return null;
 
+    const {
+        targetYear,
+        residualRatePct = 10,
+        surplusTillGoal = 0,
+        growthTillGoal = 0,
+        maturityTillGoal = 0,
+        drawnByEarlierGoals = 0,
+        residualDraw = 0,
+        totalAvailable = 0,
+        totalPoolAvailable = totalAvailable,
+        surplusRemaining = Math.max(0, totalPoolAvailable - residualDraw),
+    } = breakdown;
+
     return (
-        <div className="ymm-customize-readonly">
-            <button
-                type="button"
-                className="ymm-calc-toggle"
-                onClick={() => setOpen((value) => !value)}
+        <div
+            className="ymm-surplus-ribbon"
+            style={{
+                margin: '0.85rem 0 1.1rem',
+                padding: '0.9rem 1.1rem',
+                borderRadius: '12px',
+                background: 'rgba(124, 58, 237, 0.06)',
+                border: '1px solid rgba(124, 58, 237, 0.2)',
+            }}
+            aria-label={`Accumulated surplus derivation for target year ${targetYear}`}
+        >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.65rem' }}>
+                <Sparkles size={16} color="#7c3aed" />
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Accumulated Surplus Derivation Math
+                </span>
+            </div>
+
+            <div
+                style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: '10px 14px',
+                    fontSize: '0.82rem',
+                    color: 'var(--text-main, #0f172a)',
+                }}
             >
-                Accumulated surplus calculation
-                {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            {open && (
-                <div className="ymm-calc-table">
-                    {(breakdown.lines || []).map((line) => (
-                        <div
-                            key={line.id}
-                            className={`ymm-calc-row${line.id === 'total' ? ' ymm-calc-total' : ''}`}
-                        >
-                            <span>{line.label}</span>
-                            <span />
-                            <span />
-                            <span>{formatCurrency(line.amount)}</span>
-                        </div>
-                    ))}
+                {/* Step 1: Surplus Accrued */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)', fontWeight: 500 }}>
+                        Surplus till {targetYear}
+                    </span>
+                    <strong style={{ fontVariantNumeric: 'tabular-nums', color: '#0f172a' }}>
+                        {formatCurrency(surplusTillGoal)}
+                    </strong>
                 </div>
-            )}
+
+                {/* Operator + */}
+                <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#059669', userSelect: 'none' }}>+</span>
+
+                {/* Step 2: Growth */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)', fontWeight: 500 }}>
+                        Growth @ {residualRatePct}%
+                    </span>
+                    <strong style={{ fontVariantNumeric: 'tabular-nums', color: '#059669' }}>
+                        {formatCurrency(growthTillGoal)}
+                    </strong>
+                </div>
+
+                {/* Step 3: Unused Maturities (if > 0) */}
+                {maturityTillGoal > 0 && (
+                    <>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#059669', userSelect: 'none' }}>+</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)', fontWeight: 500 }}>
+                                Maturities
+                            </span>
+                            <strong style={{ fontVariantNumeric: 'tabular-nums', color: '#059669' }}>
+                                {formatCurrency(maturityTillGoal)}
+                            </strong>
+                        </div>
+                    </>
+                )}
+
+                {/* Step 4: Earlier Goals Deducted (if > 0) */}
+                {drawnByEarlierGoals > 0 && (
+                    <>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#dc2626', userSelect: 'none' }}>-</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)', fontWeight: 500 }}>
+                                Earlier Goals
+                            </span>
+                            <strong style={{ fontVariantNumeric: 'tabular-nums', color: '#dc2626' }}>
+                                {formatCurrency(drawnByEarlierGoals)}
+                            </strong>
+                        </div>
+                    </>
+                )}
+
+                {/* Operator = */}
+                <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#7c3aed', userSelect: 'none' }}>=</span>
+
+                {/* Step 5: Total Pool Available */}
+                <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(124, 58, 237, 0.12)', padding: '4px 10px', borderRadius: '8px' }}>
+                    <span style={{ fontSize: '0.74rem', color: '#6d28d9', fontWeight: 600 }}>
+                        Total Pool Available
+                    </span>
+                    <strong style={{ fontVariantNumeric: 'tabular-nums', color: '#6d28d9', fontSize: '0.92rem' }}>
+                        {formatCurrency(totalPoolAvailable)}
+                    </strong>
+                </div>
+
+                {/* Operator - */}
+                {residualDraw > 0 && (
+                    <>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#b45309', userSelect: 'none' }}>-</span>
+
+                        {/* Step 6: Allocated to Goal */}
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)', fontWeight: 500 }}>
+                                Allocated to Goal
+                            </span>
+                            <strong style={{ fontVariantNumeric: 'tabular-nums', color: '#b45309' }}>
+                                {formatCurrency(residualDraw)}
+                            </strong>
+                        </div>
+
+                        {/* Operator = */}
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#059669', userSelect: 'none' }}>=</span>
+
+                        {/* Step 7: Surplus Remaining */}
+                        <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(5, 150, 105, 0.12)', padding: '4px 10px', borderRadius: '8px' }}>
+                            <span style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 600 }}>
+                                Surplus Remaining
+                            </span>
+                            <strong style={{ fontVariantNumeric: 'tabular-nums', color: '#059669', fontSize: '0.92rem' }}>
+                                {formatCurrency(surplusRemaining)}
+                            </strong>
+                        </div>
+                    </>
+                )}
+            </div>
         </div>
     );
 };
@@ -484,8 +577,6 @@ const CustomizePanel = ({
                 ))}
             </div>
 
-            <ResidualExpandable breakdown={goal.residualBreakdown} />
-
             {(goal.maturityAtGoalYear || []).map((row) => (
                 <div key={row.id} className="ymm-customize-readonly-row">
                     <div>
@@ -545,6 +636,9 @@ const GoalCard = ({
             ? { label: 'Partially Funded', tone: 'partial' }
             : { label: 'Shortfall', tone: 'danger' };
 
+    const currentYearNow = new Date().getFullYear();
+    const yearsLeft = Math.max(0, goal.targetYear - currentYearNow);
+
     return (
         <div
             ref={cardRef}
@@ -556,54 +650,84 @@ const GoalCard = ({
             data-goal-id={goal.goalId}
         >
             <div className="ymm-goal-head">
-                <div>
-                    <div className="ymm-goal-title-row">
-                        <span
-                            className="ymm-goal-icon"
-                            style={{ background: accent.hex }}
-                            aria-hidden="true"
-                        >
-                            <Target size={16} color="#fff" />
-                        </span>
-                        <h3>{goal.name}</h3>
-                        <span
-                            className="ymm-goal-badge"
-                            style={{ background: accent.soft, color: accent.ink }}
-                        >
-                            {status.tone === 'success' ? <CheckCircle2 size={13} /> : null}
-                            {status.label}
-                        </span>
-                        {isCustomized && (
-                            <span className="ymm-goal-chip" style={{ background: accent.soft, color: accent.ink }}>
-                                Customized
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <GoalProgressDonut pct={scenario.fundedPct} tone={status.tone} />
+                    <div>
+                        <div className="ymm-goal-title-row">
+                            <span
+                                className="ymm-goal-icon"
+                                style={{ background: accent.hex }}
+                                aria-hidden="true"
+                            >
+                                <Target size={16} color="#fff" />
                             </span>
-                        )}
-                        {goal.isRetirement && (
-                            <span className="ymm-goal-chip" style={{ background: accent.soft, color: accent.ink }}>
-                                Retirement
+                            <h3>{goal.name}</h3>
+                            <span
+                                className="ymm-goal-badge"
+                                style={{ background: accent.soft, color: accent.ink }}
+                            >
+                                {status.tone === 'success' ? <CheckCircle2 size={13} /> : null}
+                                {status.label}
                             </span>
-                        )}
+                            {isCustomized && (
+                                <span className="ymm-goal-chip" style={{ background: accent.soft, color: accent.ink }}>
+                                    Customized
+                                </span>
+                            )}
+                            {goal.isRetirement && (
+                                <span className="ymm-goal-chip" style={{ background: accent.soft, color: accent.ink }}>
+                                    Retirement
+                                </span>
+                            )}
+                        </div>
+                        <div className="ymm-goal-sub" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>Needed by {goal.targetYear}</span>
+                            <span style={{ fontSize: '0.75rem', padding: '1px 6px', borderRadius: '4px', background: 'var(--bg-subtle, #f1f5f9)', color: 'var(--text-muted, #64748b)', fontWeight: 600 }}>
+                                {yearsLeft === 0 ? 'Due this year' : `In ${yearsLeft} Year${yearsLeft > 1 ? 's' : ''}`}
+                            </span>
+                        </div>
                     </div>
-                    <div className="ymm-goal-sub">Needed by {goal.targetYear}</div>
                 </div>
                 <div className="ymm-goal-amount">
                     <div className="ymm-goal-amount-label">Goal amount</div>
-                    <div className="ymm-goal-amount-value" style={{ color: accent.ink }}>
+                    <div className="ymm-goal-amount-value" style={{ color: accent.ink, fontVariantNumeric: 'tabular-nums' }}>
                         {formatCurrency(goal.goalAmount)}
                     </div>
                 </div>
             </div>
 
+            {scenario.remainingGap > 0 && (
+                <div
+                    style={{
+                        margin: '0.75rem 0',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '10px',
+                        background: 'rgba(217, 119, 6, 0.08)',
+                        border: '1px solid rgba(217, 119, 6, 0.2)',
+                        fontSize: '0.82rem',
+                        color: '#b45309',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                    }}
+                >
+                    <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                    <span>
+                        <strong>Recommended Action:</strong> Increase monthly SIP allocation or adjust timeline to bridge remaining {formatCurrency(scenario.remainingGap)} gap.
+                    </span>
+                </div>
+            )}
+
             <div className="ymm-milestone-list">
                 <WealthMilestone scenario={scenario} accent={accent} />
             </div>
 
-            <CompositionBar
+            <AssetCompositionBar
                 composition={scenario.composition}
                 accent={accent}
             />
 
-            <CalculationDetails audit={goal.calculationAudit} accent={accent} />
+            <SurplusMathRibbon breakdown={goal.residualBreakdown} />
 
             {editing ? (
                 <CustomizePanel
@@ -663,14 +787,43 @@ const TrackSurplusAllocationSection = () => {
     const [editingGoalId, setEditingGoalId] = useState(null);
     const [draftByGoalId, setDraftByGoalId] = useState({});
     const [customizedGoalIds, setCustomizedGoalIds] = useState(() => loadCustomizedGoalIds());
+    const [sensitivityInflation, setSensitivityInflation] = useState(6);
+    const [sensitivityReturnDelta, setSensitivityReturnDelta] = useState(0);
+    const [simulatedRetirementAge, setSimulatedRetirementAge] = useState(() => {
+        const selfMember = (familyMembers || []).find((m) => m.relation?.toLowerCase() === 'self');
+        return parseInt(selfMember?.retirementAge, 10) || 60;
+    });
+
     const cardRefs = useRef({});
     const syncingRef = useRef(false);
+
+    const effectiveGoals = useMemo(() => {
+        if (sensitivityInflation === 6) return goals;
+        return (goals || []).map((g) => ({ ...g, inflationRate: sensitivityInflation }));
+    }, [goals, sensitivityInflation]);
+
+    const effectiveCalculatorInputs = useMemo(() => {
+        if (sensitivityReturnDelta === 0) return calculatorInputs;
+        return {
+            ...calculatorInputs,
+            sip: { ...calculatorInputs?.sip, rate: (parseFloat(calculatorInputs?.sip?.rate) || 12) + sensitivityReturnDelta },
+            equity: { ...calculatorInputs?.equity, rate: (parseFloat(calculatorInputs?.equity?.rate) || 15) + sensitivityReturnDelta },
+            lumpsum: { ...calculatorInputs?.lumpsum, rate: (parseFloat(calculatorInputs?.lumpsum?.rate) || 12) + sensitivityReturnDelta },
+        };
+    }, [calculatorInputs, sensitivityReturnDelta]);
+
+    const effectiveFamilyMembers = useMemo(() => {
+        if (!simulatedRetirementAge) return familyMembers;
+        return (familyMembers || []).map((m) => (
+            m.relation?.toLowerCase() === 'self' ? { ...m, retirementAge: simulatedRetirementAge } : m
+        ));
+    }, [familyMembers, simulatedRetirementAge]);
 
     const moneyFlowReport = useMemo(
         () => buildYourMoneyFlowReport({
             currentYearLedger,
             planStartMonth,
-            familyMembers,
+            familyMembers: effectiveFamilyMembers,
             income,
             expenseCategories,
             hasSpouseIncome,
@@ -680,7 +833,7 @@ const TrackSurplusAllocationSection = () => {
         [
             currentYearLedger,
             planStartMonth,
-            familyMembers,
+            effectiveFamilyMembers,
             income,
             expenseCategories,
             hasSpouseIncome,
@@ -695,12 +848,12 @@ const TrackSurplusAllocationSection = () => {
 
     const report = useMemo(
         () => buildTrackSurplusAllocationReport({
-            goals,
+            goals: effectiveGoals,
             expenseCategories,
             assetCategories,
-            calculatorInputs,
+            calculatorInputs: effectiveCalculatorInputs,
             investmentAllocations,
-            familyMembers,
+            familyMembers: effectiveFamilyMembers,
             policies,
             journeyProjections,
             monthlyUnallocatedSurplus: moneyFlowReport.ledger.unallocatedSurplus,
@@ -711,12 +864,12 @@ const TrackSurplusAllocationSection = () => {
             customizedGoalIds: [...customizedGoalIds],
         }),
         [
-            goals,
+            effectiveGoals,
             expenseCategories,
             assetCategories,
-            calculatorInputs,
+            effectiveCalculatorInputs,
             investmentAllocations,
-            familyMembers,
+            effectiveFamilyMembers,
             policies,
             journeyProjections,
             moneyFlowReport,
@@ -861,6 +1014,27 @@ const TrackSurplusAllocationSection = () => {
                 </div>
             </ReportReveal>
 
+            <ReportReveal delay={40}>
+                <ExecutiveKpiDashboard totals={report.totals} meta={report.meta} />
+            </ReportReveal>
+
+            <ReportReveal delay={60}>
+                <SensitivityControlRail
+                    inflationRate={sensitivityInflation}
+                    onInflationChange={setSensitivityInflation}
+                    returnDelta={sensitivityReturnDelta}
+                    onReturnDeltaChange={setSensitivityReturnDelta}
+                    retirementAge={simulatedRetirementAge}
+                    onRetirementAgeChange={setSimulatedRetirementAge}
+                    onReset={() => {
+                        setSensitivityInflation(6);
+                        setSensitivityReturnDelta(0);
+                        const selfMember = (familyMembers || []).find((m) => m.relation?.toLowerCase() === 'self');
+                        setSimulatedRetirementAge(parseInt(selfMember?.retirementAge, 10) || 60);
+                    }}
+                />
+            </ReportReveal>
+
             <ReportReveal delay={80}>
                 <div
                     className="card"
@@ -910,11 +1084,12 @@ const TrackSurplusAllocationSection = () => {
             </ReportReveal>
 
             <ReportReveal delay={120}>
-                <JourneyMap
+                <NetWorthTrajectoryChart
                     currentYear={meta.asOfYear}
                     retirementYear={retirementYear}
-                    farthestGoalYear={meta.farthestGoalYear || meta.horizonYear}
+                    horizonYear={meta.farthestGoalYear || meta.horizonYear}
                     goals={goalCards}
+                    futureSurplusTimeline={report.futureSurplus?.timeline}
                 />
             </ReportReveal>
 
