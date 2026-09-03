@@ -439,6 +439,10 @@ describe('buildTrackSurplusAllocationReport', () => {
         expect(report.totals.projectedWealth).toBe(
             car.scenario.projectedWealth + house.scenario.projectedWealth,
         );
+        expect(report.totals.totalGoalLiability).toBe(car.goalAmount + house.goalAmount);
+        expect(report.totals.solvencyRatio).toBeGreaterThan(0);
+        expect(report.totals.solvencyStatus).toBeDefined();
+        expect(report.totals.solvencyStatus.label).toBeDefined();
     });
 
     it('includes PYMTW planning in the single wealth scenario', () => {
@@ -534,9 +538,13 @@ describe('buildTrackSurplusAllocationReport', () => {
 
         expect(surplus.amount).toBe(100000);
         expect(sip.amount).toBe(400000);
-        expect(card.residualBreakdown.lines.at(-1)).toMatchObject({
-            id: 'total',
+        expect(card.residualBreakdown.lines.find((l) => l.id === 'pool')).toMatchObject({
+            id: 'pool',
             amount: 200000,
+        });
+        expect(card.residualBreakdown.lines.find((l) => l.id === 'remaining')).toMatchObject({
+            id: 'remaining',
+            amount: 100000,
         });
     });
 

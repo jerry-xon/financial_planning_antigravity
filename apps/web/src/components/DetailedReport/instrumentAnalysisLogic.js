@@ -199,6 +199,28 @@ export function getLispDraftMonthly(draft) {
     return premiumToMonthlyEquivalent(draft.premium, draft.frequency);
 }
 
+/** Studio apply stores recurring amounts as annual totals; convert to monthly. */
+export function getRecurringMonthlyAmount(alloc = {}) {
+    const amount = parseAmount(alloc.amount);
+    const type = alloc.type;
+    const freq = String(alloc.frequency || 'Monthly').toLowerCase();
+
+    // Installment premium rows (legacy Life / new LISP or Term Insurance with insuredMember)
+    const isInstallmentLife = (
+        (type === 'Life Insurance' && !alloc.studioPlanKey)
+        || ((type === 'Life Insurance Saving Plans' || type === 'Term Insurance') && alloc.insuredMember)
+    );
+    if (isInstallmentLife) {
+        if (freq === 'quarterly') return amount / 3;
+        if (freq === 'half-yearly' || freq === 'half yearly') return amount / 6;
+        if (freq === 'annual' || freq === 'annually') return amount / 12;
+        return amount;
+    }
+
+    // Studio rows (SIP, Term/Health, legacy annual LISP, etc.): annual ÷ 12
+    return amount / 12;
+}
+
 /** Numeric monthly/lumpsum amount used for surplus totals and max clamps. */
 export function getDraftTypeAmount(draftAllocations = {}, type) {
     const value = draftAllocations?.[type];
@@ -397,9 +419,13 @@ export function analyzeInstrument(
     const retirementYear = getRetirementYear(familyMembers, currentYear);
     const yearsToRetirement = retirementYear - currentYear;
     const allocType = def.allocType;
-    const stored = investmentAllocations.filter((a) => normalizeAllocType(a.type) === instrumentType || a.type === allocType);
+    const planKey = getAllocationPlanKey(calendarYear, monthIndex);
+    const stored = investmentAllocations.filter((a) => {
+        if (a.studioPlanKey === planKey) return false;
+        return normalizeAllocType(a.type) === instrumentType || a.type === allocType;
+    });
     const proposedMonthly = stored.reduce((sum, a) => {
-        if (def.inputMode === 'monthly') return sum + parseAmount(a.amount) / 12;
+        if (def.inputMode === 'monthly') return sum + getRecurringMonthlyAmount(a);
         return sum;
     }, 0);
     const proposedLumpsum = stored.reduce((sum, a) => {
@@ -424,7 +450,10 @@ export function analyzeInstrument(
         const existing = parseAmount(expenseCategories?.savings?.sip?.amount ?? expenseCategories?.savings?.sip);
         const corpus = parseAmount(assetCategories?.investments?.mutualFunds)
             || parseAmount(assetCategories?.equity?.mfEquity) || 0;
-        const proposed = stored.map((a) => ({ ...a, amount: parseAmount(a.amount) * 12 }));
+        const proposed = stored.map((a) => ({
+            ...a,
+            amount: getRecurringMonthlyAmount(a) * 12,
+        }));
         if (scenario > 0) {
             proposed.push(makeScenarioAlloc(allocType, scenario, startMonth, calendarYear, def));
         }
@@ -433,7 +462,7 @@ export function analyzeInstrument(
             cfg.events || cfg.increments || [], proposed, goalMappings, goals,
         );
         series = data.map((r) => ({ year: r.year, corpus: r.valueAfterWithdrawal }));
-        headlineValue = Math.round(series.find((r) => r.year === retirementYear)?.corpus || 0);
+        headlineValue = Math.round(series.find((r) => r.year === retirementYear)?.corpus || series[series.length - 1]?.corpus || 0);
     } else if (instrumentType === 'Lumpsum') {
         const base = parseAmount(cfg.amount) || 0;
         const proposed = [...stored];
@@ -443,7 +472,7 @@ export function analyzeInstrument(
             cfg.events || [], proposed, goalMappings, goals,
         );
         series = data.map((r) => ({ year: r.year, corpus: r.valueAfterWithdrawal }));
-        headlineValue = Math.round(series.find((r) => r.year === retirementYear)?.corpus || 0);
+        headlineValue = Math.round(series.find((r) => r.year === retirementYear)?.corpus || series[series.length - 1]?.corpus || 0);
     } else if (instrumentType === 'Direct Equity & ETFs') {
         const corpus = parseAmount(assetCategories?.investments?.equity) || parseAmount(assetCategories?.equity?.stocks) || 0;
         const proposed = [...stored];
@@ -453,7 +482,7 @@ export function analyzeInstrument(
             cfg.events || [], proposed, goalMappings, goals,
         );
         series = data.map((r) => ({ year: r.year, corpus: r.valueAfterWithdrawal }));
-        headlineValue = Math.round(series.find((r) => r.year === retirementYear)?.corpus || 0);
+        headlineValue = Math.round(series.find((r) => r.year === retirementYear)?.corpus || series[series.length - 1]?.corpus || 0);
     } else if (instrumentType === 'PPF') {
         const proposed = stored.map((a) => ({
             ...a,
@@ -546,6 +575,89 @@ export function compareInstrumentGoalImpacts(baselineImpacts = [], scenarioImpac
         };
     });
 }
+export function calculateMarginalImpact({
+    draftAllocations = {},
+    goals = [],
+    calculatorInputs = {},
+    currentYear = new Date().getFullYear(),
+}) {
+    const activeGoals = goals
+        .map((g) => {
+            const rawYears = g.yearsToGoal !== undefined && g.yearsToGoal !== '' && g.yearsToGoal !== null
+                ? parseFloat(g.yearsToGoal)
+                : (g.targetYear ? parseFloat(g.targetYear) - currentYear : NaN);
+            return {
+                ...g,
+                parsedYears: rawYears,
+            };
+        })
+        .filter((g) => (
+            !isNaN(g.parsedYears)
+            && g.parsedYears >= 0
+            && (g.name || g.placeholder)
+            && (g.presentValue !== undefined && g.presentValue !== '' ? parseFloat(g.presentValue) >= 0 : true)
+        ))
+        .sort((a, b) => a.parsedYears - b.parsedYears)
+        .slice(0, 2);
+
+    if (activeGoals.length === 0) return [];
+
+    const draftTypes = STUDIO_INSTRUMENT_TYPES.filter((t) => getDraftTypeAmount(draftAllocations, t) > 0);
+    if (draftTypes.length === 0) return [];
+
+    return activeGoals.map((goal) => {
+        const yearsToGoal = goal.parsedYears;
+        const monthsToGoal = Math.round(yearsToGoal * 12);
+        const targetYear = currentYear + Math.round(yearsToGoal);
+        let totalAdded = 0;
+        const breakdowns = [];
+
+        draftTypes.forEach((type) => {
+            const def = INSTRUMENT_REGISTRY[type];
+            if (!def || def.isProtection) return;
+
+            const calcKey = def.goalKey || (type === 'PPF' ? 'ppf' : type === 'NPS' ? 'nps' : null);
+            const cfg = calcKey ? (calculatorInputs[calcKey] || {}) : {};
+            const rate = parseFloat(cfg.rate) || def.defaultRate;
+            const r = rate / 1200;
+            const amount = getDraftTypeAmount(draftAllocations, type);
+            let fv = 0;
+
+            if (def.inputMode === 'monthly') {
+                if (r > 0 && monthsToGoal > 0) {
+                    fv = amount * ((Math.pow(1 + r, monthsToGoal) - 1) / r) * (1 + r);
+                } else {
+                    fv = amount * monthsToGoal;
+                }
+            } else if (def.inputMode === 'lumpsum') {
+                if (r > 0 && monthsToGoal > 0) {
+                    fv = amount * Math.pow(1 + r, monthsToGoal);
+                } else {
+                    fv = amount;
+                }
+            }
+
+            totalAdded += fv;
+            breakdowns.push({
+                type,
+                label: def.label || type,
+                amount,
+                inputMode: def.inputMode,
+                rate,
+                addedAmount: Math.round(fv),
+            });
+        });
+
+        return {
+            goalId: goal.id,
+            goalName: goal.name || goal.placeholder || 'Goal',
+            yearsAway: yearsToGoal,
+            targetYear,
+            addedAmount: Math.round(totalAdded),
+            breakdowns,
+        };
+    });
+}
 
 export function buildGrowthPreview({
     expenseCategories,
@@ -596,6 +708,13 @@ export function buildGrowthPreview({
         };
     });
 
+    const marginalImpacts = calculateMarginalImpact({
+        draftAllocations,
+        goals,
+        calculatorInputs,
+        currentYear,
+    });
+
     return {
         retirementYear,
         baselineTotal,
@@ -603,6 +722,7 @@ export function buildGrowthPreview({
         totalDelta: scenarioTotal - baselineTotal,
         rows,
         hasDraft: instrumentKeys.length > 0,
+        marginalImpacts,
     };
 }
 

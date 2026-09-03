@@ -468,14 +468,18 @@ const PutYourMoneyToWorkSection = ({ mode = 'pymtw' }) => {
         ppfMaxByCap,
     ]);
 
+    const effectiveAllocations = useMemo(() => (
+        isEditingMonth ? draftAllocations : (hasAppliedMonthPlan ? appliedBaseline : draftAllocations)
+    ), [isEditingMonth, draftAllocations, hasAppliedMonthPlan, appliedBaseline]);
+
     const growthPreview = useMemo(() => {
         if (!analysisBase || !studio.meta?.hasData) return null;
         return buildGrowthPreview({
             ...analysisBase,
-            draftAllocations,
+            draftAllocations: effectiveAllocations,
             monthIndex: effectiveMonth,
         });
-    }, [analysisBase, draftAllocations, effectiveMonth, studio.meta]);
+    }, [analysisBase, effectiveAllocations, effectiveMonth, studio.meta]);
 
     const appliedGrowthPreview = useMemo(() => {
         if (avenuesMode !== 'ai_applied' && avenuesMode !== 'manual_applied') return null;
@@ -487,9 +491,12 @@ const PutYourMoneyToWorkSection = ({ mode = 'pymtw' }) => {
             scenarioTotal: snap.retirementCorpusAfter || 0,
             totalDelta: snap.retirementCorpusDelta || 0,
             retirementYear: snap.retirementYear || growthPreview?.retirementYear,
-            rows: [],
+            rows: snap.growthPreview || [],
+            marginalImpacts: (growthPreview?.marginalImpacts && growthPreview.marginalImpacts.length > 0)
+                ? growthPreview.marginalImpacts
+                : (snap.marginalImpacts || []),
         };
-    }, [avenuesMode, allocationPlans, planKey, growthPreview?.retirementYear]);
+    }, [avenuesMode, allocationPlans, planKey, growthPreview]);
 
     const recommendedBundles = useMemo(
         () => buildRecommendedBundles({

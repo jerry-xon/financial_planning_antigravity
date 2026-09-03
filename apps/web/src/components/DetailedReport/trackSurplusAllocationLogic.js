@@ -206,6 +206,12 @@ export function buildResidualBreakdownForGoal({
         });
     });
 
+    const totalPoolAvailable = Math.max(
+        Math.round(totalAvailable),
+        Math.round(surplusTillGoal + growthTillGoal + maturityTillGoal - drawnByEarlierGoals),
+    );
+    const surplusRemaining = Math.max(0, totalPoolAvailable - Math.round(residualDraw));
+
     return {
         targetYear,
         residualDraw: Math.round(residualDraw),
@@ -216,6 +222,8 @@ export function buildResidualBreakdownForGoal({
         maturityTillGoal: Math.round(maturityTillGoal),
         drawnByEarlierGoals: Math.round(drawnByEarlierGoals),
         totalAvailable: Math.round(totalAvailable),
+        totalPoolAvailable,
+        surplusRemaining,
         lines: [
             {
                 id: 'surplus',
@@ -234,8 +242,13 @@ export function buildResidualBreakdownForGoal({
             },
             {
                 id: 'earlier',
-                label: 'Used by earlier goals',
+                label: 'Deducted: Drawn by earlier goals',
                 amount: Math.round(drawnByEarlierGoals),
+            },
+            {
+                id: 'pool',
+                label: 'Total Surplus Pool Available',
+                amount: totalPoolAvailable,
             },
             {
                 id: 'drawn',
@@ -243,11 +256,11 @@ export function buildResidualBreakdownForGoal({
                 amount: Math.round(residualDraw),
             },
             {
-                id: 'total',
-                label: 'Total amount available for this goal',
-                amount: Math.round(totalAvailable),
+                id: 'remaining',
+                label: 'Surplus Remaining After Goal',
+                amount: surplusRemaining,
             },
-        ].filter((line) => line.amount > 0 || line.id === 'drawn' || line.id === 'total'),
+        ].filter((line) => line.amount > 0 || line.id === 'drawn' || line.id === 'pool' || line.id === 'remaining' || line.id === 'total'),
     };
 }
 
@@ -912,17 +925,22 @@ export function simulateResidualPool({
     };
 }
 
-function buildScenario(scenarioId, targetYear, goalAmount, draws) {
+function buildScenario(scenarioId, targetYear, goalAmount, draws, extraMeta = {}) {
     const composition = draws
         .filter((item) => item.amount > 0)
         .map((item) => ({ ...item, amount: Math.round(item.amount) }));
     const projectedWealth = composition.reduce((sum, item) => sum + item.amount, 0);
+    const totalPoolAvailable = extraMeta.totalPoolAvailable ?? Math.max(projectedWealth, extraMeta.residualAvailable || 0);
+    const surplusRemaining = extraMeta.surplusRemaining ?? Math.max(0, totalPoolAvailable - projectedWealth);
+
     return {
         id: scenarioId,
         label: scenarioLabel(scenarioId, targetYear),
         description: scenarioDescription(scenarioId),
         goalAmount,
         projectedWealth,
+        totalPoolAvailable,
+        surplusRemaining,
         remainingGap: Math.max(0, Math.round(goalAmount - projectedWealth)),
         fundedPct: goalAmount > 0
             ? Math.min(100, Math.round((projectedWealth / goalAmount) * 100))
@@ -1086,9 +1104,6 @@ export function buildTrackSurplusAllocationReport({
             }, ...planDraws]
             : planDraws;
 
-        const wealthScenario = buildScenario(SCENARIO_WEALTH, targetYear, goalAmount, wealthDraws);
-
-        // Display-only maturity rows for Customize when maturity year === goal year.
         const maturityAtGoalYear = planDraws
             .filter((d) => d.kind === 'maturity' && (d.id === 'fd' || d.id === 'rd') && d.amount > 0)
             .map((d) => ({
@@ -1107,6 +1122,18 @@ export function buildTrackSurplusAllocationReport({
             asOfYear,
             residualRatePct,
         });
+
+        const wealthScenario = buildScenario(
+            SCENARIO_WEALTH,
+            targetYear,
+            goalAmount,
+            wealthDraws,
+            {
+                totalPoolAvailable: residualBreakdown.totalPoolAvailable,
+                surplusRemaining: residualBreakdown.surplusRemaining,
+                residualAvailable,
+            },
+        );
 
         return {
             goalId: goal.id,
@@ -1163,16 +1190,72 @@ export function buildTrackSurplusAllocationReport({
         };
     });
 
-    const totals = goalCards.reduce((acc, card) => {
+    const rawTotals = goalCards.reduce((acc, card) => {
         acc.goalAmount += card.goalAmount;
         acc.projectedWealth += card.scenario.projectedWealth;
         acc.remainingGap += card.scenario.remainingGap;
+        if (card.scenario.remainingGap <= 0) {
+            acc.fullyFundedCount += 1;
+        } else if (card.scenario.projectedWealth > 0) {
+            acc.partiallyFundedCount += 1;
+        } else {
+            acc.shortfallCount += 1;
+        }
         return acc;
     }, {
         goalAmount: 0,
         projectedWealth: 0,
         remainingGap: 0,
+        fullyFundedCount: 0,
+        partiallyFundedCount: 0,
+        shortfallCount: 0,
     });
+
+    const totalGoalLiability = rawTotals.goalAmount;
+    const totalProjectedWealth = rawTotals.projectedWealth;
+    const totalRemainingGap = rawTotals.remainingGap;
+    const totalGoalCount = goalCards.length;
+    const solvencyRatio = totalGoalLiability > 0
+        ? Math.min(100, Math.round((totalProjectedWealth / totalGoalLiability) * 100))
+        : 100;
+
+    let solvencyStatus = {
+        label: 'Fully On Track',
+        tone: 'success',
+        color: '#059669',
+        soft: 'rgba(5, 150, 105, 0.12)',
+        description: 'Your projected wealth fully covers all your life goals.',
+    };
+
+    if (totalGoalCount > 0) {
+        if (solvencyRatio < 70) {
+            solvencyStatus = {
+                label: 'Critical Shortfall',
+                tone: 'danger',
+                color: '#dc2626',
+                soft: 'rgba(220, 38, 38, 0.12)',
+                description: 'Significant gaps detected. Increase surplus allocations to cover goals.',
+            };
+        } else if (solvencyRatio < 100) {
+            solvencyStatus = {
+                label: 'Requires Adjustment',
+                tone: 'warning',
+                color: '#d97706',
+                soft: 'rgba(217, 119, 6, 0.12)',
+                description: 'Most goals are covered, but a shortfall remains for later goals.',
+            };
+        }
+    }
+
+    const totals = {
+        ...rawTotals,
+        totalGoalLiability,
+        totalProjectedWealth,
+        totalRemainingGap,
+        totalGoalCount,
+        solvencyRatio,
+        solvencyStatus,
+    };
 
     const farthestGoalYear = activeGoals.reduce(
         (max, g) => Math.max(max, getGoalTargetYear(g, asOfYear)),
