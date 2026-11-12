@@ -72,30 +72,7 @@ const RoleBasedRouting = ({ children }) => {
     return <AdminDashboard />;
   }
 
-  if (userRole === "agent") {
-    return (
-      <>
-        {children}
-        <div
-          style={{
-            position: "fixed",
-            bottom: 20,
-            right: 20,
-            padding: "0.75rem 1rem",
-            background: "var(--primary)",
-            color: "white",
-            borderRadius: "8px",
-            fontSize: "0.875rem",
-            fontWeight: "600",
-            zIndex: 9999,
-          }}
-        >
-          Agent Account
-        </div>
-      </>
-    );
-  }
-
+  // Legacy agent accounts: no special B2C chrome — partners use WealthMap-Partner
   if (!user) {
     return <>{children}</>;
   }

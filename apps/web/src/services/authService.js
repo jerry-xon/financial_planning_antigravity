@@ -31,6 +31,8 @@ const buildRedirectUrl = (path = '/') => {
 
 // Sign up with email and password
 export const signUpWithEmail = async (email, password, fullName, role = 'user', company = '') => {
+  // Public signup cannot create agents; partner portal invite path only
+  const safeRole = role === 'agent' ? 'user' : (role || 'user');
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -38,8 +40,8 @@ export const signUpWithEmail = async (email, password, fullName, role = 'user', 
       options: {
         data: {
           full_name: fullName,
-          role: role,
-          company_name: company,
+          role: safeRole,
+          company_name: safeRole === 'user' ? '' : company,
         },
       },
     });
@@ -70,12 +72,14 @@ export const signInWithEmail = async (email, password) => {
 
 export const signInWithGoogle = async (role = 'user') => {
   try {
+    // Public OAuth cannot create agents; partners are invite-only
+    const safeRole = role === 'agent' ? 'user' : (role || 'user');
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: buildRedirectUrl('/'),
         queryParams: {
-          role: role,
+          role: safeRole,
         },
       },
     });

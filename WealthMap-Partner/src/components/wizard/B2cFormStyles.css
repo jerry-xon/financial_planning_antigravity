@@ -1,0 +1,157 @@
+/* B2C conversational field styles (subset of apps/web index.css) for partner wizard */
+:root {
+  --primary: #0f766e;
+  --text-main: #121820;
+  --text-muted: #5c6b7a;
+  --bg-card: #ffffff;
+}
+
+.b2c-form-host {
+  --border: rgba(18, 24, 32, 0.12);
+}
+
+.b2c-form-host .conversational-input {
+  width: 100%;
+  padding: 0.9rem 1.1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 1.05rem;
+  outline: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  font-family: inherit;
+}
+
+.b2c-form-host .conversational-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.b2c-form-host .conversational-input::placeholder {
+  color: #b0bec5;
+}
+
+.b2c-form-host select.conversational-input,
+.b2c-form-host .conversational-select {
+  padding: 0.6rem 2rem 0.6rem 1.1rem;
+  line-height: 1.35;
+  min-height: 48px;
+  height: auto;
+  box-sizing: border-box;
+  appearance: auto;
+  -webkit-appearance: menulist;
+  cursor: pointer;
+}
+
+.b2c-form-host .currency-input-wrapper {
+  position: relative;
+}
+
+.b2c-form-host .currency-input-wrapper .currency-symbol {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 1.05rem;
+  pointer-events: none;
+}
+
+.b2c-form-host .currency-input-wrapper .conversational-input {
+  padding-left: 2.25rem;
+  font-weight: 600;
+}
+
+.b2c-form-host .option-cards {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.b2c-form-host .option-card {
+  flex: 1;
+  min-width: 120px;
+  max-width: 200px;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  border: 1.5px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+  font-weight: 700;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.b2c-form-host .option-card.active,
+.b2c-form-host .option-card.selected {
+  border-color: var(--primary);
+  background: rgba(15, 118, 110, 0.08);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.b2c-form-host .reconciliation-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  margin: 0.75rem 0 1rem;
+  font-size: 0.88rem;
+}
+
+.b2c-form-host .reconciliation-bar__segment strong {
+  font-weight: 750;
+}
+
+.b2c-form-host .reconciliation-bar__remaining--match {
+  color: #059669;
+}
+
+.b2c-form-host .reconciliation-bar__remaining--under,
+.b2c-form-host .reconciliation-bar__remaining--under strong {
+  color: #d97706;
+}
+
+.b2c-form-host .reconciliation-bar__remaining--over {
+  color: #dc2626;
+}
+
+.wizard-tabs {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding-bottom: 0.35rem;
+  margin-bottom: 1rem;
+  scrollbar-width: thin;
+}
+
+.wizard-tab {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.wizard-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.wizard-tab.done:not(.active) {
+  border-color: rgba(15, 118, 110, 0.35);
+  color: var(--accent);
+}

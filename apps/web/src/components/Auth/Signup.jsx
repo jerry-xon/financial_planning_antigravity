@@ -1,13 +1,11 @@
-import { AlertCircle, Briefcase, CheckCircle, Chrome, Lock, Mail, User } from 'lucide-react';
+import { AlertCircle, CheckCircle, Chrome, Lock, Mail, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { signInWithGoogle, signUpWithEmail } from '../../services/authService';
 import { getPendingCouponInvite } from '@/lib/couponInviteStorage';
 
 const Signup = ({ onSwitchToLogin }) => {
-  const [role, setRole] = useState('user'); // 'agent' or 'user'
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [company, setCompany] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,7 +22,6 @@ const Signup = ({ onSwitchToLogin }) => {
     setError('');
     setSuccess(false);
 
-    // Validation
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -35,22 +32,17 @@ const Signup = ({ onSwitchToLogin }) => {
       return;
     }
 
-    if (role === 'agent' && !company) {
-      setError('Company name is required for agent registration');
-      return;
-    }
-
     setLoading(true);
 
-    const { error: signUpError } = await signUpWithEmail(email, password, fullName, role, company);
-    
+    // Public B2C signup is always role=user (partners are invite-only via partner portal)
+    const { error: signUpError } = await signUpWithEmail(email, password, fullName, 'user', '');
+
     if (signUpError) {
       setError(signUpError.message || 'Failed to create account. Please try again.');
       setLoading(false);
     } else {
       setSuccess(true);
       setLoading(false);
-      // Optionally redirect to login or show success message
       setTimeout(() => {
         onSwitchToLogin();
       }, 2000);
@@ -60,9 +52,9 @@ const Signup = ({ onSwitchToLogin }) => {
   const handleGoogleSignup = async () => {
     setError('');
     setLoading(true);
-    
-    const { error: signInError } = await signInWithGoogle(role);
-    
+
+    const { error: signInError } = await signInWithGoogle('user');
+
     if (signInError) {
       setError(signInError.message || 'Failed to sign up with Google.');
       setLoading(false);
@@ -90,61 +82,6 @@ const Signup = ({ onSwitchToLogin }) => {
             <span>Account created successfully! Please check your email to verify your account.</span>
           </div>
         )}
-
-        {/* Role Selection */}
-        <div className="role-selection">
-          <label style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '1rem', display: 'block' }}>
-            I am signing up as:
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
-            <button
-              type="button"
-              onClick={() => setRole('user')}
-              disabled={loading}
-              className="role-button"
-              style={{
-                padding: '1.25rem',
-                border: `2px solid ${role === 'user' ? 'var(--primary)' : 'var(--border)'}`,
-                background: role === 'user' ? 'var(--primary)10' : 'transparent',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontWeight: role === 'user' ? '600' : '500'
-              }}
-            >
-              <User size={24} />
-              <span>Regular User</span>
-              <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Create my own report</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('agent')}
-              disabled={loading}
-              className="role-button"
-              style={{
-                padding: '1.25rem',
-                border: `2px solid ${role === 'agent' ? 'var(--primary)' : 'var(--border)'}`,
-                background: role === 'agent' ? 'var(--primary)10' : 'transparent',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontWeight: role === 'agent' ? '600' : '500'
-              }}
-            >
-              <Briefcase size={24} />
-              <span>Agent</span>
-              <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Create reports for clients</span>
-            </button>
-          </div>
-        </div>
 
         <form onSubmit={handleSignup} className="auth-form">
           <div className="input-group">
@@ -174,22 +111,6 @@ const Signup = ({ onSwitchToLogin }) => {
               disabled={loading}
             />
           </div>
-
-          {role === 'agent' && (
-            <div className="input-group">
-              <label>
-                <Briefcase size={14} /> Company Name
-              </label>
-              <input
-                type="text"
-                placeholder="Your Financial Consulting Firm"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-          )}
 
           <div className="input-group">
             <label>
@@ -221,8 +142,8 @@ const Signup = ({ onSwitchToLogin }) => {
             />
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="btn btn-primary btn-block"
             disabled={loading || success}
           >
@@ -234,7 +155,7 @@ const Signup = ({ onSwitchToLogin }) => {
           <span>OR</span>
         </div>
 
-        <button 
+        <button
           type="button"
           className="btn btn-google btn-block"
           onClick={handleGoogleSignup}
@@ -247,8 +168,8 @@ const Signup = ({ onSwitchToLogin }) => {
         <div className="auth-footer">
           <p>
             Already have an account?{' '}
-            <button 
-              className="link-button" 
+            <button
+              className="link-button"
               onClick={onSwitchToLogin}
               disabled={loading}
             >
@@ -400,7 +321,7 @@ const Signup = ({ onSwitchToLogin }) => {
           text-decoration: underline;
           font-weight: 500;
         }
-        
+
         .legal-policy-link:hover {
           color: var(--primary);
         }

@@ -141,7 +141,7 @@ const BreakdownDebt = () => {
                     onClose={() => setActiveLoanModal(null)}
                     onSave={(data) => handleEmiSave(activeLoanModal, data)}
                     initialData={typeof emi[activeLoanModal] === 'object' ? emi[activeLoanModal] : null}
-                    loanType={EMI_LOAN_KEYS.find(l => l.key === activeLoanModal)?.label}
+                    loanTypeTitle={EMI_LOAN_KEYS.find(l => l.key === activeLoanModal)?.label}
                 />
             )}
         </div>

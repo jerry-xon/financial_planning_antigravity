@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WealthTicker Mutual Fund Data — Plain-English Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #14201a;
+    --muted: #5a6b62;
+    --paper: #f3f6f2;
+    --card: #ffffff;
+    --line: #d5e0d8;
+    --teal: #0f6b5c;
+    --teal-deep: #0a4a40;
+    --sand: #e8f0ea;
+    --accent: #c45c26;
+    --up: #0f6b5c;
+    --down: #b42318;
+    --shadow: 0 12px 40px rgba(20, 32, 26, 0.08);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: "Source Sans 3", system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #dcefe6 0%, transparent 55%),
+      radial-gradient(900px 500px at 100% 0%, #f2e6d8 0%, transparent 50%),
+      linear-gradient(180deg, #eef4f0 0%, var(--paper) 30%, #e9efe9 100%);
+    line-height: 1.55;
+  }
+  h1,h2,h3,h4,h5 { font-family: Fraunces, Georgia, serif; font-weight: 700; line-height: 1.2; margin: 0 0 0.5rem; }
+  p { margin: 0 0 1rem; }
+  a { color: var(--teal); }
+  .wrap { width: min(1080px, calc(100% - 2rem)); margin: 0 auto; }
+  .hero {
+    padding: 4.5rem 0 3rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow {
+    display: inline-block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 1rem;
+  }
+  .hero h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); max-width: 16ch; }
+  .hero .sub { font-size: 1.15rem; color: var(--muted); max-width: 48ch; }
+  .hero-meta {
+    display: flex; flex-wrap: wrap; gap: 0.75rem;
+    margin-top: 1.75rem;
+  }
+  .badge {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.92rem;
+    box-shadow: var(--shadow);
+  }
+  nav.toc {
+    position: sticky; top: 0; z-index: 5;
+    backdrop-filter: blur(10px);
+    background: rgba(243,246,242,0.86);
+    border-bottom: 1px solid var(--line);
+  }
+  nav.toc .wrap {
+    display: flex; gap: 0.35rem; overflow-x: auto;
+    padding: 0.75rem 0; scrollbar-width: thin;
+  }
+  nav.toc a {
+    white-space: nowrap;
+    text-decoration: none;
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 0.92rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+  }
+  nav.toc a:hover { background: var(--sand); color: var(--teal-deep); }
+  section.api {
+    padding: 3.25rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .section-kicker {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .section-title { font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: 0.75rem; }
+  .plain {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.35rem 1.5rem;
+    box-shadow: var(--shadow);
+    margin: 1.25rem 0 1.75rem;
+  }
+  .plain h3 { font-size: 1.15rem; margin-bottom: 0.4rem; }
+  .plain ul { margin: 0.4rem 0 0; padding-left: 1.15rem; color: var(--muted); }
+  .plain li { margin: 0.35rem 0; }
+  .ask-box {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  @media (min-width: 800px) {
+    .ask-box { grid-template-columns: 1fr 1fr; }
+  }
+  .ask, .get {
+    border-radius: 16px;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--line);
+  }
+  .ask { background: #fff8f2; border-color: #efd8c5; }
+  .get { background: #eef8f4; border-color: #c9e4da; }
+  .ask h4, .get h4 { font-size: 1rem; margin-bottom: 0.35rem; }
+  .path {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.86rem;
+    background: #10231e;
+    color: #d7f3ea;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    overflow-x: auto;
+    margin: 0.75rem 0 1.25rem;
+  }
+  .path .method { color: #7ddeb8; font-weight: 700; margin-right: 0.5rem; }
+  .fund-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.25rem 1.35rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+  }
+  .fund-card.featured { border-color: #b7d7cb; background: linear-gradient(180deg, #f7fcf9, #fff); }
+  .fund-card header { display:flex; flex-wrap:wrap; gap:0.6rem; align-items:flex-start; justify-content:space-between; margin-bottom: 0.85rem; }
+  .fund-card h4 { font-size: 1.15rem; max-width: 42ch; }
+  .pill {
+    background: var(--sand);
+    color: var(--teal-deep);
+    border-radius: 999px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+  .lead { color: var(--muted); }
+  .kv { display:grid; gap:0.65rem; margin:0; }
+  .kv > div { display:grid; grid-template-columns: 11rem 1fr; gap:0.5rem; padding-bottom:0.55rem; border-bottom: 1px dashed var(--line); }
+  .kv dt { color: var(--muted); font-weight: 600; }
+  .kv dd { margin: 0; }
+  @media (max-width: 640px) {
+    .kv > div { grid-template-columns: 1fr; }
+  }
+  .stat-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0 1.25rem;
+  }
+  .stat {
+    background: var(--sand);
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+  }
+  .stat .label { display:block; font-size:0.8rem; color:var(--muted); font-weight:600; margin-bottom:0.2rem; }
+  .stat strong { display:block; font-size:1.15rem; }
+  .muted { color: var(--muted); font-size: 0.9rem; }
+  .up { color: var(--up); font-weight: 700; }
+  .down { color: var(--down); font-weight: 700; }
+  table.simple {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.75rem 0 1.25rem;
+    font-size: 0.95rem;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  table.simple th, table.simple td {
+    text-align: left;
+    padding: 0.7rem 0.85rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  table.simple th { background: var(--sand); font-size: 0.85rem; }
+  table.simple tr:last-child td { border-bottom: 0; }
+  .chips { display:flex; flex-wrap:wrap; gap:0.55rem; margin: 1rem 0; }
+  .chip {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.55rem 0.8rem;
+    font-weight: 600;
+    box-shadow: var(--shadow);
+  }
+  .chip small { display:block; color: var(--muted); font-weight: 500; font-family: ui-monospace, Menlo, monospace; font-size: 0.75rem; margin-top: 0.15rem; }
+  details.raw {
+    margin-top: 1rem;
+    border: 1px dashed var(--line);
+    border-radius: 14px;
+    background: #101a16;
+    color: #d9ebe3;
+  }
+  details.raw summary {
+    cursor: pointer;
+    padding: 0.85rem 1rem;
+    font-weight: 600;
+    color: #9fd6c2;
+  }
+  details.raw pre {
+    margin: 0;
+    padding: 0 1rem 1rem;
+    overflow: auto;
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+  .callout {
+    background: linear-gradient(135deg, #12352e, #0f6b5c);
+    color: #effaf5;
+    border-radius: 18px;
+    padding: 1.4rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .callout h3 { color: #fff; }
+  .callout p { color: #d5eee5; margin-bottom: 0.5rem; }
+  .glossary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.85rem;
+  }
+  .glossary article {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1rem;
+  }
+  .glossary h4 { font-size: 1rem; }
+  .glossary p { color: var(--muted); margin: 0; font-size: 0.95rem; }
+  footer {
+    padding: 2.5rem 0 3.5rem;
+    color: var(--muted);
+    font-size: 0.92rem;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.88em;
+    background: var(--sand);
+    padding: 0.1rem 0.35rem;
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <div class="eyebrow">WealthTicker · Mutual fund data</div>
+      <h1>A plain-English guide to the fund information you can fetch</h1>
+      <p class="sub">This is not a developer manual. It explains, in everyday language, what each free WealthTicker data request does, what comes back, and what those numbers mean for someone comparing Indian mutual funds.</p>
+      <div class="hero-meta">
+        <span class="badge">Live responses captured 3 Oct 2026</span>
+        <span class="badge">6 free endpoints covered</span>
+        <span class="badge">Pro endpoints skipped</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="On this page">
+    <div class="wrap">
+      <a href="#start">How it works</a>
+      <a href="#search">Find funds</a>
+      <a href="#one-fund">One fund report</a>
+      <a href="#nav">Price history</a>
+      <a href="#categories">Fund types</a>
+      <a href="#amcs">Fund houses</a>
+      <a href="#amc-one">One fund house</a>
+      <a href="#glossary">Word guide</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="api" id="start">
+      <div class="wrap">
+        <div class="section-kicker">Before you begin</div>
+        <h2 class="section-title">What is this, really?</h2>
+        <div class="plain">
+          <h3>Imagine a librarian for mutual funds</h3>
+          <p>WealthTicker keeps a big, up-to-date library of Indian mutual funds. You can ask it questions like “show me Nifty index funds” or “tell me everything about this one UTI fund,” and it answers with clean, structured facts — returns, fees, risk, and more.</p>
+          <ul>
+            <li><strong>You ask</strong> by visiting a web address (called an endpoint) with your private access key.</li>
+            <li><strong>It answers</strong> with facts pulled from public AMFI NAV data and WealthTicker’s own calculations.</li>
+            <li><strong>This guide</strong> shows live answers we received, rewritten so a non-technical reader can understand them.</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <h3>Your access key stays private</h3>
+          <p>Every request needs a personal key (created under Settings → API keys on WealthTicker). This guide intentionally does <em>not</em> store or display your key.</p>
+          <p>Free plan limits: about 100 asks per day / 2,000 per month. NAV history on free is roughly the trailing 1 year.</p>
+        </div>
+        <div class="glossary" style="margin-top:1.25rem">
+          <article>
+            <h4>What we covered</h4>
+            <p>Search funds, one-fund details, NAV history, all categories, all fund houses, and one fund-house profile.</p>
+          </article>
+          <article>
+            <h4>What we skipped</h4>
+            <p>Two Pro-only asks: portfolio overlap between funds, and full stock-holding lists. Those need a Pro plan.</p>
+          </article>
+          <article>
+            <h4>Base address</h4>
+            <p><code>https://wealthticker.in/api/v1</code> — every ask below starts from here.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="api" id="search">
+      <div class="wrap">
+        <div class="section-kicker">Endpoint 1 of 6</div>
+        <h2 class="section-title">Find funds by name or theme</h2>
+        <div class="ask-box">
+          <div class="ask">
+            <h4>In plain words — you ask</h4>
+            <p>“Show me mutual funds related to <em>nifty index</em>. Give me the first 10.”</p>
+          </div>
+          <div class="get">
+            <h4>What you get</h4>
+            <p>A shortlist of matching schemes with fees, size, returns, and risk — like a search results page.</p>
+          </div>
+        </div>
+        <div class="path"><span class="method">GET</span>/funds?search=nifty index&amp;page=1&amp;limit=10</div>
+        <div class="plain">
+          <h3>What happened when we tried it</h3>
+          <ul>
+            <li>Status: <strong>success</strong></li>
+            <li>Matches found: <strong>948</strong> funds (we asked for page 1, 10 at a time)</li>
+            <li>Useful for: building a screener, autocomplete search, or “funds like this” lists</li>
+          </ul>
+        </div>
+        <h3 style="margin:1.5rem 0 0.75rem; font-size:1.25rem;">Sample results (first 3 of 10)</h3>
+        
+    <article class="fund-card">
+      <header>
+        <h4>ICICI Prudential Nifty Pharma Index Fund - Direct Plan - IDCW</h4>
+        <span class="pill">ICICI Prudential Mutual Fund</span>
+      </header>
+      <dl class="kv">
+        <div><dt>What kind of fund?</dt><dd>Index · Index Funds</dd></div>
+        <div><dt>Plan / option</dt><dd>Direct · IDCW</dd></div>
+        <div><dt>Today’s NAV</dt><dd>₹20.3757 <span class="muted">as of 2026-10-01</span></dd></div>
+        <div><dt>Fund size (AUM)</dt><dd>₹122 Cr</dd></div>
+        <div><dt>Expense ratio</dt><dd>0.51% a year</dd></div>
+        <div><dt>1-year return</dt><dd class="up">+21.21%</dd></div>
+        <div><dt>3-year return (CAGR)</dt><dd class="up">+19.50%</dd></div>
+        <div><dt>Rating</dt><dd>★★★★★ (5/5)</dd></div>
+        <div><dt>Scheme code</dt><dd><code>150928</code> <span class="muted">— use this ID to ask about one fund</span></dd></div>
+      </dl>
+    </article>
+    <article class="fund-card">
+      <header>
+        <h4>ICICI Prudential Nifty Pharma Index Fund - Direct Plan - Growth</h4>
+        <span class="pill">ICICI Prudential Mutual Fund</span>
+      </header>
+      <dl class="kv">
+        <div><dt>What kind of fund?</dt><dd>Index · Index Funds</dd></div>
+        <div><dt>Plan / option</dt><dd>Direct · Growth</dd></div>
+        <div><dt>Today’s NAV</dt><dd>₹20.3747 <span class="muted">as of 2026-10-01</span></dd></div>
+        <div><dt>Fund size (AUM)</dt><dd>₹122 Cr</dd></div>
+        <div><dt>Expense ratio</dt><dd>0.51% a year</dd></div>
+        <div><dt>1-year return</dt><dd class="up">+21.21%</dd></div>
+        <div><dt>3-year return (CAGR)</dt><dd class="up">+19.50%</dd></div>
+        <div><dt>Rating</dt><dd>★★★★★ (5/5)</dd></div>
+        <div><dt>Scheme code</dt><dd><code>150930</code> <span class="muted">— use this ID to ask about one fund</span></dd></div>
+      </dl>
+    </article>
+    <article class="fund-card">
+      <header>
+        <h4>ICICI Prudential Nifty Pharma Index Fund - Regular Plan - Growth</h4>
+        <span class="pill">ICICI Prudential Mutual Fund</span>
+      </header>
+      <dl class="kv">
+        <div><dt>What kind of fund?</dt><dd>Index · Index Funds</dd></div>
+        <div><dt>Plan / option</dt><dd>Regular · Growth</dd></div>
+        <div><dt>Today’s NAV</dt><dd>₹19.8872 <span class="muted">as of 2026-10-01</span></dd></div>
+        <div><dt>Fund size (AUM)</dt><dd>₹122 Cr</dd></div>
+        <div><dt>Expense ratio</dt><dd>1.18% a year</dd></div>
+        <div><dt>1-year return</dt><dd class="up">+20.43%</dd></div>
+        <div><dt>3-year return (CAGR)</dt><dd class="up">+18.76%</dd></div>
+        <div><dt>Rating</dt><dd>★★★★★ (5/5)</dd></div>
+        <div><dt>Scheme code</dt><dd><code>150929</code> <span class="muted">— use this ID to ask about one fund</span></dd></div>
+      </dl>
+    </article>
+        <div class="plain">
+          <h3>Optional filters you can add to the ask</h3>
+          <ul>
+            <li><strong>category / subCategory</strong> — Equity, Debt, Index Funds, and so on</li>
+            <li><strong>amc</strong> — only one fund house (e.g. HDFC)</li>
+            <li><strong>plan</strong> — Direct or Regular</li>
+            <li><strong>option</strong> — Growth or IDCW (dividend-style payout)</li>
+            <li><strong>minAum / maxExpenseRatio</strong> — “big enough funds” / “cheap enough fees”</li>
+            <li><strong>sort + dir</strong> — order by a field ascending or descending</li>
+          </ul>
+        </div>
+        <details class="raw"><summary>Peek at the raw computer answer (trimmed)</summary><pre>{
+  &quot;data&quot;: [
+    {
+      &quot;schemeCode&quot;: 150928,
+      &quot;schemeName&quot;: &quot;ICICI Prudential Nifty Pharma Index Fund - Direct Plan - IDCW&quot;,
+      &quot;amc&quot;: &quot;ICICI Prudential Mutual Fund&quot;,
+      &quot;category&quot;: &quot;Index&quot;,
+      &quot;subCategory&quot;: &quot;Index Funds&quot;,
+      &quot;plan&quot;: &quot;Direct&quot;,
+      &quot;option&quot;: &quot;IDCW&quot;,
+      &quot;isinGrowth&quot;: &quot;INF109KC12M7&quot;,
+      &quot;isinReinvest&quot;: &quot;INF109KC13M5&quot;,
+      &quot;latestNav&quot;: 20.3757,
+      &quot;navDate&quot;: &quot;2026-10-01&quot;,
+      &quot;inceptionDate&quot;: &quot;2022-12-15&quot;,
+      &quot;aum&quot;: 1216316000,
+      &quot;expenseRatio&quot;: 0.51,
+      &quot;exitLoad&quot;: &quot;Nil&quot;,
+      &quot;minSip&quot;: 1000,
+      &quot;lockInYears&quot;: 0,
+      &quot;rating&quot;: 5,
+      &quot;returns&quot;: {
+        &quot;m1&quot;: -1.819,
+        &quot;m3&quot;: 4.6249,
+        &quot;m6&quot;: 19.6775,
+        &quot;ytd&quot;: 16.4951,
+        &quot;y1&quot;: 21.2067,
+        &quot;y3&quot;: 19.5021,
+        &quot;y5&quot;: null,
+        &quot;y10&quot;: null,
+        &quot;inception&quot;: 20.8154
+      },
+      &quot;risk&quot;: {
+        &quot;volatility&quot;: 15.0472,
+        &quot;sharpe&quot;: 0.864,
+        &quot;sortino&quot;: 1.244,
+        &quot;maxDrawdown&quot;: -16.5889,
+        &quot;maxDrawdown3y&quot;: -16.5889,
+        &quot;alpha&quot;: 12.147,
+        &quot;beta&quot;: 0.648,
+        &quot;benchmark&quot;: &quot;Nifty 500&quot;
+      }
+    }
+  ],
+  &quot;meta&quot;: {
+    &quot;total&quot;: 948,
+    &quot;page&quot;: 1,
+    &quot;limit&quot;: 10
+  }
+}</pre></details>
+      </div>
+    </section>
+
+    <section class="api" id="one-fund">
+      <div class="wrap">
+        <div class="section-kicker">Endpoint 2 of 6</div>
+        <h2 class="section-title">One fund’s full report card</h2>
+        <div class="ask-box">
+          <div class="ask">
+            <h4>In plain words — you ask</h4>
+            <p>“Give me the complete snapshot for scheme code <strong>120716</strong>.”</p>
+          </div>
+          <div class="get">
+            <h4>What you get</h4>
+            <p>Everything useful about that one fund in a single answer: identity, NAV, size, fees, returns, and risk.</p>
+          </div>
+        </div>
+        <div class="path"><span class="method">GET</span>/funds/120716</div>
+        
+<article class="fund-card featured">
+  <header>
+    <h4>UTI Nifty 50 Index Fund - Direct Plan - Growth</h4>
+    <span class="pill">UTI Mutual Fund</span>
+  </header>
+  <p class="lead">Think of this as a full “fund report card” for one scheme.</p>
+  <div class="stat-grid">
+    <div class="stat"><span class="label">NAV</span><strong>₹157.8901</strong><span class="muted">2026-10-01</span></div>
+    <div class="stat"><span class="label">Fund size</span><strong>₹278 thousand Cr</strong><span class="muted">Assets under management</span></div>
+    <div class="stat"><span class="label">Yearly fee</span><strong>0.25%</strong><span class="muted">Expense ratio</span></div>
+    <div class="stat"><span class="label">Rating</span><strong>★★★☆☆ (3/5)</strong><span class="muted">Internal score</span></div>
+  </div>
+  <h5>How has the money grown?</h5>
+  <table class="simple">
+    <thead><tr><th>Period</th><th>Return</th><th>In plain words</th></tr></thead>
+    <tbody>
+      <tr><td>1 month</td><td class="down">-6.78%</td><td>Recent short-term move</td></tr>
+      <tr><td>1 year</td><td class="down">-8.90%</td><td>If you held for the last year</td></tr>
+      <tr><td>3 years</td><td class="up">+5.51%</td><td>Average yearly growth (CAGR)</td></tr>
+      <tr><td>5 years</td><td class="up">+6.06%</td><td>Longer-term track record</td></tr>
+      <tr><td>10 years</td><td class="up">+11.08%</td><td>Decade view</td></tr>
+      <tr><td>Since start</td><td class="up">+11.05%</td><td>From launch (2013-01-02)</td></tr>
+    </tbody>
+  </table>
+  <h5>How bumpy was the ride?</h5>
+  <dl class="kv">
+    <div><dt>Volatility</dt><dd>13.2797% — how much the value jumps around</dd></div>
+    <div><dt>Max drawdown</dt><dd>-38.42% — the worst peak-to-bottom fall ever measured</dd></div>
+    <div><dt>Sharpe ratio</dt><dd>-0.075 — return vs risk (higher is better)</dd></div>
+    <div><dt>Compared to</dt><dd>Nifty 50 (beta 1.004)</dd></div>
+  </dl>
+</article>
+
+        <details class="raw"><summary>Peek at the raw computer answer</summary><pre>{
+  &quot;data&quot;: {
+    &quot;schemeCode&quot;: 120716,
+    &quot;schemeName&quot;: &quot;UTI Nifty 50 Index Fund - Direct Plan - Growth&quot;,
+    &quot;amc&quot;: &quot;UTI Mutual Fund&quot;,
+    &quot;category&quot;: &quot;Index&quot;,
+    &quot;subCategory&quot;: &quot;Index Funds&quot;,
+    &quot;plan&quot;: &quot;Direct&quot;,
+    &quot;option&quot;: &quot;Growth&quot;,
+    &quot;isinGrowth&quot;: &quot;INF789F01XA0&quot;,
+    &quot;isinReinvest&quot;: null,
+    &quot;latestNav&quot;: 157.8901,
+    &quot;navDate&quot;: &quot;2026-10-01&quot;,
+    &quot;inceptionDate&quot;: &quot;2013-01-02&quot;,
+    &quot;aum&quot;: 278261909000,
+    &quot;expenseRatio&quot;: 0.25,
+    &quot;exitLoad&quot;: null,
+    &quot;minSip&quot;: null,
+    &quot;lockInYears&quot;: null,
+    &quot;rating&quot;: 3,
+    &quot;returns&quot;: {
+      &quot;m1&quot;: -6.7836,
+      &quot;m3&quot;: -6.345,
+      &quot;m6&quot;: -0.413,
+      &quot;ytd&quot;: -13.5643,
+      &quot;y1&quot;: -8.9006,
+      &quot;y3&quot;: 5.5058,
+      &quot;y5&quot;: 6.0565,
+      &quot;y10&quot;: 11.0829,
+      &quot;inception&quot;: 11.0468
+    },
+    &quot;risk&quot;: {
+      &quot;volatility&quot;: 13.2797,
+      &quot;sharpe&quot;: -0.075,
+      &quot;sortino&quot;: -0.104,
+      &quot;maxDrawdown&quot;: -38.4179,
+      &quot;maxDrawdown3y&quot;: -15.5067,
+      &quot;alpha&quot;: 0.826,
+      &quot;beta&quot;: 1.004,
+      &quot;benchmark&quot;: &quot;Nifty 50&quot;
+    }
+  }
+}</pre></details>
+      </div>
+    </section>
+
+    <section class="api" id="nav">
+      <div class="wrap">
+        <div class="section-kicker">Endpoint 3 of 6</div>
+        <h2 class="section-title">Day-by-day price history (NAV)</h2>
+        <div class="ask-box">
+          <div class="ask">
+            <h4>In plain words — you ask</h4>
+            <p>“Show me how the unit price of fund 120716 moved from 1 Jan 2025 to 1 Jan 2026.”</p>
+          </div>
+          <div class="get">
+            <h4>What you get</h4>
+            <p>A calendar of daily NAVs — perfect for drawing a line chart of how ₹1 unit’s value changed.</p>
+          </div>
+        </div>
+        <div class="path"><span class="method">GET</span>/funds/120716/nav?from=2025-01-01&amp;to=2026-01-01</div>
+        <div class="plain">
+          <h3>What happened when we tried it</h3>
+          <ul>
+            <li>We asked for a full calendar year, but the free plan returned the <strong>trailing ~1 year window</strong> WealthTicker allows on Free.</li>
+            <li>Actual dates returned: <strong>2025-10-01</strong> → <strong>2026-01-01</strong></li>
+            <li>Daily points: <strong>62</strong></li>
+            <li>Response marked truncated: <strong>yes</strong></li>
+            <li>Over that returned window, NAV moved from ₹173.3163 to ₹182.6676 (+5.40%)</li>
+          </ul>
+        </div>
+        <table class="simple">
+          <thead><tr><th>Date</th><th>NAV (unit price)</th></tr></thead>
+          <tbody>
+            <tr><td>2025-10-01</td><td>₹173.3163</td></tr><tr><td>2025-10-03</td><td>₹173.7187</td></tr><tr><td>2025-10-06</td><td>₹174.9961</td></tr><tr><td>2025-10-07</td><td>₹175.2089</td></tr><tr><td>2025-12-30</td><td>₹181.2188</td></tr><tr><td>2025-12-31</td><td>₹182.5506</td></tr><tr><td>2026-01-01</td><td>₹182.6676</td></tr>
+          </tbody>
+        </table>
+        <p class="muted">Table shows the first few and last few days; the live answer contained all 62 points.</p>
+        <details class="raw"><summary>Peek at the raw computer answer (trimmed)</summary><pre>{
+  &quot;data&quot;: [
+    {
+      &quot;date&quot;: &quot;2025-10-01&quot;,
+      &quot;nav&quot;: 173.3163
+    },
+    {
+      &quot;date&quot;: &quot;2025-10-03&quot;,
+      &quot;nav&quot;: 173.7187
+    },
+    {
+      &quot;date&quot;: &quot;2025-10-06&quot;,
+      &quot;nav&quot;: 174.9961
+    }
+  ],
+  &quot;meta&quot;: {
+    &quot;schemeCode&quot;: 120716,
+    &quot;points&quot;: 62,
+    &quot;from&quot;: &quot;2025-10-01&quot;,
+    &quot;to&quot;: &quot;2026-01-01&quot;,
+    &quot;truncated&quot;: true
+  },
+  &quot;_note&quot;: &quot;Live call returned 62 daily points&quot;
+}</pre></details>
+      </div>
+    </section>
+
+    <section class="api" id="categories">
+      <div class="wrap">
+        <div class="section-kicker">Endpoint 4 of 6</div>
+        <h2 class="section-title">All fund types (categories)</h2>
+        <div class="ask-box">
+          <div class="ask">
+            <h4>In plain words — you ask</h4>
+            <p>“List every SEBI fund category and how those groups are doing on average.”</p>
+          </div>
+          <div class="get">
+            <h4>What you get</h4>
+            <p>A menu of fund types (Large Cap, Liquid, ELSS…) with average returns and average fees for each group.</p>
+          </div>
+        </div>
+        <div class="path"><span class="method">GET</span>/categories</div>
+        <div class="plain">
+          <h3>What happened when we tried it</h3>
+          <ul>
+            <li>Categories returned: <strong>56</strong></li>
+            <li>NAV date used for averages: <strong>2026-10-03</strong></li>
+            <li>Useful for: “which corner of the market is doing well?” dashboards</li>
+          </ul>
+        </div>
+        <table class="simple">
+          <thead>
+            <tr>
+              <th>Family</th>
+              <th>Type</th>
+              <th>Funds</th>
+              <th>Avg 1Y</th>
+              <th>Avg 3Y</th>
+              <th>Avg fee</th>
+            </tr>
+          </thead>
+          <tbody><tr><td>Equity</td><td>Large Cap Fund</td><td>37</td><td>-4.23%</td><td>+8.84%</td><td>1.15%</td></tr><tr><td>Equity</td><td>Mid Cap Fund</td><td>34</td><td>+4.73%</td><td>+15.20%</td><td>1.1%</td></tr><tr><td>Equity</td><td>Small Cap Fund</td><td>36</td><td>+11.58%</td><td>+14.98%</td><td>0.95%</td></tr><tr><td>Index</td><td>Index Funds</td><td>384</td><td>0.00%</td><td>+8.94%</td><td>0.5%</td></tr><tr><td>Debt</td><td>Liquid Fund</td><td>48</td><td>+5.97%</td><td>+6.37%</td><td>0.14%</td></tr><tr><td>Equity</td><td>Flexi Cap Fund</td><td>46</td><td>+0.22%</td><td>+11.69%</td><td>1.12%</td></tr><tr><td>Equity</td><td>ELSS</td><td>50</td><td>-1.16%</td><td>+10.60%</td><td>1.14%</td></tr></tbody>
+        </table>
+        <details class="raw"><summary>Peek at the raw computer answer (trimmed)</summary><pre>{
+  &quot;data&quot;: [
+    {
+      &quot;category&quot;: &quot;Equity&quot;,
+      &quot;subCategory&quot;: &quot;Large Cap Fund&quot;,
+      &quot;fundCount&quot;: 37,
+      &quot;avgRet1m&quot;: -5.74,
+      &quot;avgRet3m&quot;: -4.25,
+      &quot;avgRet6m&quot;: 3.77,
+      &quot;avgRet1y&quot;: -4.23,
+      &quot;avgRet3y&quot;: 8.84,
+      &quot;avgRet5y&quot;: 8.17,
+      &quot;avgExpenseRatio&quot;: 1.15
+    },
+    {
+      &quot;category&quot;: &quot;Equity&quot;,
+      &quot;subCategory&quot;: &quot;Mid Cap Fund&quot;,
+      &quot;fundCount&quot;: 34,
+      &quot;avgRet1m&quot;: -5.97,
+      &quot;avgRet3m&quot;: -2.74,
+      &quot;avgRet6m&quot;: 12.83,
+      &quot;avgRet1y&quot;: 4.73,
+      &quot;avgRet3y&quot;: 15.2,
+      &quot;avgRet5y&quot;: 14.49,
+      &quot;avgExpenseRatio&quot;: 1.1
+    }
+  ],
+  &quot;meta&quot;: {
+    &quot;navDate&quot;: &quot;2026-10-03&quot;
+  },
+  &quot;_note&quot;: &quot;Live call returned 56 categories&quot;
+}</pre></details>
+      </div>
+    </section>
+
+    <section class="api" id="amcs">
+      <div class="wrap">
+        <div class="section-kicker">Endpoint 5 of 6</div>
+        <h2 class="section-title">Directory of fund houses</h2>
+        <div class="ask-box">
+          <div class="ask">
+            <h4>In plain words — you ask</h4>
+            <p>“Give me the phonebook of all Asset Management Companies (AMCs).”</p>
+          </div>
+          <div class="get">
+            <h4>What you get</h4>
+            <p>Every fund house name plus a short web-friendly ID (slug) you can use to open that house’s profile.</p>
+          </div>
+        </div>
+        <div class="path"><span class="method">GET</span>/amcs</div>
+        <div class="plain">
+          <h3>What happened when we tried it</h3>
+          <ul>
+            <li>Fund houses listed: <strong>55</strong></li>
+            <li>Note: the Postman example used <code>hdfc-mutual-fund</code>, but the live slug is simply <code>hdfc</code>.</li>
+          </ul>
+        </div>
+        <div class="chips"><span class="chip">Axis Mutual Fund<small>axis</small></span><span class="chip">HDFC Mutual Fund<small>hdfc</small></span><span class="chip">ICICI Prudential Mutual Fund<small>icici-prudential</small></span><span class="chip">Kotak Mahindra Mutual Fund<small>kotak-mahindra</small></span><span class="chip">Mirae Asset Mutual Fund<small>mirae-asset</small></span><span class="chip">Nippon India Mutual Fund<small>nippon-india</small></span><span class="chip">SBI Mutual Fund<small>sbi</small></span><span class="chip">UTI Mutual Fund<small>uti</small></span></div>
+        <p class="muted">Each chip shows the public name and the slug underneath.</p>
+        <details class="raw"><summary>Peek at the raw computer answer (trimmed)</summary><pre>{
+  &quot;data&quot;: [
+    {
+      &quot;amc&quot;: &quot;Axis Mutual Fund&quot;,
+      &quot;slug&quot;: &quot;axis&quot;
+    },
+    {
+      &quot;amc&quot;: &quot;HDFC Mutual Fund&quot;,
+      &quot;slug&quot;: &quot;hdfc&quot;
+    },
+    {
+      &quot;amc&quot;: &quot;ICICI Prudential Mutual Fund&quot;,
+      &quot;slug&quot;: &quot;icici-prudential&quot;
+    },
+    {
+      &quot;amc&quot;: &quot;Kotak Mahindra Mutual Fund&quot;,
+      &quot;slug&quot;: &quot;kotak-mahindra&quot;
+    }
+  ],
+  &quot;meta&quot;: {
+    &quot;total&quot;: 55
+  },
+  &quot;_note&quot;: &quot;Live call returned 55 fund houses&quot;
+}</pre></details>
+      </div>
+    </section>
+
+    <section class="api" id="amc-one">
+      <div class="wrap">
+        <div class="section-kicker">Endpoint 6 of 6</div>
+        <h2 class="section-title">One fund house profile</h2>
+        <div class="ask-box">
+          <div class="ask">
+            <h4>In plain words — you ask</h4>
+            <p>“Tell me about HDFC Mutual Fund — who they are and which schemes stand out.”</p>
+          </div>
+          <div class="get">
+            <h4>What you get</h4>
+            <p>A short about-blurb, website, how many schemes they run, and a list of their top-performing funds.</p>
+          </div>
+        </div>
+        <div class="path"><span class="method">GET</span>/amcs/hdfc</div>
+        <article class="fund-card featured">
+          <header>
+            <h4>HDFC Mutual Fund</h4>
+            <span class="pill">slug: hdfc</span>
+          </header>
+          <p>HDFC Mutual Fund is run by HDFC Asset Management, part of the HDFC Bank group and listed on the exchanges since 2018. It has been in business since 1999, absorbed Zurich India&#x27;s schemes in 2003, and is consistently among the two or three largest fund houses by assets.</p>
+          <div class="stat-grid">
+            <div class="stat"><span class="label">Schemes</span><strong>574</strong><span class="muted">Products on offer</span></div>
+            <div class="stat"><span class="label">Sub-categories</span><strong>42</strong><span class="muted">Types of funds</span></div>
+            <div class="stat"><span class="label">Website</span><strong style="font-size:0.95rem"><a href="https://www.hdfcfund.com/" target="_blank" rel="noopener">https://www.hdfcfund.com/</a></strong><span class="muted">Official site</span></div>
+          </div>
+          <h5>Top funds included in the answer</h5>
+          <table class="simple">
+            <thead><tr><th>Fund</th><th>3Y return</th><th>Size</th><th>Rating</th></tr></thead>
+            <tbody><tr><td>HDFC Silver ETF Fund of Fund - Direct Plan - Growth Option</td><td>+42.96%</td><td>₹46 thousand Cr</td><td>★★★★☆ (4/5)</td></tr><tr><td>HDFC Defence Fund - Direct Plan - Growth Option</td><td>+36.08%</td><td>₹94 thousand Cr</td><td>★★★★☆ (4/5)</td></tr><tr><td>HDFC Gold ETF Fund of Fund - Direct Plan - Growth Option</td><td>+35.01%</td><td>₹116 thousand Cr</td><td>★★☆☆☆ (2/5)</td></tr><tr><td>HDFC Pharma and Healthcare Fund - Direct Plan - Growth Option</td><td>+30.26%</td><td>₹23 thousand Cr</td><td>★★★★★ (5/5)</td></tr><tr><td>HDFC Developed World Overseas Equity Passive FOF - Direct Plan - Growth Option</td><td>+26.84%</td><td>₹16 thousand Cr</td><td>★★★★☆ (4/5)</td></tr></tbody>
+          </table>
+        </article>
+        <details class="raw"><summary>Peek at the raw computer answer (trimmed)</summary><pre>{
+  &quot;data&quot;: {
+    &quot;amc&quot;: &quot;HDFC Mutual Fund&quot;,
+    &quot;slug&quot;: &quot;hdfc&quot;,
+    &quot;about&quot;: &quot;HDFC Mutual Fund is run by HDFC Asset Management, part of the HDFC Bank group and listed on the exchanges since 2018. It has been in business since 1999, absorbed Zurich India&#x27;s schemes in 2003, and is consistently among the two or three largest fund houses by assets.&quot;,
+    &quot;website&quot;: &quot;https://www.hdfcfund.com/&quot;,
+    &quot;schemes&quot;: 574,
+    &quot;subCategories&quot;: 42,
+    &quot;topFunds&quot;: [
+      {
+        &quot;schemeCode&quot;: 150737,
+        &quot;schemeName&quot;: &quot;HDFC Silver ETF Fund of Fund - Direct Plan - Growth Option&quot;,
+        &quot;amc&quot;: &quot;HDFC Mutual Fund&quot;,
+        &quot;category&quot;: &quot;FoF&quot;,
+        &quot;subCategory&quot;: &quot;FoF Domestic&quot;,
+        &quot;plan&quot;: &quot;Direct&quot;,
+        &quot;option&quot;: &quot;Growth&quot;,
+        &quot;isinGrowth&quot;: &quot;INF179KC1DU7&quot;,
+        &quot;isinReinvest&quot;: null,
+        &quot;latestNav&quot;: 36.0336,
+        &quot;navDate&quot;: &quot;2026-10-01&quot;,
+        &quot;inceptionDate&quot;: &quot;2022-10-28&quot;,
+        &quot;aum&quot;: 45925071000,
+        &quot;expenseRatio&quot;: 0.21,
+        &quot;exitLoad&quot;: &quot;In respect of each purchase/switch-in of units:- an Exit Load of 1% is payable if Units are redeemed/switched-out within 15 days from the date of allotment. No Exit Load is payable if Units are redeemed/switched-out after 15 days from the date of allotment. No Exit Load is payable if Units are redeemed/switched-out after 1 year from the date of allotment.&quot;,
+        &quot;minSip&quot;: 100,
+        &quot;lockInYears&quot;: 0,
+        &quot;rating&quot;: 4,
+        &quot;returns&quot;: {
+          &quot;m1&quot;: -4.0095,
+          &quot;m3&quot;: -1.3494,
+          &quot;m6&quot;: -7.5881,
+          &quot;ytd&quot;: -3.1776,
+          &quot;y1&quot;: 47.9892,
+          &quot;y3&quot;: 42.9631,
+          &quot;y5&quot;: null,
+          &quot;y10&quot;: null,
+          &quot;inception&quot;: 38.7099
+        },
+        &quot;risk&quot;: {
+          &quot;volatility&quot;: 41.4779,
+          &quot;sharpe&quot;: 0.879,
+          &quot;sortino&quot;: 1.199,
+          &quot;maxDrawdown&quot;: -46.0004,
+          &quot;maxDrawdown3y&quot;: -46.0004,
+          &quot;alpha&quot;: null,
+          &quot;beta&quot;: null,
+          &quot;benchmark&quot;: null
+        }
+      }
+    ],
+    &quot;_note&quot;: &quot;15 top funds in full response&quot;
+  }
+}</pre></details>
+      </div>
+    </section>
+
+    <section class="api" id="glossary">
+      <div class="wrap">
+        <div class="section-kicker">Word guide</div>
+        <h2 class="section-title">Jargon → everyday meaning</h2>
+        <div class="glossary">
+          <article><h4>NAV</h4><p>The price of one unit of the fund for that day — like the share price of the fund.</p></article>
+          <article><h4>AUM</h4><p>How much money investors have parked in the fund. Bigger isn’t always better, but it shows scale.</p></article>
+          <article><h4>Expense ratio</h4><p>The yearly fee the fund charges, shown as a percentage of your investment.</p></article>
+          <article><h4>CAGR</h4><p>The smoothed yearly growth rate over multiple years (not a simple total).</p></article>
+          <article><h4>Direct vs Regular</h4><p>Direct plans skip distributor commissions and usually have lower fees than Regular plans.</p></article>
+          <article><h4>Growth vs IDCW</h4><p>Growth reinvests profits into the fund. IDCW can pay out money from time to time.</p></article>
+          <article><h4>Volatility</h4><p>How much the fund’s value tends to swing up and down.</p></article>
+          <article><h4>Max drawdown</h4><p>The worst fall from a peak to a low — a gut-check for “how bad can it get?”</p></article>
+          <article><h4>Sharpe / Sortino</h4><p>Scores for “return per unit of risk.” Higher usually means a smoother ride for the return earned.</p></article>
+          <article><h4>Scheme code</h4><p>The unique ID for a fund. Use it when you want details or NAV history for exactly one scheme.</p></article>
+          <article><h4>Slug</h4><p>A short web-friendly name for a fund house (example: <code>hdfc</code>).</p></article>
+          <article><h4>Pro endpoints</h4><p>Overlap and portfolio-stats need a paid Pro plan — not covered in this free guide.</p></article>
+        </div>
+        <div class="callout" style="margin-top:2rem">
+          <h3>Important reminder</h3>
+          <p>This guide explains data. It is not investment advice. Mutual fund investments are subject to market risks. Always read the scheme documents and verify numbers before making decisions.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p>Built from live WealthTicker free-tier responses on 3 Oct 2026. Source: <a href="https://wealthticker.in/developers">wealthticker.in/developers</a>.</p>
+      <p>Pro endpoints intentionally omitted: <code>/funds/{code}/overlap</code> and <code>/funds/{code}/portfolio-stats</code>.</p>
+    </div>
+  </footer>
+</body>
+</html>

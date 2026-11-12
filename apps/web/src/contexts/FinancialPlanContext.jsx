@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import { createFinancialPlan, getActivePlan, updateFinancialPlan, markSummaryReportGenerated, getUserProfile } from '../services/financialPlanService';
+import { createFinancialPlan, getActivePlan, updateFinancialPlan, markSummaryReportGenerated, getUserProfile } from '../services/planApiService';
 import {
   buildSummaryDraftPayload,
   clearSummaryDraft,

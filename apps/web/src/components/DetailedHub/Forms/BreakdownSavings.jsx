@@ -270,7 +270,7 @@ const BreakdownSavings = () => {
                             ? savings[activeInvModal]
                             : savings[activeInvModal.key]?.[activeInvModal.index]
                     }
-                    invType={typeof activeInvModal === 'string' ? activeInvModal : activeInvModal.key}
+                    investmentTypeTitle={typeof activeInvModal === 'string' ? activeInvModal : activeInvModal.key}
                 />
             )}
         </div>

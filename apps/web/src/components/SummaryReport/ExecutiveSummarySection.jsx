@@ -4,6 +4,7 @@ import { Wallet, Shield, Heart, TrendingUp, Target, Download, CalendarClock, Bad
 import { useFinancialPlan } from '../../contexts/FinancialPlanContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { buildExecutiveSummaryReport, buildWhatIfScenario } from './ExecutiveSummaryLogic';
+import { bridgeExecutiveSummary } from '../../lib/planComputeBridge';
 import { getReadinessSnapshotsByPlan, upsertMonthlyReadinessSnapshot } from '../../services/financialPlanService';
 import { buildExecutiveSummarySignals, PILLAR_TO_RECOMMENDATION_ID } from '../../recommendationRegistry/adapters/executiveSummaryAdapter';
 import { useRecommendationStore } from '../../recommendationOrchestration';
@@ -53,26 +54,59 @@ const ExecutiveSummarySection = () => {
         calculatorInputs,
     } = useFinancialPlan();
 
-    const report = useMemo(
-        () =>
-            buildExecutiveSummaryReport({
-                income,
-                expenseCategories,
-                assetCategories,
-                summaryLifeCover,
-                summaryHealthCover,
-                contingencyFund,
-                goals,
-                inflationRates,
-                familyMembers,
-                hasSpouseIncome,
-                policies,
-                hasHealthInsurance,
-                liabilityCategories,
-                calculatorInputs,
-            }),
-        [income, expenseCategories, assetCategories, summaryLifeCover, summaryHealthCover, contingencyFund, goals, inflationRates, familyMembers, hasSpouseIncome, policies, hasHealthInsurance, liabilityCategories, calculatorInputs]
+    const planState = useMemo(
+        () => ({
+            income,
+            expenseCategories,
+            assetCategories,
+            summaryLifeCover,
+            summaryHealthCover,
+            contingencyFund,
+            goals,
+            inflationRates,
+            familyMembers,
+            hasSpouseIncome,
+            policies,
+            hasHealthInsurance,
+            liabilityCategories,
+            calculatorInputs,
+        }),
+        [
+            income,
+            expenseCategories,
+            assetCategories,
+            summaryLifeCover,
+            summaryHealthCover,
+            contingencyFund,
+            goals,
+            inflationRates,
+            familyMembers,
+            hasSpouseIncome,
+            policies,
+            hasHealthInsurance,
+            liabilityCategories,
+            calculatorInputs,
+        ],
     );
+
+    // Instant local result, then refresh from Edge when available.
+    const localReport = useMemo(
+        () => buildExecutiveSummaryReport(planState),
+        [planState],
+    );
+    const [report, setReport] = useState(localReport);
+
+    useEffect(() => {
+        setReport(localReport);
+        let cancelled = false;
+        (async () => {
+            const remote = await bridgeExecutiveSummary(planState, planId);
+            if (!cancelled && remote) setReport(remote);
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [localReport, planState, planId]);
 
     // Priority Next Steps: report selects/orders by weakest pillars; presentation
     // owns card layout, actions, and visual hierarchy.

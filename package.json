@@ -3,16 +3,21 @@
   "private": true,
   "version": "0.0.0",
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "WealthMap-Partner"
   ],
   "scripts": {
     "dev": "npm -w @finplan/web run dev",
-    "build": "npm -w @finplan/web run build",
+    "dev:partner": "npm -w @finplan/partner run dev",
+    "build": "npm run build:edge-engines && npm -w @finplan/web run build",
+    "build:partner": "npm -w @finplan/partner run build",
+    "build:edge-engines": "node scripts/build-edge-engines.mjs",
     "lint": "npm -w @finplan/web run lint",
     "preview": "npm -w @finplan/web run preview",
     "test": "npm -w @finplan/web run test"
   },
   "devDependencies": {
+    "esbuild": "^0.25.12",
     "supabase": "^2.111.0"
   }
 }

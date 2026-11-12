@@ -1,0 +1,156 @@
+import { normalizeIncomeState } from '../../../apps/web/src/components/DetailedFlow/incomeDetailSync';
+import { migrateInsuranceBlock } from '../../../apps/web/src/components/DetailedFlow/insuranceDetailSync';
+
+export function emptyPlanPayload({ fullName = '', phone = '' } = {}) {
+  return {
+    familyMembers: [
+      {
+        name: fullName,
+        dob: '',
+        occupation: 'Salaried',
+        employmentType: 'Private Sector',
+        retirementAge: 60,
+        relation: 'Self',
+        isMarried: undefined,
+        natureOfBusiness: '',
+        organizationName: '',
+        educationalQualification: '',
+        mobile: phone,
+      },
+    ],
+    income: normalizeIncomeState({}),
+    expenseCategories: {
+      household: { grocery: '', rent: '', education: '', lifestyle: '', medical: '', travel: '' },
+      emi: {
+        personalLoan: '',
+        homeLoan: '',
+        educationLoan: '',
+        carLoan: '',
+        twoWheelerLoan: '',
+        otherEmi: '',
+        otherEmiName: '',
+      },
+      selectedEmiLoanTypes: [],
+      insurance: migrateInsuranceBlock({
+        health: { value: '', frequency: 'Annual' },
+        car: { value: '', frequency: 'Annual' },
+        bike: { value: '', frequency: 'Annual' },
+        life: {},
+        others: { value: '', frequency: 'Annual' },
+        policyDocs: {},
+      }),
+      savings: { sip: '', ppf: '', nps: '', rd: '', otherSaving: '' },
+      summaryMonthlyInvestments: '',
+      summaryOtherSavings: '',
+      summaryInsuranceTotal: '',
+      summaryHouseholdTotal: '',
+      summaryEmiTotal: '',
+      summaryLifePremiums: '',
+    },
+    assetCategories: {
+      summaryPortfolioValue: '',
+      summaryLiquidCash: '',
+      summaryRealEstateAssets: '',
+      realEstate: { residential: '', secondProperty: '', landPlot: '' },
+      vehicles: { idv: '' },
+      valuables: { gold: '', art: '' },
+      cash: { savings: '', cashInHand: '' },
+      investments: { equity: '', mutualFunds: '', fixedDeposit: '', recurringDeposit: '' },
+      insurance: { savingPlans: '', ulip: '' },
+      retirement: { epf: '', ppf: '', nps: '' },
+      others: { other: '' },
+      custom: [],
+    },
+    liabilityCategories: {
+      summaryOutstandingLoans: '',
+      summaryCreditCardDues: '',
+      summaryOtherPayables: '',
+      loans: {
+        home: '',
+        personal: '',
+        car: '',
+        twoWheeler: '',
+        education: '',
+        otherEmis: '',
+        creditCard: '',
+      },
+      custom: [],
+    },
+    goals: [],
+    policies: [],
+    contingencyFund: '',
+    inflationRates: { incomeIncrement: 10, householdInflation: 6, educationInflation: 8 },
+    hasLifeInsurance: null,
+    hasHealthInsurance: null,
+    summaryLifeCover: '',
+    summaryHealthCover: '',
+    hasSpouseIncome: false,
+    hasEMI: false,
+  };
+}
+
+export function planFromDb(plan) {
+  if (!plan) return emptyPlanPayload();
+  const base = emptyPlanPayload();
+  return {
+    ...base,
+    familyMembers: plan.family_members?.length ? plan.family_members : base.familyMembers,
+    income: normalizeIncomeState(plan.income || {}),
+    expenseCategories: {
+      ...base.expenseCategories,
+      ...(plan.expense_categories || {}),
+      household: {
+        ...base.expenseCategories.household,
+        ...(plan.expense_categories?.household || {}),
+      },
+      emi: { ...base.expenseCategories.emi, ...(plan.expense_categories?.emi || {}) },
+      insurance: migrateInsuranceBlock({
+        ...base.expenseCategories.insurance,
+        ...(plan.expense_categories?.insurance || {}),
+      }),
+      savings: { ...base.expenseCategories.savings, ...(plan.expense_categories?.savings || {}) },
+    },
+    assetCategories: {
+      ...base.assetCategories,
+      ...(plan.asset_categories || {}),
+      custom: Array.isArray(plan.asset_categories?.custom) ? plan.asset_categories.custom : [],
+    },
+    liabilityCategories: {
+      ...base.liabilityCategories,
+      ...(plan.liability_categories || {}),
+      loans: {
+        ...base.liabilityCategories.loans,
+        ...(plan.liability_categories?.loans || {}),
+      },
+      custom: Array.isArray(plan.liability_categories?.custom)
+        ? plan.liability_categories.custom
+        : [],
+    },
+    goals: plan.goals || [],
+    policies: plan.policies || [],
+    contingencyFund: plan.contingency_fund ?? '',
+    inflationRates: plan.inflation_rates || base.inflationRates,
+    hasLifeInsurance: plan.has_life_insurance ?? null,
+    hasHealthInsurance: plan.has_health_insurance ?? null,
+    summaryLifeCover: plan.summary_life_cover ?? '',
+    summaryHealthCover: plan.summary_health_cover ?? '',
+    currentYearLedger: plan.current_year_ledger,
+    investmentAllocations: plan.investment_allocations,
+    goalMappings: plan.goal_mappings,
+    hasSpouseIncome: !!(plan.income?.spouse && Number(plan.income.spouse) > 0),
+  };
+}
+
+/** Contact step + 9 detailed tabs matching B2C Detailed Hub cards */
+export const WIZARD_STEPS = [
+  { id: 'contact', title: 'Contact' },
+  { id: 'family', title: 'Family Info' },
+  { id: 'income', title: 'Income' },
+  { id: 'household', title: 'Household & Lifestyle' },
+  { id: 'emis', title: 'EMIs & Debts' },
+  { id: 'insurance', title: 'Insurance Premiums' },
+  { id: 'savings', title: 'Savings & Investments' },
+  { id: 'assets', title: 'Assets' },
+  { id: 'liabilities', title: 'Liabilities' },
+  { id: 'goals', title: 'Goals' },
+];

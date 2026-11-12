@@ -393,3 +393,13 @@ verify_jwt = false
 # Same ES256 JWT gateway issue as razorpay-checkout; auth via getUser() inside.
 [functions.send-push-notification]
 verify_jwt = false
+
+# Plan CRUD + financial engines — auth enforced inside via getUser().
+[functions.plan-api]
+verify_jwt = false
+
+[functions.plan-compute]
+verify_jwt = false
+
+[functions.partner-api]
+verify_jwt = false
