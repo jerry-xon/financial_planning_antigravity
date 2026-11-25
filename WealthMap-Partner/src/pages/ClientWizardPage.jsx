@@ -10,7 +10,7 @@ import BreakdownFamily from '../../../apps/web/src/components/DetailedHub/Forms/
 import BreakdownIncome from '../../../apps/web/src/components/DetailedHub/Forms/BreakdownIncome';
 import BreakdownExpenses from '../../../apps/web/src/components/DetailedHub/Forms/BreakdownExpenses';
 import BreakdownDebt from '../../../apps/web/src/components/DetailedHub/Forms/BreakdownDebt';
-import BreakdownInsurance from '../../../apps/web/src/components/DetailedHub/Forms/BreakdownInsurance';
+import B2BBreakdownInsurance from '../components/wizard/B2BBreakdownInsurance';
 import BreakdownSavings from '../../../apps/web/src/components/DetailedHub/Forms/BreakdownSavings';
 import BreakdownAssets from '../../../apps/web/src/components/DetailedHub/Forms/BreakdownAssets';
 import BreakdownLiabilities from '../../../apps/web/src/components/DetailedHub/Forms/BreakdownLiabilities';
@@ -31,7 +31,7 @@ const DETAIL_TABS = [
   { id: 'income', title: 'Income', Comp: BreakdownIncome },
   { id: 'household', title: 'Household & Lifestyle Expenses', Comp: BreakdownExpenses },
   { id: 'emis', title: 'EMIs & Debts', Comp: BreakdownDebt },
-  { id: 'insurance', title: 'Insurance Premiums', Comp: BreakdownInsurance },
+  { id: 'insurance', title: 'Insurance Premiums', Comp: B2BBreakdownInsurance },
   { id: 'savings', title: 'Savings & Investments', Comp: BreakdownSavings },
   { id: 'assets', title: 'Assets', Comp: BreakdownAssets },
   { id: 'liabilities', title: 'Liabilities', Comp: BreakdownLiabilities },
@@ -169,25 +169,37 @@ function WizardBody({
           >
             Back
           </button>
-          {step < WIZARD_STEPS.length - 1 ? (
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={saving || (step === 0 && (!fullName || (!isEdit && !email)))}
-              onClick={() => onSave({ advance: true, plan: getPlanPayload() })}
-            >
-              Continue
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={saving || !fullName || (!isEdit && !email)}
-              onClick={() => onSave({ advance: false, finish: true, plan: getPlanPayload() })}
-            >
-              {saving ? <span className="spinner" /> : 'Save & preview report'}
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            {clientId && step > 0 && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={saving}
+                onClick={() => onSave({ advance: false, plan: getPlanPayload() })}
+              >
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            )}
+            {step < WIZARD_STEPS.length - 1 ? (
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={saving || (step === 0 && (!fullName || (!isEdit && !email)))}
+                onClick={() => onSave({ advance: true, plan: getPlanPayload() })}
+              >
+                Continue
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={saving || !fullName || (!isEdit && !email)}
+                onClick={() => onSave({ advance: false, finish: true, plan: getPlanPayload() })}
+              >
+                {saving ? <span className="spinner" /> : 'Save & preview report'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </PageShell>

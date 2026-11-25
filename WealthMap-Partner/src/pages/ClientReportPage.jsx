@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { invokePartnerApi } from '../lib/partnerApi';
 import { Loader, PageShell } from '../components/ui';
-import { ReportSections } from '../components/ReportSections';
+import { WealthMapReportView } from '../components/WealthMapReportView';
 
 export function ClientReportPage() {
   const [reports, setReports] = useState(null);
+  const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -13,7 +14,10 @@ export function ClientReportPage() {
     (async () => {
       try {
         const data = await invokePartnerApi('get_my_report');
-        if (!cancelled) setReports(data.reports);
+        if (!cancelled) {
+          setReports(data?.reports || null);
+          setPlan(data?.plan || null);
+        }
       } catch (err) {
         if (!cancelled) setError(err.message || 'Report unavailable');
       } finally {
@@ -30,7 +34,7 @@ export function ClientReportPage() {
   return (
     <PageShell title="Your financial report" subtitle="Read-only view prepared by your advisor">
       {error ? <p style={{ color: 'var(--danger)' }}>{error}</p> : null}
-      <ReportSections reports={reports} />
+      <WealthMapReportView plan={plan} reports={reports} />
     </PageShell>
   );
 }

@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { invokePartnerApi } from '../lib/partnerApi';
 import { Loader, PageShell } from '../components/ui';
-import { ReportSections } from '../components/ReportSections';
+import { WealthMapReportView } from '../components/WealthMapReportView';
 
 export function PartnerReportPreviewPage() {
   const { clientId } = useParams();
   const navigate = useNavigate();
   const [reports, setReports] = useState(null);
+  const [plan, setPlan] = useState(null);
+  const [client, setClient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
@@ -19,8 +21,15 @@ export function PartnerReportPreviewPage() {
       setLoading(true);
       setError('');
       try {
-        const data = await invokePartnerApi('get_client_report', { client_id: clientId });
-        if (!cancelled) setReports(data.reports);
+        const [repData, planData] = await Promise.all([
+          invokePartnerApi('get_client_report', { client_id: clientId }),
+          invokePartnerApi('get_client_plan', { clientId }),
+        ]);
+        if (!cancelled) {
+          setReports(repData?.reports || null);
+          setPlan(repData?.plan || planData?.plan || null);
+          setClient(planData?.client || null);
+        }
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to generate report');
       } finally {
@@ -65,7 +74,7 @@ export function PartnerReportPreviewPage() {
     >
       {error ? <p style={{ color: 'var(--danger)' }}>{error}</p> : null}
       {sentMsg ? <p style={{ color: 'var(--success)' }}>{sentMsg}</p> : null}
-      <ReportSections reports={reports} />
+      <WealthMapReportView plan={plan} reports={reports} client={client} />
     </PageShell>
   );
 }

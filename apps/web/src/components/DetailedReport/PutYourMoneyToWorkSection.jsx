@@ -10,6 +10,7 @@ import {
     computeAllocationImpactForMonth,
     createEmptyDraftAllocations,
     getAllocationPlanKey,
+    isProtectionAllocationType,
     PROTECTION_ALLOCATION_TYPES,
     getPymtwInstrumentCategories,
 } from './putYourMoneyToWorkLogic';

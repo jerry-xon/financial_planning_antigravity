@@ -591,7 +591,7 @@ serve(async (req) => {
         };
 
         const sections = await buildPartnerReportSections(payload);
-        return json(200, { success: true, data: { planId, reports: sections } });
+        return json(200, { success: true, data: { planId, plan, reports: sections } });
       }
 
       case 'send_client_report': {

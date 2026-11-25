@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const partnerSrc = path.resolve(__dirname, 'src');
 const partnerPlanContext = path.resolve(partnerSrc, 'lib/PartnerPlanContext.jsx');
+const partnerAuthContext = path.resolve(partnerSrc, 'lib/AuthContext.jsx');
+const workspaceShim = path.resolve(partnerSrc, 'lib/b2cShims/workspaceShim.jsx');
 const projectionShim = path.resolve(partnerSrc, 'lib/b2cShims/projectionLogicShim.js');
 const profileShim = path.resolve(partnerSrc, 'lib/b2cShims/profileLogicShim.js');
 
@@ -17,6 +19,8 @@ function partnerB2cBridge() {
     resolveId(source, importer) {
       if (!importer) return null;
       if (source.includes('FinancialPlanContext')) return partnerPlanContext;
+      if (source.includes('FinancialWorkspaceContext')) return workspaceShim;
+      if (source.includes('contexts/AuthContext')) return partnerAuthContext;
       if (source.includes('JourneyModule/ProjectionLogic') || source.endsWith('/ProjectionLogic')) {
         return projectionShim;
       }
@@ -33,7 +37,7 @@ export default defineConfig({
   envDir: path.resolve(__dirname, '..'),
   resolve: {
     alias: { '@': partnerSrc },
-    dedupe: ['react', 'react-dom', 'react-router-dom', 'lucide-react', 'framer-motion'],
+    dedupe: ['react', 'react-dom', 'react-router-dom', 'lucide-react', 'framer-motion', 'recharts'],
   },
   server: {
     host: '127.0.0.1',
@@ -44,6 +48,6 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'lucide-react', 'framer-motion'],
+    include: ['react', 'react-dom', 'react-router-dom', 'lucide-react', 'framer-motion', 'recharts'],
   },
 });
