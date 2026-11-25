@@ -35,6 +35,19 @@ function adminClient() {
   });
 }
 
+// -------------------------------------------------------------------
+// Helper: validate absolute partner path (Windows or macOS whitelist)
+// -------------------------------------------------------------------
+function isValidPartnerPath(p: string): boolean {
+  // Windows whitelist: C:\PartnerDocs\Policies\
+  const windowsRoot = /^C:\\PartnerDocs\\Policies\\/i;
+  // macOS whitelist: /Users/<any>/PartnerDocs/Policies/
+  const macRoot = /^\/Users\/[^\/]+\/PartnerDocs\/Policies\/.*/;
+  // Reject directory‑traversal attempts
+  if (p.includes('..')) return false;
+  return windowsRoot.test(p) || macRoot.test(p);
+}
+
 async function getSeatBalance(admin: ReturnType<typeof adminClient>, partnerId: string) {
   const { data } = await admin
     .from('partner_seat_balance')
@@ -993,7 +1006,16 @@ serve(async (req) => {
           updated_at: new Date().toISOString(),
         };
 
-        let saved;
+        // ---- Local policy path handling ----
+const rawPath = String(body.local_policy_path || body.localPolicyPath || '').trim();
+if (rawPath) {
+  if (!isValidPartnerPath(rawPath)) {
+    return json(400, { success: false, error: 'Invalid localPolicyPath – must be inside the partner whitelist folder' });
+  }
+  row.local_policy_path = rawPath;
+}
+
+let saved;
         if (policyId) {
           const { data, error } = await admin
             .from('crm_policies')

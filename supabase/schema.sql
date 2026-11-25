@@ -108,6 +108,7 @@ create table if not exists public.financial_plans (
   liability_categories jsonb default '{"loans": {"home": "", "personal": "", "car": "", "education": "", "otherEmis": "", "creditCard": ""}, "custom": []}'::jsonb,
   goals jsonb default '[]'::jsonb,
   policies jsonb default '[]'::jsonb,
+  local_policy_path text,
   contingency_fund numeric default 0,
   has_life_insurance boolean,
   has_health_insurance boolean,
